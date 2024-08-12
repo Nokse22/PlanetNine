@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=planetnine
+Exec=planetnine
+Icon=io.github.nokse22.PlanetNine
+Terminal=false
+Type=Application
+Categories=Utility;
+Keywords=GTK;
+StartupNotify=true

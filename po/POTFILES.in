@@ -1,0 +1,8 @@
+# List of source files containing translatable strings.
+# Please keep this file sorted alphabetically.
+data/io.github.nokse22.PlanetNine.desktop.in
+data/io.github.nokse22.PlanetNine.metainfo.xml.in
+data/io.github.nokse22.PlanetNine.gschema.xml
+src/main.py
+src/window.py
+src/window.ui

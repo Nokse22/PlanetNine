@@ -1,0 +1,17 @@
+listview {
+  background-color: transparent;
+}
+
+listview row {
+  /* background-color: transparent; */
+  padding-top: 3px;
+  padding-bottom: 3px;
+  border-radius: 12px;
+}
+
+vte-terminal {
+}
+
+.markdown-view {
+  background-color: transparent;
+}

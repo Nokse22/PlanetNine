@@ -1,0 +1,101 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Created with Cambalache 0.90.4 -->
+<interface>
+  <!-- interface-name code block.ui -->
+  <requires lib="gtk" version="4.12"/>
+  <requires lib="gtksource" version="5.0"/>
+  <template class="UIBlock" parent="GtkBox">
+    <property name="valign">start</property>
+    <child>
+      <object class="AdwBin">
+        <property name="margin-start">12</property>
+        <property name="margin-end">12</property>
+        <property name="margin-top">12</property>
+        <property name="width-request">30</property>
+        <child>
+          <object class="GtkLabel" id="count_label">
+            <property name="valign">start</property>
+            <property name="label">0</property>
+            <property name="visible" bind-property="visible" bind-source="markdown_page" bind-flags="invert-boolean | sync-create"/>
+            <style>
+              <class name="title-4"/>
+              <class name="dim-label"/>
+            </style>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkStack">
+        <child>
+          <object class="GtkStackPage" id="markdown_page">
+            <property name="name">markdown</property>
+            <property name="child">
+              <object class="MarkdownTextView" id="markdown_text_view">
+                <style>
+                  <class name="markdown-view"/>
+                </style>
+              </object>
+            </property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkStackPage">
+            <property name="name">code</property>
+            <property name="child">
+              <object class="GtkBox">
+                <property name="orientation">vertical</property>
+                <property name="spacing">6</property>
+                <property name="valign">start</property>
+                <property name="hexpand">True</property>
+                <child>
+                  <object class="GtkFrame">
+                    <property name="height-request">50</property>
+                    <property name="width-request">200</property>
+                    <child>
+                      <object class="GtkSourceView">
+                        <property name="monospace">True</property>
+                        <property name="auto-indent">True</property>
+                        <property name="top-margin">12</property>
+                        <property name="bottom-margin">12</property>
+                        <property name="left-margin">12</property>
+                        <property name="right-margin">6</property>
+                        <property name="pixels-above-lines">2</property>
+                        <property name="pixels-below-lines">2</property>
+                        <property name="pixels-inside-wrap">2</property>
+                        <property name="wrap-mode">word-char</property>
+                        <property name="tab-width">4</property>
+                        <property name="buffer">
+                          <object class="GtkSourceBuffer" id="code_buffer">
+                            <property name="enable-undo">True</property>
+                            <property name="highlight-syntax">True</property>
+                            <property name="highlight-matching-brackets">True</property>
+                          </object>
+                        </property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkScrolledWindow" id="output_scrolled_window">
+                    <property name="visible">False</property>
+                    <property name="height-request">100</property>
+                    <child>
+                      <object class="VteTerminal" id="output_terminal">
+                        <property name="hexpand">true</property>
+                        <property name="vexpand-set">true</property>
+                        <property name="font-scale">0.8</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </property>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+    </child>
+  </template>
+</interface>
