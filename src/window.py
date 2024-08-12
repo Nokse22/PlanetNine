@@ -28,9 +28,13 @@ import subprocess
 import re
 import threading
 import time
+import os
+import hashlib
+import base64
 
 from .jupyter_server import JupyterServer
 from .block import UIBlock, Block, BlockType
+from .command_line import CommandLine
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/window.ui')
 class PlanetnineWindow(Adw.ApplicationWindow):
@@ -42,6 +46,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     item_factory = Gtk.Template.Child()
 
     queue = []
+
+    cache_dir = os.environ["XDG_CACHE_HOME"]
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -61,7 +67,16 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.list_view.set_model(self.blocks_selection_model)
 
+        self.create_action('add-text-block', lambda *args: self.add_block(Block(BlockType.TEXT)))
+        self.create_action('add-code-block', lambda *args: self.add_block(Block(BlockType.CODE)))
+
         self.blocks_model.append(Block(BlockType.CODE))
+
+        self.command_line = CommandLine()
+
+    def add_block(self, block):
+        position = self.blocks_selection_model.get_selected() + 1
+        self.blocks_model.insert(position, block)
 
     def on_jupyter_server_started(self, server):
         server.get_kernel_specs()
@@ -70,25 +85,13 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     def on_jupyter_server_has_new_line(self, server, line):
         self.terminal.feed([ord(char) for char in line + "\r\n"])
 
-    @Gtk.Template.Callback("on_add_button_clicked")
-    def on_add_button_clicked(self, btn):
-        block = Block(BlockType.CODE)
-        self.blocks_model.append(block)
-
     @Gtk.Template.Callback("on_factory_bind")
     def on_factory_bind(self, factory, list_item):
         block = list_item.get_item()
 
         ui_block = list_item.get_child()
-        if ui_block.get_block() is None:
-            ui_block.set_block(block)
-
-        # if block.block_type == BlockType.CODE and not block.binded:
-        #     code_block = list_item.get_child()
-        #     block.bind_property("content", code_block, "content", 1)
-        #     block.bind_property("output", code_block, "output", 1)
-        #     block.bind_property("count", code_block, "count", 1)
-        #     block.set_binded(True)
+        if block.get_block() is None:
+            block.set_block(ui_block)
 
     @Gtk.Template.Callback("on_factory_setup")
     def on_factory_setup(self, factory, list_item):
@@ -102,12 +105,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         if block.block_type == BlockType.CODE:
             if self.queue == []:
-                self.jupyter_server.run_code(
-                    code=block.content,
-                    block=block,
-                    callback=self.run_code_callback,
-                    finish_callback=self.run_code_finish
-                )
+                self.run_block(block)
             else:
                 self.queue.append(block)
 
@@ -125,34 +123,63 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         print("RESTART and run!")
         self.jupyter_server.restart_kernel(2)
         for index, block in enumerate(self.blocks_model):
+            if index == 0:
+                continue
             self.queue.append(block)
         block = self.blocks_model.get_item(0)
-        self.jupyter_server.run_code(
-            code=block.content,
-            block=block,
-            callback=self.run_code_callback,
-            finish_callback=self.run_code_finish
-        )
+        self.run_block(block)
 
-    def run_code_callback(self, msg_type, stream_content, block):
+    def run_block(self, block):
+        if block.content.startswith("%"):
+            print("Magic!")
+            self.command_line.run_command(
+                block.content[1:].split(" "),
+                callback=self.run_command_callback,
+                args=[block]
+            )
+        else:
+            self.jupyter_server.run_code(
+                block.content,
+                callback=self.run_code_callback,
+                finish_callback=self.run_code_finish,
+                args=[block]
+            )
+
+    def run_command_callback(self, line, block):
+        block.set_output(line + '\n')
+
+    def run_code_callback(self, msg_type, content, block):
         if msg_type == 'stream':
-            text = stream_content['text']
+            text = content['text']
             block.set_output(text)
 
         elif msg_type == 'execute_input':
-            count = stream_content['execution_count']
+            count = content['execution_count']
             block.set_count(int(count))
-            block.set_output("")
+            block.reset_output()
+
+        elif msg_type == 'display_data':
+            data = content['data']["image/png"]
+
+            image_data = base64.b64decode(data)
+            sha256_hash = hashlib.sha256(image_data).hexdigest()
+
+            image_path = os.path.join(self.cache_dir, f"{sha256_hash}.png")
+            with open(image_path, 'wb') as f:
+                f.write(image_data)
+
+            block.add_image(image_path)
 
         elif msg_type == 'error':
-            block.set_output("\n".join(stream_content['traceback']))
+            block.set_output("\n".join(content['traceback']))
 
     def run_code_finish(self, block):
         if self.queue != []:
             block=self.queue.pop(0)
-            self.jupyter_server.run_code(
-                code=block.content,
-                block=block,
-                callback=self.run_code_callback,
-                finish_callback=self.run_code_finish
-            )
+            self.run_block(block)
+
+    def create_action(self, name, callback):
+        action = Gio.SimpleAction.new(name, None)
+        action.connect("activate", callback)
+        self.add_action(action)
+        return action

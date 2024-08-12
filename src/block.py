@@ -38,10 +38,9 @@ class Block(GObject.GObject):
 
     _block_type = None
 
-    _content = ""
-    _count = 0
-    _output = ""
-    _binded = False
+    _block = None
+
+    _images = []
 
     def __init__(self, _block_type):
         super().__init__()
@@ -51,63 +50,37 @@ class Block(GObject.GObject):
         else:
             raise Exception("has to be BlockType")
 
-    @GObject.Property(type=bool, default=False)
-    def binded(self):
-        return self._binded
-
-    @binded.setter
-    def binded(self, value):
-        self._binded = value
-
-    @GObject.Property(type=str)
-    def content(self):
-        return self._content
-
-    @content.setter
-    def content(self, value):
-        self._content = value
-
     @GObject.Property(type=int)
-    def count(self):
-        return self._count
-
-    @count.setter
-    def count(self, value):
-        self._count = value
-
-    @GObject.Property(type=str)
     def block_type(self):
         return self._block_type
 
-    @block_type.setter
-    def block_type(self, value):
-        self._block_type = value
-
     @GObject.Property(type=str)
-    def output(self):
-        return self._output
+    def content(self):
+        return self._block.get_content()
 
-    @output.setter
-    def output(self, value=""):
-        self._output = value
+    def set_block(self, block):
+        self._block = block
+        self._block.set_block_type(self._block_type)
 
-    def set_content(self, value):
-        self._content = value
-        self.notify("content")
+    def get_block(self):
+        return self._block
+
+    def set_content(value):
+        self._block.set_content(value)
 
     def set_count(self, value):
-        self._count = value
-        self.notify("count")
+        self._block.set_count(value)
 
     def set_output(self, value):
-        self._output = value
-        self.notify("output")
+        self._block.set_output(value)
 
-    def get_output(self):
-        return self._output
+    def add_image(self, image_path):
+        self._images.append(image_path)
+        self._block.add_image(image_path)
 
-    def set_binded(self, value):
-        self._binded = value
+    def reset_output(self):
+        self._block.reset_output()
+        self._images=[]
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/block.ui')
 class UIBlock(Gtk.Box):
@@ -122,12 +95,10 @@ class UIBlock(Gtk.Box):
     output_scrolled_window = Gtk.Template.Child()
     count_label = Gtk.Template.Child()
     markdown_text_view = Gtk.Template.Child()
+    stack = Gtk.Template.Child()
+    image_box = Gtk.Template.Child()
 
     _count = 0
-
-    _output = ""
-
-    block = None
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -147,54 +118,30 @@ class UIBlock(Gtk.Box):
 
         self.output_terminal.set_color_background(Gdk.RGBA(alpha=1))
 
-        self.code_buffer.connect("changed", lambda *args: self.notify("content"))
-        self.markdown_text_view.get_buffer().connect("changed", lambda *args: self.notify("content"))
+        self.text_buffer = self.markdown_text_view.get_buffer()
 
-    def set_block(self, block):
-        self.block = block
+    def set_content(self, value):
+        if self.block_type == BlockType.TEXT:
+            self.text_buffer.set_text(value)
 
-    def get_block(self):
-        return self.block
+        elif self.block_type == BlockType.CODE:
+            self.code_buffer.set_text(value)
 
-    @GObject.Property(type=str)
-    def content(self):
-        start = self.code_buffer.get_start_iter()
-        end = self.code_buffer.get_end_iter()
-        return self.code_buffer.get_text(start, end, True)
+    def get_content(self):
+        if self.block_type == BlockType.TEXT:
+            start = self.text_buffer.get_start_iter()
+            end = self.text_buffer.get_end_iter()
+            return self.text_buffer.get_text(start, end, True)
 
-    @content.setter
-    def content(self, value):
-        self.set_content(value)
-
-    def set_content(value):
-        self.code_buffer.set_text(value)
-
-        self.notify("content")
-
-    @GObject.Property(type=int)
-    def count(self):
-        return self._count
-
-    @count.setter
-    def count(self, value):
-        self.set_count(value)
+        elif self.block_type == BlockType.CODE:
+            start = self.code_buffer.get_start_iter()
+            end = self.code_buffer.get_end_iter()
+            return self.code_buffer.get_text(start, end, True)
 
     def set_count(self, value):
-        self._count = value
-        self.count_label.set_label(str(self._count))
-
-        self.notify("count")
-
-    @GObject.Property(type=str)
-    def output(self):
-        return self._output
-
-    @output.setter
-    def output(self, value):
-        self.set_output(value)
+        self.count_label.set_label(str(value))
 
     def set_output(self, value=""):
-        self._output = value
         if value == "":
             self.output_scrolled_window.set_visible(False)
             self.output_terminal.reset(True, True)
@@ -202,7 +149,31 @@ class UIBlock(Gtk.Box):
         self.output_scrolled_window.set_visible(True)
         self.output_terminal.feed([ord(char) for char in value.replace("\n","\r\n")])
 
-        self.notify("output")
+    def set_block_type(self, block_type):
+        self.block_type = block_type
+        if block_type == BlockType.TEXT:
+            self.stack.set_visible_child_name("text")
+            self.count_label.set_visible(False)
+        elif block_type == BlockType.CODE:
+            self.stack.set_visible_child_name("code")
+            self.count_label.set_visible(True)
+
+    def reset_output(self):
+        self.output_scrolled_window.set_visible(False)
+        self.output_terminal.reset(True, True)
+
+        child = self.image_box.get_first_child()
+        while child:
+            self.image_box.remove(child)
+            child = self.image_box.get_first_child()
+
+    def add_image(self, image_path):
+        image = Gtk.Picture(height_request=100)
+
+        image.set_filename(image_path)
+
+        self.output_scrolled_window.set_visible(True)
+        self.image_box.append(image)
 
     def update_style_scheme(self, *args):
         scheme_name = "Adwaita"
@@ -211,3 +182,46 @@ class UIBlock(Gtk.Box):
         sm = GtkSource.StyleSchemeManager()
         scheme = sm.get_scheme(scheme_name)
         self.code_buffer.set_style_scheme(scheme)
+
+    @Gtk.Template.Callback("on_drag_source_prepare")
+    def on_drag_source_prepare(self, source, x, y):
+        global drag_x, drag_y
+        drag_x = x
+        drag_y = y
+
+        box = Gtk.Box()
+
+        value = GObject.Value()
+        value.init(Gtk.Box)
+        value.set_object(box)
+
+        return Gdk.ContentProvider.new_for_value(value)
+
+    @Gtk.Template.Callback("on_drag_source_begin")
+    def on_drag_source_begin(self, source, drag):
+        print("begin")
+        drag_widget = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL
+        )
+
+        drag_widget.append(
+            Gtk.Label(
+                label=self.count_label.get_label(),
+                css_classes=["title-4", "dim-label"]
+            )
+        )
+
+        drag_widget.append(
+            Gtk.Frame(
+                label="something...",
+            )
+        )
+
+        icon = Gtk.DragIcon.get_for_drag(drag)
+        icon.set_child(drag_widget)
+
+        drag.set_hotspot(drag_x, drag_y)
+
+    @Gtk.Template.Callback("on_drag_source_end")
+    def on_drag_source_end(self, source, drag, delete_data):
+        print(source)

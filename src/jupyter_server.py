@@ -127,10 +127,13 @@ class JupyterServer(GObject.GObject):
     def restart_kernel(self, kernel_id):
         print(f"restart kernel {kernel_id}")
 
-    def run_code(self, code, block, **kwargs):
+    def run_code(self, code, **kwargs):
         callback = None
         finish_callback = None
+        args = []
 
+        if "args" in kwargs:
+            args = kwargs["args"]
         if "callback" in kwargs:
             callback = kwargs["callback"]
         if "finish_callback" in kwargs:
@@ -140,10 +143,10 @@ class JupyterServer(GObject.GObject):
 
         msg_id = self.client.execute(code)
 
-        th = threading.Thread(target=self.update_output, args=[callback, finish_callback, block], daemon=True)
+        th = threading.Thread(target=self.update_output, args=[callback, finish_callback, *args], daemon=True)
         th.start()
 
-    def update_output(self, callback, finish_callback, block):
+    def update_output(self, callback, finish_callback, *args):
         while True:
             msg = self.client.get_iopub_msg()
             msg_type = msg['header']['msg_type']
@@ -152,7 +155,7 @@ class JupyterServer(GObject.GObject):
             if msg_type == 'status':
                 status = msg['content']['execution_state']
                 if status == "idle":
-                    GLib.idle_add(finish_callback, block)
+                    GLib.idle_add(finish_callback, *args)
                     return
 
-            GLib.idle_add(callback, msg_type, stream_content, block)
+            GLib.idle_add(callback, msg_type, stream_content, *args)

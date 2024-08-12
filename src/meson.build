@@ -33,6 +33,7 @@ planetnine_sources = [
   'jupyter_server.py',
   'block.py',
   'markdown_textview.py',
+  'command_line.py'
 ]
 
 install_data(planetnine_sources, install_dir: moduledir)

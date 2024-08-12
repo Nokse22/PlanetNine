@@ -16,8 +16,8 @@
             <child type="start">
               <object class="AdwSplitButton">
                 <property name="icon-name">list-add-symbolic</property>
-                <signal name="clicked" handler="on_add_button_clicked"></signal>
                 <property name="menu-model">add-menu</property>
+                <property name="action-name">win.add-code-block</property>
               </object>
             </child>
             <child type="start">

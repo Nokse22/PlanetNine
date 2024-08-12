@@ -14,4 +14,5 @@ vte-terminal {
 
 .markdown-view {
   background-color: transparent;
+  color: @window_fg_color;
 }
