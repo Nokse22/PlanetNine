@@ -23,7 +23,7 @@ from gi.repository import GLib
 from gi.repository import Gio
 from gi.repository import GObject
 from gi.repository import GtkSource
-from gi.repository import Gdk
+from gi.repository import Gdk, GdkPixbuf
 
 from enum import IntEnum
 
@@ -91,12 +91,11 @@ class UIBlock(Gtk.Box):
     }
 
     code_buffer = Gtk.Template.Child()
-    output_terminal = Gtk.Template.Child()
     output_scrolled_window = Gtk.Template.Child()
     count_label = Gtk.Template.Child()
     markdown_text_view = Gtk.Template.Child()
     stack = Gtk.Template.Child()
-    image_box = Gtk.Template.Child()
+    output_box = Gtk.Template.Child()
 
     _count = 0
 
@@ -116,7 +115,7 @@ class UIBlock(Gtk.Box):
         style_manager.connect("notify::dark", self.update_style_scheme)
         self.update_style_scheme()
 
-        self.output_terminal.set_color_background(Gdk.RGBA(alpha=1))
+        # self.output_terminal.set_color_background(Gdk.RGBA(alpha=1))
 
         self.text_buffer = self.markdown_text_view.get_buffer()
 
@@ -144,10 +143,17 @@ class UIBlock(Gtk.Box):
     def set_output(self, value=""):
         if value == "":
             self.output_scrolled_window.set_visible(False)
-            self.output_terminal.reset(True, True)
+            # self.output_terminal.reset(True, True)
             return
         self.output_scrolled_window.set_visible(True)
-        self.output_terminal.feed([ord(char) for char in value.replace("\n","\r\n")])
+        child = self.output_box.get_last_child()
+        if isinstance(child, Gtk.TextView):
+            child.get_buffer().set_text(value)
+        else:
+            child = self.get_new_output_text_view()
+            self.output_box.append(child)
+
+            child.get_buffer().set_text(value)
 
     def set_block_type(self, block_type):
         self.block_type = block_type
@@ -160,20 +166,23 @@ class UIBlock(Gtk.Box):
 
     def reset_output(self):
         self.output_scrolled_window.set_visible(False)
-        self.output_terminal.reset(True, True)
 
-        child = self.image_box.get_first_child()
+        child = self.output_box.get_first_child()
         while child:
-            self.image_box.remove(child)
-            child = self.image_box.get_first_child()
+            self.output_box.remove(child)
+            child = self.output_box.get_first_child()
 
     def add_image(self, image_path):
-        image = Gtk.Picture(height_request=100)
+        pixbuf = GdkPixbuf.Pixbuf.new_from_file(image_path)
+        image_height = pixbuf.get_height()
+
+        image = Gtk.Picture()
 
         image.set_filename(image_path)
+        image.set_size_request(-1, image_height)
 
         self.output_scrolled_window.set_visible(True)
-        self.image_box.append(image)
+        self.output_box.append(image)
 
     def update_style_scheme(self, *args):
         scheme_name = "Adwaita"
@@ -225,3 +234,14 @@ class UIBlock(Gtk.Box):
     @Gtk.Template.Callback("on_drag_source_end")
     def on_drag_source_end(self, source, drag, delete_data):
         print(source)
+
+    def get_new_output_text_view(self):
+        text_view = Gtk.TextView(
+            css_classes=["output-text-view"],
+            editable=False,
+            monospace=True,
+            wrap_mode=Gtk.WrapMode.CHAR,
+            input_purpose=Gtk.InputPurpose.TERMINAL,
+            cursor_visible=False
+        )
+        return text_view

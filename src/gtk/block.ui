@@ -72,22 +72,13 @@
                 <child>
                   <object class="GtkScrolledWindow" id="output_scrolled_window">
                     <property name="visible">False</property>
-                    <property name="height-request">100</property>
+                    <property name="max-content-height">500</property>
+                    <property name="min-content-height">20</property>
+                    <property name="propagate-natural-height">True</property>
                     <child>
-                      <object class="GtkBox">
+                      <object class="GtkBox" id="output_box">
                         <property name="orientation">vertical</property>
-                        <child>
-                          <object class="VteTerminal" id="output_terminal">
-                            <property name="hexpand">true</property>
-                            <property name="vexpand-set">true</property>
-                            <property name="font-scale">0.8</property>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkBox" id="image_box">
-                            <property name="orientation">vertical</property>
-                          </object>
-                        </child>
+                        <property name="vexpand">true</property>
                       </object>
                     </child>
                   </object>

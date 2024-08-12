@@ -16,3 +16,7 @@ vte-terminal {
   background-color: transparent;
   color: @window_fg_color;
 }
+
+.output-text-view {
+  background-color: transparent;
+}
