@@ -33,7 +33,7 @@ import hashlib
 import base64
 
 from .jupyter_server import JupyterServer
-from .block import UIBlock, Block, BlockType
+from .block import UIBlock, Block, CellType
 from .command_line import CommandLine
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/window.ui')
@@ -44,6 +44,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     terminal = Gtk.Template.Child()
     list_view = Gtk.Template.Child()
     item_factory = Gtk.Template.Child()
+    list_drop_target = Gtk.Template.Child()
 
     queue = []
 
@@ -63,20 +64,29 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.blocks_model = Gio.ListStore()
 
-        self.blocks_selection_model = Gtk.SingleSelection(model=self.blocks_model)
+        self.blocks_selection_model = Gtk.SingleSelection(
+            model=self.blocks_model,
+            can_unselect=False
+        )
 
         self.list_view.set_model(self.blocks_selection_model)
 
-        self.create_action('add-text-block', lambda *args: self.add_block(Block(BlockType.TEXT)))
-        self.create_action('add-code-block', lambda *args: self.add_block(Block(BlockType.CODE)))
+        self.list_drop_target.set_gtypes([Block])
+        self.list_drop_target.set_actions(Gdk.DragAction.MOVE)
 
-        self.blocks_model.append(Block(BlockType.CODE))
+        self.create_action('add-text-block', lambda *args: self.add_block(Block(CellType.TEXT)))
+        self.create_action('add-code-block', lambda *args: self.add_block(Block(CellType.CODE)))
+
+        self.blocks_model.append(Block(CellType.CODE))
 
         self.command_line = CommandLine()
 
-    def add_block(self, block):
-        position = self.blocks_selection_model.get_selected() + 1
-        self.blocks_model.insert(position, block)
+    def add_block(self, cell):
+        if self.blocks_model.get_n_items() == 0:
+            self.blocks_model.append(cell)
+        else:
+            position = self.blocks_selection_model.get_selected() + 1
+            self.blocks_model.insert(position, cell)
 
     def on_jupyter_server_started(self, server):
         server.get_kernel_specs()
@@ -85,13 +95,20 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     def on_jupyter_server_has_new_line(self, server, line):
         self.terminal.feed([ord(char) for char in line + "\r\n"])
 
+    def on_cell_request_delete(self, cell_iu, cell):
+        found, position = self.blocks_model.find(cell)
+
+        if found:
+            self.blocks_model.remove(position)
+
     @Gtk.Template.Callback("on_factory_bind")
     def on_factory_bind(self, factory, list_item):
-        block = list_item.get_item()
+        cell = list_item.get_item()
 
-        ui_block = list_item.get_child()
-        if block.get_block() is None:
-            block.set_block(ui_block)
+        ui_cell = list_item.get_child()
+        if cell.get_block() is None:
+            cell.set_block(ui_cell)
+            ui_cell.connect("request-delete", self.on_cell_request_delete, cell)
 
     @Gtk.Template.Callback("on_factory_setup")
     def on_factory_setup(self, factory, list_item):
@@ -101,13 +118,15 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     @Gtk.Template.Callback("on_run_button_clicked")
     def on_run_button_clicked(self, btn):
-        block = self.blocks_selection_model.get_selected_item()
+        cell = self.blocks_selection_model.get_selected_item()
 
-        if block.block_type == BlockType.CODE:
+        if cell.block_type == CellType.CODE:
             if self.queue == []:
-                self.run_block(block)
+                self.run_cell(cell)
             else:
-                self.queue.append(block)
+                self.queue.append(cell)
+        else:
+            self.select_next_cell()
 
     @Gtk.Template.Callback("on_stop_button_clicked")
     def on_stop_button_clicked(self, btn):
@@ -122,41 +141,50 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     def on_restart_and_run_button_clicked(self, btn):
         print("RESTART and run!")
         self.jupyter_server.restart_kernel(2)
-        for index, block in enumerate(self.blocks_model):
-            if index == 0:
-                continue
-            self.queue.append(block)
-        block = self.blocks_model.get_item(0)
-        self.run_block(block)
 
-    def run_block(self, block):
-        if block.content.startswith("%"):
-            print("Magic!")
+        first_code_cell = None
+
+        for index, cell in enumerate(self.blocks_model):
+            if not first_code_cell:
+                if cell.block_type == CellType.CODE:
+                    first_code_cell = cell
+                    continue
+            if cell.block_type == CellType.CODE:
+                self.queue.append(cell)
+        self.run_cell(first_code_cell)
+
+    def run_cell(self, cell):
+        found, position = self.blocks_model.find(cell)
+
+        if found:
+            self.blocks_selection_model.set_selected(position)
+
+        if cell.content.startswith("%"):
             self.command_line.run_command(
-                block.content[1:].split(" "),
+                cell.content[1:].split(" "),
                 callback=self.run_command_callback,
-                args=[block]
+                args=[cell]
             )
         else:
             self.jupyter_server.run_code(
-                block.content,
+                cell.content,
                 callback=self.run_code_callback,
                 finish_callback=self.run_code_finish,
-                args=[block]
+                args=[cell]
             )
 
-    def run_command_callback(self, line, block):
-        block.set_output(line + '\n')
+    def run_command_callback(self, line, cell):
+        cell.set_output(line + '\n')
 
-    def run_code_callback(self, msg_type, content, block):
+    def run_code_callback(self, msg_type, content, cell):
         if msg_type == 'stream':
             text = content['text']
-            block.set_output(text)
+            cell.set_output(text)
 
         elif msg_type == 'execute_input':
             count = content['execution_count']
-            block.set_count(int(count))
-            block.reset_output()
+            cell.set_count(int(count))
+            cell.reset_output()
 
         elif msg_type == 'display_data':
             data = content['data']["image/png"]
@@ -168,18 +196,35 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             with open(image_path, 'wb') as f:
                 f.write(image_data)
 
-            block.add_image(image_path)
+            cell.add_image(image_path)
 
         elif msg_type == 'error':
-            block.set_output("\n".join(content['traceback']))
+            cell.set_output("\n".join(content['traceback']))
 
-    def run_code_finish(self, block):
+    def run_code_finish(self, cell):
         if self.queue != []:
-            block=self.queue.pop(0)
-            self.run_block(block)
+            cell=self.queue.pop(0)
+            self.run_cell(cell)
+        else:
+            self.select_next_cell()
+
+    def select_next_cell(self):
+        index = self.blocks_selection_model.get_selected()
+        if index != self.blocks_model.get_n_items() - 1:
+            self.blocks_selection_model.set_selected(index + 1)
 
     def create_action(self, name, callback):
         action = Gio.SimpleAction.new(name, None)
         action.connect("activate", callback)
         self.add_action(action)
         return action
+
+    @Gtk.Template.Callback("on_drop_target_drop")
+    def on_drop_target_drop(self, drop_target, value, x, y):
+        print("DROP")
+        print(value)
+
+        target_row = self.list_view.get_row_at_y(y)
+        target_index = target_row.get_index()
+
+        print(target_row)

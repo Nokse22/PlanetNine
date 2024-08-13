@@ -7,7 +7,19 @@
   <template class="UIBlock" parent="GtkBox">
     <property name="valign">start</property>
     <child>
+      <object class="GtkDropControllerMotion">
+        <signal name="enter" handler="on_drop_controller_enter"/>
+        <signal name="leave" handler="on_drop_controller_leave"/>
+      </object>
+    </child>
+    <child>
       <object class="AdwBin">
+        <child>
+          <object class="GtkGestureClick">
+            <property name="button">3</property>
+            <signal name="released" handler="on_click_released"/>
+          </object>
+        </child>
         <child>
           <object class="GtkDragSource" id="drag_source">
             <signal name="prepare" handler="on_drag_source_prepare"/>
@@ -72,13 +84,12 @@
                 <child>
                   <object class="GtkScrolledWindow" id="output_scrolled_window">
                     <property name="visible">False</property>
-                    <property name="max-content-height">500</property>
-                    <property name="min-content-height">20</property>
-                    <property name="propagate-natural-height">True</property>
+                    <property name="vscrollbar-policy">never</property>
                     <child>
                       <object class="GtkBox" id="output_box">
                         <property name="orientation">vertical</property>
                         <property name="vexpand">true</property>
+                        <property name="spacing">6</property>
                       </object>
                     </child>
                   </object>
@@ -92,6 +103,10 @@
             <property name="name">text</property>
             <property name="child">
               <object class="MarkdownTextView" id="markdown_text_view">
+                <property name="top-margin">12</property>
+                <property name="bottom-margin">12</property>
+                <property name="left-margin">12</property>
+                <property name="right-margin">6</property>
                 <style>
                   <class name="markdown-view"/>
                 </style>
@@ -104,4 +119,20 @@
     <child>
     </child>
   </template>
+  <menu id="right_click_menu">
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">Delete</attribute>
+        <attribute name="action">cell.delete</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">Change Type</attribute>
+        <attribute name="action">cell.change_type</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">Toggle Output Expand</attribute>
+        <attribute name="action">cell.toggle_output_expand</attribute>
+      </item>
+    </section>
+  </menu>
 </interface>

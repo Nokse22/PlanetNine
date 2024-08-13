@@ -65,14 +65,22 @@
                     <property name="margin-start">12</property>
                     <property name="margin-end">12</property>
                     <property name="margin-top">6</property>
+                    <property name="maximum-size">800</property>
+                    <property name="tightening-threshold">700</property>
                     <child>
                       <object class="GtkListView" id="list_view">
+                        <property name="margin-bottom">100</property>
                         <property name="factory">
                           <object class="GtkSignalListItemFactory" id="item_factory">
                             <signal name="bind" handler="on_factory_bind"></signal>
                             <signal name="setup" handler="on_factory_setup"></signal>
                           </object>
                         </property>
+                        <child>
+                        <object class="GtkDropTarget" id="list_drop_target">
+                          <signal name="drop" handler="on_drop_target_drop"></signal>
+                        </object>
+                      </child>
                       </object>
                     </child>
                   </object>
@@ -85,6 +93,7 @@
                   <object class="VteTerminal" id="terminal">
                     <property name="hexpand">true</property>
                     <property name="vexpand">true</property>
+                    <property name="yalign">end</property>
                     <property name="font-scale">0.8</property>
                   </object>
                 </child>

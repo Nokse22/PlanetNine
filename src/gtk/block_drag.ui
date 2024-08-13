@@ -1,0 +1,46 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Created with Cambalache 0.90.4 -->
+<interface>
+  <!-- interface-name ddrga.ui -->
+  <requires lib="gtk" version="4.6"/>
+  <requires lib="libadwaita" version="1.0"/>
+  <object class="AdwBin" id="drag_widget">
+    <property name="halign">start</property>
+    <property name="valign">start</property>
+    <child>
+      <object class="GtkBox">
+        <child>
+          <object class="GtkLabel" id="count">
+            <property name="label">0</property>
+            <property name="width-request">45</property>
+            <style>
+              <class name="title-4"/>
+              <class name="dim-label"/>
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="GtkFrame">
+            <property name="height-request">50</property>
+            <property name="margin-bottom">6</property>
+            <property name="margin-end">6</property>
+            <property name="margin-start">6</property>
+            <property name="margin-top">6</property>
+            <property name="width-request">160</property>
+            <child>
+              <object class="GtkLabel" id="code">
+                <property name="margin-start">12</property>
+                <property name="margin-end">6</property>
+                <property name="xalign">0.0</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <style>
+      <class name="drag-widget"/>
+    </style>
+  </object>
+</interface>
+

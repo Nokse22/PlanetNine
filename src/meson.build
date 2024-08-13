@@ -33,6 +33,7 @@ planetnine_sources = [
   'jupyter_server.py',
   'block.py',
   'markdown_textview.py',
+  'terminal_textview.py',
   'command_line.py'
 ]
 

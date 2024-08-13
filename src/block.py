@@ -23,13 +23,14 @@ from gi.repository import GLib
 from gi.repository import Gio
 from gi.repository import GObject
 from gi.repository import GtkSource
-from gi.repository import Gdk, GdkPixbuf
+from gi.repository import Gdk, GdkPixbuf, Pango
 
 from enum import IntEnum
 
 from .markdown_textview import MarkdownTextView
+from .terminal_textview import TerminalTextView
 
-class BlockType(IntEnum):
+class CellType(IntEnum):
     CODE = 0
     TEXT = 1
 
@@ -45,14 +46,14 @@ class Block(GObject.GObject):
     def __init__(self, _block_type):
         super().__init__()
 
-        if isinstance(_block_type, BlockType):
+        if isinstance(_block_type, CellType):
             self._block_type = _block_type
         else:
-            raise Exception("has to be BlockType")
+            raise Exception("has to be CellType")
 
     @GObject.Property(type=int)
     def block_type(self):
-        return self._block_type
+        return self._block.block_type
 
     @GObject.Property(type=str)
     def content(self):
@@ -61,6 +62,7 @@ class Block(GObject.GObject):
     def set_block(self, block):
         self._block = block
         self._block.set_block_type(self._block_type)
+        self._block.set_parent(self)
 
     def get_block(self):
         return self._block
@@ -87,7 +89,7 @@ class UIBlock(Gtk.Box):
     __gtype_name__ = 'UIBlock'
 
     __gsignals__ = {
-        'run': (GObject.SignalFlags.RUN_FIRST, None, (str,)),
+        'request-delete': (GObject.SignalFlags.RUN_FIRST, None, ()),
     }
 
     code_buffer = Gtk.Template.Child()
@@ -96,8 +98,14 @@ class UIBlock(Gtk.Box):
     markdown_text_view = Gtk.Template.Child()
     stack = Gtk.Template.Child()
     output_box = Gtk.Template.Child()
+    right_click_menu = Gtk.Template.Child()
+    drag_source = Gtk.Template.Child()
 
     _count = 0
+
+    block_type = CellType.CODE
+
+    parent = None
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -115,24 +123,35 @@ class UIBlock(Gtk.Box):
         style_manager.connect("notify::dark", self.update_style_scheme)
         self.update_style_scheme()
 
-        # self.output_terminal.set_color_background(Gdk.RGBA(alpha=1))
-
         self.text_buffer = self.markdown_text_view.get_buffer()
 
+        self.drag_source.set_actions(Gdk.DragAction.MOVE)
+
+        self.action_group = Gio.SimpleActionGroup()
+
+        self.create_action('delete', lambda *args: self.emit("request-delete"))
+        self.create_action('change_type', self.on_change_type)
+        self.create_action('toggle_output_expand', self.on_toggle_output_expand)
+
+        self.insert_action_group("cell", self.action_group)
+
+    def set_parent(self, parent):
+        self.parent = parent
+
     def set_content(self, value):
-        if self.block_type == BlockType.TEXT:
+        if self.block_type == CellType.TEXT:
             self.text_buffer.set_text(value)
 
-        elif self.block_type == BlockType.CODE:
+        elif self.block_type == CellType.CODE:
             self.code_buffer.set_text(value)
 
     def get_content(self):
-        if self.block_type == BlockType.TEXT:
+        if self.block_type == CellType.TEXT:
             start = self.text_buffer.get_start_iter()
             end = self.text_buffer.get_end_iter()
             return self.text_buffer.get_text(start, end, True)
 
-        elif self.block_type == BlockType.CODE:
+        elif self.block_type == CellType.CODE:
             start = self.code_buffer.get_start_iter()
             end = self.code_buffer.get_end_iter()
             return self.code_buffer.get_text(start, end, True)
@@ -143,26 +162,29 @@ class UIBlock(Gtk.Box):
     def set_output(self, value=""):
         if value == "":
             self.output_scrolled_window.set_visible(False)
-            # self.output_terminal.reset(True, True)
             return
         self.output_scrolled_window.set_visible(True)
         child = self.output_box.get_last_child()
-        if isinstance(child, Gtk.TextView):
-            child.get_buffer().set_text(value)
-        else:
-            child = self.get_new_output_text_view()
+        if not isinstance(child, TerminalTextView):
+            child = TerminalTextView()
             self.output_box.append(child)
 
-            child.get_buffer().set_text(value)
+        child.insert_with_escapes(value)
 
     def set_block_type(self, block_type):
+        content = self.get_content()
+
         self.block_type = block_type
-        if block_type == BlockType.TEXT:
+
+        if self.block_type == CellType.TEXT:
             self.stack.set_visible_child_name("text")
             self.count_label.set_visible(False)
-        elif block_type == BlockType.CODE:
+            self.output_scrolled_window.set_visible(False)
+        elif self.block_type == CellType.CODE:
             self.stack.set_visible_child_name("code")
             self.count_label.set_visible(True)
+
+        self.set_content(content)
 
     def reset_output(self):
         self.output_scrolled_window.set_visible(False)
@@ -192,56 +214,81 @@ class UIBlock(Gtk.Box):
         scheme = sm.get_scheme(scheme_name)
         self.code_buffer.set_style_scheme(scheme)
 
+    @Gtk.Template.Callback("on_click_released")
+    def on_click_released(self, gesture, n_press, click_x, click_y):
+        if n_press != 1:
+            return
+
+        widget = gesture.get_widget()
+        popover = Gtk.PopoverMenu(
+            menu_model=self.right_click_menu,
+            has_arrow=False,
+            halign=1,
+        )
+        position = Gdk.Rectangle()
+        position.x = click_x
+        position.y = click_y
+        popover.set_parent(widget)
+        popover.set_pointing_to(position)
+        popover.popup()
+
+        return True
+
+    def on_toggle_output_expand(self, *args):
+        _, vscrollbar_policy = self.output_scrolled_window.get_policy()
+
+        if vscrollbar_policy == Gtk.PolicyType.AUTOMATIC:
+            self.output_scrolled_window.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.NEVER)
+        else:
+            self.output_scrolled_window.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+
+    def on_change_type(self, *args):
+        if self.block_type == CellType.TEXT:
+            self.set_block_type(CellType.CODE)
+        elif self.block_type == CellType.CODE:
+            self.set_block_type(CellType.TEXT)
+
+    def create_action(self, name, callback):
+        action = Gio.SimpleAction.new(name, None)
+        action.connect("activate", callback)
+        self.action_group.add_action(action)
+        return action
+
     @Gtk.Template.Callback("on_drag_source_prepare")
     def on_drag_source_prepare(self, source, x, y):
         global drag_x, drag_y
         drag_x = x
         drag_y = y
 
-        box = Gtk.Box()
-
         value = GObject.Value()
-        value.init(Gtk.Box)
-        value.set_object(box)
+        value.init(Block)
+        value.set_object(self.parent)
 
         return Gdk.ContentProvider.new_for_value(value)
 
     @Gtk.Template.Callback("on_drag_source_begin")
     def on_drag_source_begin(self, source, drag):
         print("begin")
-        drag_widget = Gtk.Box(
-            orientation=Gtk.Orientation.HORIZONTAL
-        )
+        builder = Gtk.Builder.new_from_resource('/io/github/nokse22/PlanetNine/gtk/block_drag.ui')
+        drag_widget = builder.get_object('drag_widget')
 
-        drag_widget.append(
-            Gtk.Label(
-                label=self.count_label.get_label(),
-                css_classes=["title-4", "dim-label"]
-            )
-        )
-
-        drag_widget.append(
-            Gtk.Frame(
-                label="something...",
-            )
-        )
+        builder.get_object('count').set_label(self.count_label.get_label())
+        builder.get_object('code').set_label(self.get_content()[:20] + '...')
 
         icon = Gtk.DragIcon.get_for_drag(drag)
         icon.set_child(drag_widget)
 
-        drag.set_hotspot(drag_x, drag_y)
+        drag.set_hotspot(0, 0)
 
     @Gtk.Template.Callback("on_drag_source_end")
     def on_drag_source_end(self, source, drag, delete_data):
         print(source)
 
-    def get_new_output_text_view(self):
-        text_view = Gtk.TextView(
-            css_classes=["output-text-view"],
-            editable=False,
-            monospace=True,
-            wrap_mode=Gtk.WrapMode.CHAR,
-            input_purpose=Gtk.InputPurpose.TERMINAL,
-            cursor_visible=False
-        )
-        return text_view
+    @Gtk.Template.Callback("on_drop_controller_enter")
+    def on_drop_controller_enter(self, controller, x, y):
+        self.get_parent().add_css_class("drop-highlight")
+
+    @Gtk.Template.Callback("on_drop_controller_leave")
+    def on_drop_controller_leave(self, controller):
+        self.get_parent().remove_css_class("drop-highlight")
+
