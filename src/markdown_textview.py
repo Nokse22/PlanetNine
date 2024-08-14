@@ -19,19 +19,22 @@
 
 import gi
 gi.require_version('Gtk', '4.0')
-from gi.repository import Gtk, Pango
+from gi.repository import Gtk, Pango, GObject
 
 import re
 
 class MarkdownTextView(Gtk.TextView):
     __gtype_name__ = 'MarkdownTextView'
 
+    __gsignals__ = {
+        'changed': (GObject.SignalFlags.RUN_FIRST, None, (Gtk.TextBuffer,)),
+    }
+
     def __init__(self):
         super().__init__()
         self.set_wrap_mode(Gtk.WrapMode.WORD)
         self.set_monospace(True)
 
-        # Set up the TextBuffer and connect to its "changed" signal
         self.buffer = self.get_buffer()
 
         self.buffer.create_tag("h1", weight=Pango.Weight.BOLD, scale=2.5)
@@ -65,6 +68,8 @@ class MarkdownTextView(Gtk.TextView):
         self.buffer.connect("delete-range", self.on_text_deleted)
 
     def on_text_changed(self, buffer):
+        self.emit("changed", buffer)
+
         cursor_iter = buffer.get_iter_at_mark(buffer.get_insert())
         line_start_iter = cursor_iter.copy()
         line_start_iter.set_line_offset(0)

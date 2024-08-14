@@ -7,6 +7,7 @@ project('planetnine',
 i18n = import('i18n')
 gnome = import('gnome')
 
+dependency('pygobject-3.0', version: '>= 3.49.0')
 
 subdir('data')
 subdir('src')

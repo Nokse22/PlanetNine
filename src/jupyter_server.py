@@ -20,6 +20,7 @@
 from gi.repository import GLib
 from gi.repository import Gio
 from gi.repository import GObject
+from gi.events import GLibEventLoopPolicy
 
 import subprocess
 import re
@@ -27,6 +28,8 @@ import threading
 import time
 import json
 import os
+
+import asyncio
 
 import requests
 import jupyter_client
@@ -41,6 +44,8 @@ class JupyterServer(GObject.GObject):
         'new-line': (GObject.SignalFlags.RUN_FIRST, None, (str,)),
     }
 
+    sandboxed = GObject.Property(type=bool, default=True)
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -48,17 +53,18 @@ class JupyterServer(GObject.GObject):
         self.address = ""
         self.token = ""
 
-        self.client = jupyter_client.BlockingKernelClient()
+        self.sandboxed = True
+
+        self.client = jupyter_client.AsyncKernelClient()
 
         self.data_dir = os.environ["XDG_DATA_HOME"]
 
     def start(self):
-        self.thread = threading.Thread(target=self.jupyter_server, daemon=True)
-        self.thread.start()
+        asyncio.create_task(self.__start())
 
-    def jupyter_server(self):
+    async def __start(self):
         process = Gio.Subprocess.new(
-            ['jupyter-server', '--debug'],
+            ['jupyter-server', '--debug'] if self.sandboxed  else ['flatpak-spawn', '--host', 'jupyter-server', '--debug'],
             Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_MERGE
         )
 
@@ -66,32 +72,38 @@ class JupyterServer(GObject.GObject):
         stdout_stream = Gio.DataInputStream.new(stdout)
 
         while True:
-            line, _ = stdout_stream.read_line_utf8(None)
+            line, _ = await stdout_stream.read_line_async(0)
+
             if line is None:
                 continue
+
+            line = line.decode('utf-8')
 
             self.emit("new-line", line)
 
             if self.address == "":
                 match = re.search(r'(http[s]?://\S+?)(\?token=([\w-]+))', line)
                 if match:
+                    print(line)
                     self.address = match.group(1)
                     self.token = match.group(3)
                     self.emit("started")
-                    print(line)
 
-    def start_default_kernel(self):
+    def start_kernel_by_name(self, kernel_name, callback, *args):
+        asyncio.create_task(self.__start_kernel_by_name(kernel_name, callback, *args))
+
+    async def __start_kernel_by_name(self, kernel_name, callback, *args):
         response = requests.post(
             f'{self.address}/api/kernels',
             params={"token": self.token},
-            json={"name": "python3"}
+            json={"name": kernel_name}
         )
 
         if response.status_code == 201:
             kernel_info = response.json()
-            print("Kernel started successfully:")
+            callback(True, kernel_info, *args)
         else:
-            print(f"Failed to start kernel: {response.status_code}")
+            callback(False, None, *args)
 
         connection_file_path = f"{self.data_dir}/jupyter/runtime/kernel-{kernel_info['id']}.json"
 
@@ -101,61 +113,73 @@ class JupyterServer(GObject.GObject):
         self.client.load_connection_info(connection_info)
         self.client.start_channels()
 
-        self.client.wait_for_ready()
+    def get_kernel_specs(self, callback, *args):
+        """
+        Returns data about the default kernel and avalaible kernels.
 
-    def get_kernel_specs(self):
+        callback(successful, kernel_specs, args)
+        """
+        asyncio.create_task(self.__get_kernel_specs(callback, *args))
+
+    async def __get_kernel_specs(self, callback, *args):
         response = requests.get(f'{self.address}/api/kernelspecs', params={"token": self.token})
 
         if response.status_code == 200:
             kernel_specs = response.json()
-            pprint(kernel_specs)
-            return kernel_specs
+            callback(True, kernel_specs, *args)
         else:
-            print(f"Failed: {response.status_code}")
-            return None
+            callback(False, None, *args)
 
-    def get_kernel_info(self, kernel_id):
+    def get_kernel_info(self, kernel_id, callback, *args):
+        asyncio.create_task(self.__get_kernel_specs(kernel_id, callback, *args))
+
+    async def __get_kernel_info(self, kernel_id, callback, *args):
         response = requests.get(f'{self.address}/api/kernels/{kernel_id}', params={"token": self.token})
 
         if response.status_code == 200:
             kernel_info = response.json()
-            return kernel_info
+            callback(False, kernel_info, *args)
         else:
-            print(f"Failed to start kernel: {response.status_code}")
-            print(response.text)
+            callback(True, None, *args)
 
-    def restart_kernel(self, kernel_id):
-        print(f"restart kernel {kernel_id}")
+    def restart_kernel(self, kernel_id, callback, *args):
+        asyncio.create_task(self.__restart_kernel(kernel_id, callback, *args))
 
-    def run_code(self, code, **kwargs):
-        callback = None
+    async def __restart_kernel(self, kernel_id, callback, *args):
+        callback(kernel_id, *args)
+
+    def shutdown_kernel(self, kernel_id, callback, *args):
+        asyncio.create_task(self.__shutdown_kernel(kernel_id, callback, *args))
+
+    async def __shutdown_kernel(self, kernel_id, callback, *args):
+        callback(kernel_id, *args)
+
+    def run_code(self, code, callback, **kwargs):
+        asyncio.create_task(self.__run_code(code, callback, **kwargs))
+
+    async def __run_code(self, code, callback, **kwargs):
         finish_callback = None
         args = []
 
         if "args" in kwargs:
             args = kwargs["args"]
-        if "callback" in kwargs:
-            callback = kwargs["callback"]
         if "finish_callback" in kwargs:
             finish_callback = kwargs["finish_callback"]
 
-        self.client.wait_for_ready()
+        await self.client.wait_for_ready()
 
         msg_id = self.client.execute(code)
 
-        th = threading.Thread(target=self.update_output, args=[callback, finish_callback, *args], daemon=True)
-        th.start()
-
-    def update_output(self, callback, finish_callback, *args):
         while True:
-            msg = self.client.get_iopub_msg()
+            msg = await self.client.get_iopub_msg()
+
             msg_type = msg['header']['msg_type']
             stream_content = msg['content']
 
             if msg_type == 'status':
                 status = msg['content']['execution_state']
                 if status == "idle":
-                    GLib.idle_add(finish_callback, *args)
+                    finish_callback(*args)
                     return
 
-            GLib.idle_add(callback, msg_type, stream_content, *args)
+            callback(msg_type, stream_content, *args)

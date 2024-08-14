@@ -18,6 +18,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import sys
+import asyncio
 import gi
 
 gi.require_version('Gtk', '4.0')
@@ -27,11 +28,15 @@ gi.require_version('GtkSource', '5')
 
 from gi.repository import Gtk, Gio, Adw, GObject, GtkSource
 from gi.repository import Vte
+from gi.events import GLibEventLoopPolicy
+
 from .window import PlanetnineWindow
 
 GObject.type_register(Vte.Terminal)
 GObject.type_register(GtkSource.View)
 GObject.type_register(GtkSource.Buffer)
+
+asyncio.set_event_loop_policy(GLibEventLoopPolicy())
 
 class PlanetnineApplication(Adw.Application):
     """The main application singleton class."""

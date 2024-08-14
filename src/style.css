@@ -1,15 +1,23 @@
-listview {
+list {
   background-color: transparent;
+  border: 1px solid @window_bg_color;
 }
 
-listview row {
-  /* background-color: transparent; */
+list row {
+  background-color:transparent;
   padding-top: 3px;
   padding-bottom: 3px;
   border-radius: 12px;
 }
 
-vte-terminal {
+list row:selected frame{
+  background-color:transparent;
+  border: 1px alpha(@accent_color, 0.3) solid;
+  transition: border ease-in-out 200ms;
+}
+
+list row:selected .markdown-view{
+  border: 1px alpha(@accent_color, 0.4) solid;
 }
 
 .markdown-view {
@@ -24,26 +32,8 @@ vte-terminal {
   background-color: transparent;
 }
 
-listview row:selected frame{
-  background-color:transparent;
-  border: 1px @accent_color solid;
-  transition: border ease-in-out 200ms;
-}
-
-listview row{
-  background-color:transparent;
-}
-
-listview row:selected .markdown-view{
-  border: 1px @accent_color solid;
-}
-
 .drag-widget {
   background-color: @window_bg_color;
   border-radius: 15px;
   border: 1px @borders solid;
-}
-
-.drop-highlight {
-  background-color: alpha(@accent_color, 0.4);
 }

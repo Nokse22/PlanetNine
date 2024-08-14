@@ -4,14 +4,8 @@
   <!-- interface-name code block.ui -->
   <requires lib="gtk" version="4.12"/>
   <requires lib="gtksource" version="5.0"/>
-  <template class="UIBlock" parent="GtkBox">
+  <template class="CellUI" parent="GtkBox">
     <property name="valign">start</property>
-    <child>
-      <object class="GtkDropControllerMotion">
-        <signal name="enter" handler="on_drop_controller_enter"/>
-        <signal name="leave" handler="on_drop_controller_leave"/>
-      </object>
-    </child>
     <child>
       <object class="AdwBin">
         <child>
@@ -24,7 +18,6 @@
           <object class="GtkDragSource" id="drag_source">
             <signal name="prepare" handler="on_drag_source_prepare"/>
             <signal name="drag-begin" handler="on_drag_source_begin"/>
-            <signal name="drag-end" handler="on_drag_source_end"/>
           </object>
         </child>
         <property name="width-request">45</property>
@@ -75,6 +68,7 @@
                             <property name="enable-undo">True</property>
                             <property name="highlight-syntax">True</property>
                             <property name="highlight-matching-brackets">True</property>
+                            <signal name="changed" handler="on_source_changed"/>
                           </object>
                         </property>
                       </object>
@@ -107,6 +101,7 @@
                 <property name="bottom-margin">12</property>
                 <property name="left-margin">12</property>
                 <property name="right-margin">6</property>
+                <signal name="changed" handler="on_source_changed"/>
                 <style>
                   <class name="markdown-view"/>
                 </style>

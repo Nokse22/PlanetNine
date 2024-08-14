@@ -36,8 +36,8 @@
 	    "sources": [
 	    	{
                     "type": "file",
-                    "url": "https://files.pythonhosted.org/packages/75/e4/2c27590dfc9992f73aabbeb9241ae20220bd9452df27483b6e56d3975cc5/PyYAML-6.0.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-                    "sha256": "3ad2a3decf9aaba3d29c8f537ac4b243e36bef957511b4766cb0057d32b0be85"
+                    "url": "https://files.pythonhosted.org/packages/b9/2b/614b4752f2e127db5cc206abc23a8c19678e92b23c3db30fc86ab731d3bd/PyYAML-6.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+                    "sha256": "80bab7bfc629882493af4aa31a4cfa43a4c57c83813253626916b8c7ada83476"
                 }
 	    ]
 	},
@@ -254,8 +254,8 @@
                 },
                 {
                     "type": "file",
-                    "url": "https://files.pythonhosted.org/packages/98/51/acb359a48f0431acc1b5f6da7ab952e7e18a2783f45e05247283330aba20/pyzmq-26.1.0-cp311-cp311-manylinux_2_28_x86_64.whl",
-                    "sha256": "ce6f2b66799971cbae5d6547acefa7231458289e0ad481d0be0740535da38d8b"
+                    "url": "https://files.pythonhosted.org/packages/09/8f/6feec7e80692cf8887a3551d489e15e49afaec7d98ebb918a7787229e536/pyzmq-26.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+                    "sha256": "90d4feb2e83dfe9ace6374a847e98ee9d1246ebadcc0cb765482e272c34e5820"
                 },
                 {
                     "type": "file",
@@ -274,8 +274,8 @@
                 },
                 {
                     "type": "file",
-                    "url": "https://files.pythonhosted.org/packages/a7/e8/85835077b782555d6b3416874b702ea6ebd7db1f145283c9252968670dd5/rpds_py-0.20.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-                    "sha256": "5c1dc0f53856b9cc9a0ccca0a7cc61d3d20a7088201c0937f3f4048c1718a209"
+                    "url": "https://files.pythonhosted.org/packages/0f/f7/a59a673594e6c2ff2dbc44b00fd4ecdec2fc399bb6a7bd82d612699a0121/rpds_py-0.20.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+                    "sha256": "ea438162a9fcbee3ecf36c23e6c68237479f89f962f82dae83dc15feeceb37e4"
                 },
                 {
                     "type": "file",
