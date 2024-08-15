@@ -97,7 +97,7 @@ class MarkdownTextView(Gtk.TextView):
             for match in pattern.finditer(text):
                 start_pos = match.start(1)
                 end_pos = match.end(1)
-                iter_start = self.buffer.get_iter_at_offset(start_pos)
+                iter_start = self.buffer.get_iter_at_offset(start_pos - len(line_start))
                 iter_end = self.buffer.get_iter_at_offset(end_pos)
                 self.buffer.apply_tag_by_name(line_tag, iter_start, iter_end)
 

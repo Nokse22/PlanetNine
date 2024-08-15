@@ -55,6 +55,14 @@ class Cell(GObject.GObject):
         self._execution_count = None
         self._outputs = Gio.ListStore()
 
+    @classmethod
+    def new_from_json(cls, json_cell):
+        instance = cls()
+
+        instance.parse(json_cell)
+
+        return instance
+
     @GObject.Property(type=GObject.GObject)
     def outputs(self):
         return self._outputs
@@ -102,3 +110,27 @@ class Cell(GObject.GObject):
             cell_node.outputs.append(output_node)
 
         return cell_node
+
+    def parse(self, json_cell):
+        self.cell_type = CellType.CODE if json_cell['cell_type'] == "code" else CellType.TEXT
+        self.source = ''.join(json_cell['source'])
+        if self.cell_type == CellType.CODE:
+            self.execution_count = json_cell['execution_count'] or 0
+            for json_output in json_cell['outputs']:
+                match json_output['output_type']:
+                    case 'stream':
+                        output = Output(OutputType.STREAM)
+                        output.text = ''.join(json_output['text'])
+                    case 'display_data':
+                        output = Output(OutputType.DISPLAY_DATA)
+                        output.parse(json_output)
+                    case 'execute_result':
+                        output = Output(OutputType.EXECUTE_RESULT)
+                    case 'error':
+                        output = Output(OutputType.ERROR)
+                # output.metadata = json_output['metadata']
+                self.add_output(output)
+
+    def copy(self):
+        cell_node = self.get_cell_node()
+        return Cell.new_from_json(cell_node)

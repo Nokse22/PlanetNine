@@ -44,9 +44,9 @@ from .command_line import CommandLine
 class NotebookView(Gtk.ScrolledWindow):
     __gtype_name__ = 'NotebookView'
 
-    # __gsignals__ = {
-    #     'request-delete': (GObject.SignalFlags.RUN_FIRST, None, ()),
-    # }
+    __gsignals__ = {
+        'kernel-info-changed': (GObject.SignalFlags.RUN_FIRST, None, (str,str,)),
+    }
 
     cells_list_box = Gtk.Template.Child()
     list_drop_target = Gtk.Template.Child()
@@ -55,10 +55,16 @@ class NotebookView(Gtk.ScrolledWindow):
 
     cache_dir = os.environ["XDG_CACHE_HOME"]
 
-    def __init__(self):
+    _kernel_name = ""
+    _kernel_status = ""
+
+    def __init__(self, _notebook_model=None):
         super().__init__()
 
-        self.notebook_model = Notebook()
+        if _notebook_model:
+            self.notebook_model = _notebook_model
+        else:
+            self.notebook_model = Notebook()
 
         self.cells_list_box.bind_model(
             self.notebook_model,
@@ -70,10 +76,118 @@ class NotebookView(Gtk.ScrolledWindow):
 
         self.command_line = CommandLine()
 
+        self.jupyter_kernel = None
+
+        self.queue = []
+
         self.add_block(Cell(CellType.CODE))
 
+        self._kernel_name = ""
+
+    @GObject.Property(type=str, default="")
+    def kernel_name(self):
+        return self._kernel_name
+
+    @kernel_name.setter
+    def kernel_name(self, value):
+        self._kernel_name = value
+        self.emit("kernel-info-changed", self._kernel_name, self._kernel_status)
+
+    @GObject.Property(type=str, default="")
+    def kernel_status(self):
+        return self._kernel_status
+
+    @kernel_status.setter
+    def kernel_status(self, value):
+        self._kernel_status = value
+        self.emit("kernel-info-changed", self._kernel_name, self._kernel_status)
+
+    def run_selected_cell(self):
+        cell = self.get_selected_cell()
+
+        if cell.cell_type == CellType.CODE:
+            if self.queue == []:
+                self.run_cell(cell)
+            else:
+                self.queue.append(cell)
+        else:
+            self.select_next_cell()
+
+    def run_cell(self, cell):
+        found, position = self.notebook_model.find(cell)
+
+        if found:
+            # select cell
+            pass
+
+        if cell.source.startswith("%"):
+            self.command_line.run_command(
+                cell.source[1:].split(" "),
+                cell
+            )
+        else:
+            self.jupyter_kernel.run_code(
+                cell.source,
+                self.run_code_callback,
+                cell
+            )
+
+    def run_command_callback(self, line, cell):
+        cell.add_stream(line + '\n')
+
+    def run_code_callback(self, msg, cell):
+        msg_type = msg['header']['msg_type']
+        content = msg['content']
+
+        if msg_type == 'stream':
+            output = Output(OutputType.STREAM)
+            output.parse(content)
+            cell.add_output(output)
+
+        elif msg_type == 'execute_input':
+            count = content['execution_count']
+            cell.execution_count = int(count)
+            cell.reset_output()
+
+        elif msg_type == 'display_data':
+            output = Output(OutputType.DISPLAY_DATA)
+            output.parse(content)
+            cell.add_output(output)
+
+        elif msg_type == 'error':
+            output = Output(OutputType.ERROR)
+            output.parse(content)
+            cell.add_output(output)
+
+        elif msg_type == 'status':
+            status = content['execution_state']
+
+            self._kernel_status = status
+
+            self.emit("kernel-info-changed", self._kernel_name, self._kernel_status)
+
+            if status == "idle":
+                if self.queue != []:
+                    cell=self.queue.pop(0)
+                    self.run_cell(cell)
+                else:
+                    self.select_next_cell()
+
+    def set_kernel(self, jupyter_kernel):
+        self.jupyter_kernel = jupyter_kernel
+        self.kernel_name = jupyter_kernel.name
+        print("NAME: ", self.kernel_name)
+
     def create_widgets(self, cell):
-        return CellUI(cell)
+        cell = CellUI(cell)
+        cell.connect("request-delete", self.on_cell_request_delete)
+        return cell
+
+    def on_cell_request_delete(self, cell_ui):
+        found, position = self.notebook_model.find(cell_ui.cell)
+
+        if found:
+            self.notebook_model.remove(position)
 
     def add_block(self, cell):
         if self.notebook_model.get_n_items() > 1:
@@ -111,19 +225,20 @@ class NotebookView(Gtk.ScrolledWindow):
     def on_drop_target_drop(self, drop_target, cell, x, y):
         target_row = self.cells_list_box.get_row_at_y(y)
 
+        cell_index = None
         for index, model_cell in enumerate(self.notebook_model):
             if cell == model_cell:
                 cell_index = index
 
-        if not target_row:
+        if cell_index:
             self.notebook_model.remove(cell_index)
+
+        if not target_row:
             self.notebook_model.append(cell)
-            return
 
-        target_index = target_row.get_index()
-
-        self.notebook_model.remove(cell_index)
-        self.notebook_model.insert(target_index, cell)
+        else:
+            target_index = target_row.get_index()
+            self.notebook_model.insert(target_index, cell)
 
     @Gtk.Template.Callback("on_drop_target_motion")
     def on_drop_target_motion(self, drop_target, x, y):

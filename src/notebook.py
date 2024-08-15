@@ -30,8 +30,12 @@ from .output import Output, OutputType
 class Notebook(Gio.ListStore):
     __gtype_name__ = 'Notebook'
 
+    name = GObject.Property(type=str, default="")
+
     def __init__(self):
         super().__init__()
+
+        self.name = ""
 
     @classmethod
     def new_from_json(cls, notebook_node):
@@ -47,25 +51,7 @@ class Notebook(Gio.ListStore):
 
     def parse(self, notebook_node):
         for json_cell in notebook_node['cells']:
-            cell = Cell()
-            cell.cell_type = CellType.CODE if json_cell['cell_type'] == "code" else CellType.TEXT
-            cell.source = ''.join(json_cell['source'])
-            if cell.cell_type == CellType.CODE:
-                cell.execution_count = json_cell['execution_count']
-                for json_output in json_cell['outputs']:
-                    match json_output['output_type']:
-                        case 'stream':
-                            output = Output(OutputType.STREAM)
-                            output.text = ''.join(json_output['text'])
-                        case 'display_data':
-                            output = Output(OutputType.DISPLAY_DATA)
-                            output.parse(json_output)
-                        case 'execute_result':
-                            output = Output(OutputType.EXECUTE_RESULT)
-                        case 'error':
-                            output = Output(OutputType.ERROR)
-                    # output.metadata = json_output['metadata']
-                    cell.add_output(output)
+            cell = Cell.new_from_json(json_cell)
 
             self.append(cell)
 

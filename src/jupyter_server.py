@@ -36,6 +36,8 @@ import jupyter_client
 
 from pprint import pprint
 
+from .jupyter_kernel import JupyterKernel
+
 class JupyterServer(GObject.GObject):
     __gtype_name__ = 'JupyterServer'
 
@@ -101,17 +103,12 @@ class JupyterServer(GObject.GObject):
 
         if response.status_code == 201:
             kernel_info = response.json()
-            callback(True, kernel_info, *args)
+            kernel = JupyterKernel()
+            kernel.name = kernel_name
+            kernel.connect_to_kernel(kernel_info['id'])
+            callback(True, kernel, *args)
         else:
             callback(False, None, *args)
-
-        connection_file_path = f"{self.data_dir}/jupyter/runtime/kernel-{kernel_info['id']}.json"
-
-        with open(connection_file_path) as f:
-            connection_info = json.load(f)
-
-        self.client.load_connection_info(connection_info)
-        self.client.start_channels()
 
     def get_kernel_specs(self, callback, *args):
         """
@@ -129,57 +126,3 @@ class JupyterServer(GObject.GObject):
             callback(True, kernel_specs, *args)
         else:
             callback(False, None, *args)
-
-    def get_kernel_info(self, kernel_id, callback, *args):
-        asyncio.create_task(self.__get_kernel_specs(kernel_id, callback, *args))
-
-    async def __get_kernel_info(self, kernel_id, callback, *args):
-        response = requests.get(f'{self.address}/api/kernels/{kernel_id}', params={"token": self.token})
-
-        if response.status_code == 200:
-            kernel_info = response.json()
-            callback(False, kernel_info, *args)
-        else:
-            callback(True, None, *args)
-
-    def restart_kernel(self, kernel_id, callback, *args):
-        asyncio.create_task(self.__restart_kernel(kernel_id, callback, *args))
-
-    async def __restart_kernel(self, kernel_id, callback, *args):
-        callback(False, kernel_id, *args)
-
-    def shutdown_kernel(self, kernel_id, callback, *args):
-        asyncio.create_task(self.__shutdown_kernel(kernel_id, callback, *args))
-
-    async def __shutdown_kernel(self, kernel_id, callback, *args):
-        callback(False, kernel_id, *args)
-
-    def run_code(self, code, callback, **kwargs):
-        asyncio.create_task(self.__run_code(code, callback, **kwargs))
-
-    async def __run_code(self, code, callback, **kwargs):
-        finish_callback = None
-        args = []
-
-        if "args" in kwargs:
-            args = kwargs["args"]
-        if "finish_callback" in kwargs:
-            finish_callback = kwargs["finish_callback"]
-
-        await self.client.wait_for_ready()
-
-        msg_id = self.client.execute(code)
-
-        while True:
-            msg = await self.client.get_iopub_msg()
-
-            msg_type = msg['header']['msg_type']
-            stream_content = msg['content']
-
-            if msg_type == 'status':
-                status = msg['content']['execution_state']
-                if status == "idle":
-                    finish_callback(*args)
-                    return
-
-            callback(msg_type, stream_content, *args)

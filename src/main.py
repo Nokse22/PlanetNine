@@ -43,6 +43,7 @@ GObject.type_register(Panel.Grid)
 GObject.type_register(Panel.Paned)
 GObject.type_register(Panel.OmniBar)
 GObject.type_register(Panel.Statusbar)
+GObject.type_register(Panel.ToggleButton)
 
 asyncio.set_event_loop_policy(GLibEventLoopPolicy())
 

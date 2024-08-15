@@ -18,6 +18,7 @@
           <object class="GtkDragSource" id="drag_source">
             <signal name="prepare" handler="on_drag_source_prepare"/>
             <signal name="drag-begin" handler="on_drag_source_begin"/>
+            <signal name="drag-end" handler="on_drag_source_end"/>
           </object>
         </child>
         <property name="width-request">45</property>

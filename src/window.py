@@ -41,14 +41,18 @@ from .output import Output, OutputType
 from .command_line import CommandLine
 from .notebook import Notebook
 from .notebook_view import NotebookView
+from .jupyter_kernel import JupyterKernel
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/window.ui')
 class PlanetnineWindow(Adw.ApplicationWindow):
     __gtype_name__ = 'PlanetnineWindow'
 
-    toolbar_view = Gtk.Template.Child()
-    # terminal = Gtk.Template.Child()
-    # grid = Gtk.Template.Child()
+    # toolbar_view = Gtk.Template.Child()
+    terminal = Gtk.Template.Child()
+    # main_frame = Gtk.Template.Child()
+    grid = Gtk.Template.Child()
+    omni_bar = Gtk.Template.Child()
+    kernel_status_menu = Gtk.Template.Child()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -60,45 +64,39 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         # self.jupyter_server.start()
 
-        # self.terminal.set_color_background(Gdk.RGBA(alpha=1))
-
-        widget = Panel.Widget()
-        widget.set_child(NotebookView())
-
-        # self.grid.add(widget)
+        self.terminal.set_color_background(Gdk.RGBA(alpha=1))
 
         self.create_action('add-text-block', lambda *args: self.add_block(Cell(CellType.TEXT)))
         self.create_action('add-code-block', lambda *args: self.add_block(Cell(CellType.CODE)))
 
+        self.create_action('run-selected-cell', self.on_run_selected_cell)
+
         self.command_line = CommandLine()
+
+        self.previously_presented_widget = None
+
+    def on_run_selected_cell(self, *args):
+        notebook = self.get_selected_notebook()
+
+        notebook.run_selected_cell()
 
     def on_jupyter_server_started(self, server):
         server.get_kernel_specs(lambda suc, specs: pprint(specs))
-        server.start_kernel_by_name("python3", lambda *args: print("kernel started"))
+        server.start_kernel_by_name("python3", self.on_kernel_started, self.get_selected_notebook())
+
+    def on_kernel_started(self, successful, kernel_client, notebook):
+        print(kernel_client)
+
+        notebook.set_kernel(kernel_client)
 
     def on_jupyter_server_has_new_line(self, server, line):
-        # self.terminal.feed([ord(char) for char in line + "\r\n"])
-        pass
-
-    def on_cell_request_delete(self, cell_iu, cell):
-        found, position = self.notebook_model.find(cell)
-
-        print(found, position, cell, cell_ui)
-
-        if found:
-            self.notebook_model.remove(position)
+        self.terminal.feed([ord(char) for char in line + "\r\n"])
 
     @Gtk.Template.Callback("on_run_button_clicked")
     def on_run_button_clicked(self, btn):
-        cell = self.get_selected_cell()
+        notebook = self.get_selected_notebook()
 
-        if cell.cell_type == CellType.CODE:
-            if self.queue == []:
-                self.run_cell(cell)
-            else:
-                self.queue.append(cell)
-        else:
-            self.select_next_cell()
+        notebook.run_selected_cell()
 
     @Gtk.Template.Callback("on_stop_button_clicked")
     def on_stop_button_clicked(self, btn):
@@ -108,7 +106,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     @Gtk.Template.Callback("on_restart_button_clicked")
     def on_restart_button_clicked(self, btn):
         print("RESTART")
-        self.jupyter_server.restart_kernel(2, lambda *args: print("restarted"))
+        # self.jupyter_server.restart_kernel(2, lambda *args: print("restarted"))
+
+        self.get_selected_notebook()
 
     @Gtk.Template.Callback("on_restart_and_run_button_clicked")
     def on_restart_and_run_button_clicked(self, btn):
@@ -126,59 +126,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 self.queue.append(cell)
         self.run_cell(first_code_cell)
 
-
-
-    def run_cell(self, cell):
-        found, position = self.notebook_model.find(cell)
-
-        if found:
-            # select cell
-            pass
-
-        if cell.source.startswith("%"):
-            self.command_line.run_command(
-                cell.source[1:].split(" "),
-                self.run_command_callback,
-                args=[cell]
-            )
-        else:
-            self.jupyter_server.run_code(
-                cell.source,
-                self.run_code_callback,
-                finish_callback=self.run_code_finish,
-                args=[cell]
-            )
-
-    def run_command_callback(self, line, cell):
-        cell.add_stream(line + '\n')
-
-    def run_code_callback(self, msg_type, content, cell):
-        if msg_type == 'stream':
-            output = Output(OutputType.STREAM)
-            output.parse(content)
-            cell.add_output(output)
-
-        elif msg_type == 'execute_input':
-            count = content['execution_count']
-            cell.execution_count = int(count)
-            cell.reset_output()
-
-        elif msg_type == 'display_data':
-            output = Output(OutputType.DISPLAY_DATA)
-            output.parse(content)
-            cell.add_output(output)
-
-        elif msg_type == 'error':
-            output = Output(OutputType.ERROR)
-            output.parse(content)
-            cell.add_output(output)
-
-    def run_code_finish(self, cell):
-        if self.queue != []:
-            cell=self.queue.pop(0)
-            self.run_cell(cell)
-        else:
-            self.select_next_cell()
+    def get_selected_notebook(self):
+        return self.grid.get_most_recent_frame().get_visible_child().get_child()
 
     def create_action(self, name, callback):
         action = Gio.SimpleAction.new(name, None)
@@ -214,15 +163,46 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             notebook_node = nbformat.reads(file_content, as_version=4)
 
             notebook = Notebook.new_from_json(notebook_node)
+            notebook.name = os.path.basename(file_path)
 
-            self.cells_list_box.bind_model(
-                notebook,
-                self.create_widgets
+            widget = Panel.Widget(
+                icon_name="python-symbolic",
+                title=notebook.name
             )
-            self.notebook_model = notebook
+            widget.connect("presented", self.on_widget_presented)
+            save_delegate = Panel.SaveDelegate()
+            widget.set_save_delegate(save_delegate)
+            widget.set_child(NotebookView(notebook))
+            self.grid.add(widget)
 
-            pprint(notebook.get_notebook_node())
+    def on_widget_presented(self, widget):
+        widget = widget.get_child()
+
+        if isinstance(self.previously_presented_widget, NotebookView):
+            self.previously_presented_widget.disconnect_by_func(self.on_kernel_info_changed)
+
+        if isinstance(widget, NotebookView):
+            widget.connect("kernel-info-changed", self.on_kernel_info_changed)
+            self.set_kernel_info(widget.kernel_name, widget.kernel_status)
+
+        self.previously_presented_widget = widget
+
+    def on_kernel_info_changed(self, notebook_view, kernel_name, status):
+        self.set_kernel_info(kernel_name, status)
+
+    def set_kernel_info(self, kernel_name, status):
+        string = f"{kernel_name} | {status}"
+        self.kernel_status_menu.set_label(string)
 
     @Gtk.Template.Callback("on_create_frame")
     def on_create_frame(self, grid):
-        return Panel.Frame()
+        new_frame = Panel.Frame()
+        new_frame.set_placeholder(
+            Adw.StatusPage(
+                title="No pages open"
+            )
+        )
+        tab_bar = Panel.FrameTabBar()
+        new_frame.set_header(tab_bar)
+
+        return new_frame

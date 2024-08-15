@@ -31,6 +31,7 @@ from enum import IntEnum
 import hashlib
 import base64
 import os
+import copy
 
 from .markdown_textview import MarkdownTextView
 from .terminal_textview import TerminalTextView
@@ -273,7 +274,7 @@ class CellUI(Gtk.Box):
     def on_drag_source_prepare(self, source, x, y):
         value = GObject.Value()
         value.init(Cell)
-        value.set_object(self.cell)
+        value.set_object(self.cell.copy())
 
         return Gdk.ContentProvider.new_for_value(value)
 
@@ -289,6 +290,11 @@ class CellUI(Gtk.Box):
         icon.set_child(drag_widget)
 
         drag.set_hotspot(0, 0)
+
+    @Gtk.Template.Callback("on_drag_source_end")
+    def on_drag_source_end(self, source, drag, delete_data):
+        print("how do i delete", source, drag, delete_data)
+        self.emit("request-delete")
 
     def on_reset_output(self, cell):
         self.reset_output()

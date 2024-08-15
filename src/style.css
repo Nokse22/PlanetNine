@@ -13,7 +13,7 @@ list row {
 list row:selected frame{
   background-color:transparent;
   border: 1px alpha(@accent_color, 0.3) solid;
-  transition: border ease-in-out 200ms;
+  transition: border ease-in-out 100ms;
 }
 
 list row:selected .markdown-view{

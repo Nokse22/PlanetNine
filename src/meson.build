@@ -38,7 +38,8 @@ planetnine_sources = [
   'terminal_textview.py',
   'command_line.py',
   'notebook.py',
-  'notebook_view.py'
+  'notebook_view.py',
+  'jupyter_kernel.py'
 ]
 
 install_data(planetnine_sources, install_dir: moduledir)
