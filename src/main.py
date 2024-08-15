@@ -25,16 +25,24 @@ gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 gi.require_version("Vte", "3.91")
 gi.require_version('GtkSource', '5')
+gi.require_version('WebKit', '6.0')
+gi.require_version('Panel', '1')
 
 from gi.repository import Gtk, Gio, Adw, GObject, GtkSource
 from gi.repository import Vte
 from gi.events import GLibEventLoopPolicy
+from gi.repository import Panel
 
 from .window import PlanetnineWindow
 
 GObject.type_register(Vte.Terminal)
 GObject.type_register(GtkSource.View)
 GObject.type_register(GtkSource.Buffer)
+GObject.type_register(Panel.Dock)
+GObject.type_register(Panel.Grid)
+GObject.type_register(Panel.Paned)
+GObject.type_register(Panel.OmniBar)
+GObject.type_register(Panel.Statusbar)
 
 asyncio.set_event_loop_policy(GLibEventLoopPolicy())
 

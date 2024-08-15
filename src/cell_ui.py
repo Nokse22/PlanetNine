@@ -21,8 +21,8 @@ from gi.repository import Adw
 from gi.repository import Gtk
 from gi.repository import GLib
 from gi.repository import Gio
-from gi.repository import GObject
-from gi.repository import GtkSource
+from gi.repository import GObject, WebKit
+from gi.repository import GtkSource, GLib
 from gi.repository import Gdk, GdkPixbuf, Pango
 
 from pprint import pprint
@@ -35,7 +35,7 @@ import os
 from .markdown_textview import MarkdownTextView
 from .terminal_textview import TerminalTextView
 from .cell import Cell, CellType
-from .output import Output, OutputType
+from .output import Output, OutputType, DataType
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/cell.ui')
 class CellUI(Gtk.Box):
@@ -82,6 +82,7 @@ class CellUI(Gtk.Box):
 
         self.drag_source.set_actions(Gdk.DragAction.MOVE)
 
+        self.cell_type = self.cell.cell_type
         self.set_content(self.cell.source)
         for output in self.cell.outputs:
             self.add_output(output)
@@ -149,7 +150,7 @@ class CellUI(Gtk.Box):
             return self.code_buffer.get_text(start, end, True)
 
     def set_execution_count(self, value):
-        self.count_label.set_label(str(value))
+        self.count_label.set_label(str(value or 0))
 
     def add_output(self, output):
         self.output_scrolled_window.set_visible(True)
@@ -165,9 +166,9 @@ class CellUI(Gtk.Box):
                     case DataType.IMAGE:
                         self.add_output_image(output.data_content)
                     case DataType.HTML:
-                        self.add_output_text(output.data_content)
+                        self.add_output_html(output.data_content)
                     case DataType.MARKDOWN:
-                        self.add_output_text(output.data_content)
+                        self.add_output_markdown(output.data_content)
 
             case OutputType.EXECUTE_RESULT:
                 print(output.data_content)
@@ -182,6 +183,17 @@ class CellUI(Gtk.Box):
         while child:
             self.output_box.remove(child)
             child = self.output_box.get_first_child()
+
+    def add_output_markdown(self, markdown_string):
+        child = MarkdownTextView()
+        child.set_editable(False)
+        self.output_box.append(child)
+        child.set_text(markdown_string)
+
+    def add_output_html(self, html_string):
+        webview = WebKit.WebView()
+        webview.load_html(html_string, None)
+        self.output_box.append(webview)
 
     def add_output_image(self, image_content):
         image_data = base64.b64decode(image_content)

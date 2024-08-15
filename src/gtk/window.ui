@@ -13,6 +13,11 @@
       <object class="AdwToolbarView" id="toolbar_view">
         <child type="top">
           <object class="AdwHeaderBar" id="header_bar">
+            <property name="title-widget">
+              <object class="PanelOmniBar">
+
+              </object>
+            </property>
             <child type="start">
               <object class="AdwSplitButton">
                 <property name="icon-name">list-add-symbolic</property>
@@ -45,6 +50,15 @@
               </object>
             </child>
             <child type="end">
+              <object class="GtkButton">
+                <property name="label">Open</property>
+                <signal name="clicked" handler="on_open_notebook_clicked"></signal>
+                <style>
+                  <class name="suggested-action"/>
+                </style>
+              </object>
+            </child>
+            <child type="end">
               <object class="GtkMenuButton">
                 <property name="primary">True</property>
                 <property name="icon-name">open-menu-symbolic</property>
@@ -55,49 +69,85 @@
           </object>
         </child>
         <property name="content">
-          <object class="GtkPaned">
-            <property name="orientation">vertical</property>
-            <property name="resize-end-child">false</property>
-            <property name="start-child">
-              <object class="GtkScrolledWindow">
+          <object class="PanelDock" id="dock">
+            <property name="reveal-start">true</property>
+            <property name="vexpand">true</property>
+            <child>
+              <object class="PanelGrid" id="grid">
+                <signal name="create-frame" handler="on_create_frame"/>
+              </object>
+            </child>
+            <child type="start">
+              <object class="PanelPaned">
+                <property name="orientation">vertical</property>
                 <child>
-                  <object class="AdwClamp">
-                    <property name="maximum-size">800</property>
-                    <property name="tightening-threshold">700</property>
+                  <object class="PanelFrame">
                     <child>
-                      <object class="GtkListBox" id="cells_list_box">
-                        <property name="margin-start">12</property>
-                        <property name="margin-end">12</property>
-                        <property name="margin-top">6</property>
-                        <property name="margin-bottom">100</property>
-                        <property name="selection-mode">single</property>
+                      <object class="PanelWidget">
+                        <property name="title">Color</property>
+                        <property name="tooltip">Color</property>
+                        <property name="can-maximize">true</property>
+                        <property name="icon-name">color-select-symbolic</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Project tree/folder ?</property>
+                            <property name="vexpand">true</property>
+                            <property name="hexpand">true</property>
+                            <style>
+                              <class name="title-2"></class>
+                            </style>
+                          </object>
+                        </child>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkDropTarget" id="list_drop_target">
-                        <signal name="drop" handler="on_drop_target_drop"></signal>
-                        <signal name="motion" handler="on_drop_target_motion"></signal>
-                        <signal name="leave" handler="on_drop_target_leave"></signal>
+                      <object class="PanelWidget">
+                        <property name="title">Swatches</property>
+                        <property name="icon-name">preferences-color-symbolic</property>
+                        <property name="can-maximize">true</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Kernel manager?</property>
+                            <property name="vexpand">true</property>
+                            <property name="hexpand">true</property>
+                            <style>
+                              <class name="title-2"></class>
+                            </style>
+                          </object>
+                        </child>
                       </object>
                     </child>
                   </object>
                 </child>
               </object>
-            </property>
-            <property name="end-child">
-              <object class="GtkScrolledWindow">
+            </child>
+            <child type="bottom">
+              <object class="PanelPaned">
+                <property name="orientation">vertical</property>
                 <child>
-                  <object class="VteTerminal" id="terminal">
-                    <property name="hexpand">true</property>
-                    <property name="vexpand">true</property>
-                    <property name="yalign">end</property>
-                    <property name="font-scale">0.8</property>
+                  <object class="PanelFrame">
+                    <child>
+                      <object class="PanelWidget">
+                        <property name="title">Color</property>
+                        <property name="tooltip">Color</property>
+                        <property name="can-maximize">true</property>
+                        <property name="icon-name">color-select-symbolic</property>
+                        <child>
+
+                        </child>
+                      </object>
+                    </child>
                   </object>
                 </child>
               </object>
-            </property>
+            </child>
           </object>
         </property>
+        <child type="bottom">
+          <object class="PanelStatusbar">
+
+          </object>
+        </child>
       </object>
     </property>
   </template>

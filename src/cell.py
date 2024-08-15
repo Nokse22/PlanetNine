@@ -20,6 +20,8 @@
 from gi.repository import Gio
 from gi.repository import GObject
 
+import nbformat
+
 from enum import IntEnum
 
 from .output import Output, OutputType
@@ -40,15 +42,17 @@ class Cell(GObject.GObject):
 
     cell_type = GObject.Property(type=int, default=CellType.CODE)
     source = GObject.Property(type=str, default="")
+    id = GObject.Property(type=str, default="")
 
     def __init__(self, _cell_type=CellType.CODE):
         super().__init__()
 
         self.source = ""
         self.cell_type = _cell_type
+        self.id = ""
 
         # Only for Code cells
-        self._execution_count = 0
+        self._execution_count = None
         self._outputs = Gio.ListStore()
 
     @GObject.Property(type=GObject.GObject)
@@ -82,3 +86,19 @@ class Cell(GObject.GObject):
     def reset_output(self):
         self._outputs.remove_all()
         self.emit("output-reset")
+
+    def get_cell_node(self):
+        if self.cell_type == CellType.TEXT:
+            cell_node = nbformat.v4.new_markdown_cell()
+            return cell_node
+
+        cell_node = nbformat.v4.new_code_cell()
+        cell_node.source = self.source
+        cell_node.execution_count = self.execution_count
+        cell_node.id = self.id
+
+        for output in self.outputs:
+            output_node = output.get_output_node()
+            cell_node.outputs.append(output_node)
+
+        return cell_node

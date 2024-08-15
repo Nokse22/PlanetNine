@@ -20,6 +20,10 @@
 from gi.repository import GObject
 
 from enum import IntEnum
+from pprint import pprint
+
+import nbformat
+import json
 
 class OutputType(IntEnum):
     STREAM = 0
@@ -37,32 +41,62 @@ class DataType(IntEnum):
 class Output(GObject.GObject):
     __gtype_name__ = 'Output'
 
+    name = GObject.Property(type=str, default="")
+    text = GObject.Property(type=str, default="")
+    execution_count = GObject.Property(type=int, default=0)
+
+    ename = GObject.Property(type=str, default="")
+    evalue = GObject.Property(type=str, default="")
+    traceback = GObject.Property(type=str, default="")
+
+    data_type = GObject.Property(type=int, default=0)
+    data_content = GObject.Property(type=str, default="")
+
+    output_type = 0
+
     def __init__(self, _output_type):
         super().__init__()
 
-        self.name = GObject.Property(type=str, default="")
-        self.text = GObject.Property(type=str, default="")
-        self.execution_count = GObject.Property(type=int, default=0)
-
-        self.ename = GObject.Property(type=str, default="")
-        self.evalue = GObject.Property(type=str, default="")
-        self.traceback = GObject.Property(type=str, default="")
-
-        self.data_type = GObject.Property(type=int, default=0)
-        self.data_content = GObject.Property(type=str, default="")
-
         self.output_type = _output_type
 
-    def parse(self, json):
+        self.name = ""
+        self.text = ""
+        self.execution_count = 0
+
+        self.ename = ""
+        self.evalue = ""
+        self.traceback = ""
+
+        self.data_type = 0
+        self.data_content = ""
+
+    @classmethod
+    def new_from_json(cls, json_string):
+        instance = cls()
+
+        instance.parse(json_string)
+
+        return instance
+
+    @GObject.Property(type=GObject.TYPE_PYOBJECT)
+    def metadata(self):
+        return self._metadata
+
+    @metadata.setter
+    def metadata(self, metadata_dict):
+        self._metadata = metadata_dict
+        self.notify("metadata")
+
+    def parse(self, json_dict):
         match self.output_type:
             case OutputType.STREAM:
-                self.parse_stream(json)
+                self.parse_stream(json_dict)
             case OutputType.DISPLAY_DATA:
-                self.parse_display_data(json)
+                self.parse_display_data(json_dict)
             case OutputType.EXECUTE_RESULT:
-                self.parse_execute_result(json)
+                self.parse_execute_result(json_dict)
             case OutputType.ERROR:
-                self.parse_error(json)
+                self.parse_error(json_dict)
 
     def parse_stream(self, json):
         self.name = json['name']
@@ -86,7 +120,7 @@ class Output(GObject.GObject):
             self.data_type = DataType.TEXT
 
     def parse_execute_result(self, json):
-        self.parse_display_data()
+        self.parse_display_data(json)
         self.execution_count = json['execution_count']
 
     def parse_error(self, json):
@@ -94,3 +128,30 @@ class Output(GObject.GObject):
         self.evalue = json['evalue']
         self.traceback = "\n".join(json['traceback'])
 
+    def get_output_node(self):
+        match self.output_type:
+            case OutputType.STREAM:
+                output_node = nbformat.v4.new_output('stream')
+                output_node.text = self.text
+            case OutputType.DISPLAY_DATA:
+                output_node = nbformat.v4.new_output('display_data')
+            case OutputType.EXECUTE_RESULT:
+                output_node = nbformat.v4.new_output('execute_result')
+            case OutputType.ERROR:
+                output_node = nbformat.v4.new_output('error')
+                output_node.ename = self.ename
+                output_node.evalue = self.evalue
+                output_node.traceback = self.traceback
+
+        return output_node
+
+    def __repr__(self):
+        match self.output_type:
+            case OutputType.STREAM:
+                return f"<Output of type: STREAM with {self.text}>"
+            case OutputType.DISPLAY_DATA:
+                return f"<Output of type: DISPLAY_DATA with {self.data_content}>"
+            case OutputType.EXECUTE_RESULT:
+                return f"<Output of type: EXECUTE_RESULT with {self.execution_count}>"
+            case OutputType.ERROR:
+                return f"<Output of type: ERROR with {self.traceback}>"

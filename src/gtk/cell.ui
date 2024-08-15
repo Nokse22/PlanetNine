@@ -79,6 +79,9 @@
                   <object class="GtkScrolledWindow" id="output_scrolled_window">
                     <property name="visible">False</property>
                     <property name="vscrollbar-policy">never</property>
+                    <style>
+                      <class name="output"/>
+                    </style>
                     <child>
                       <object class="GtkBox" id="output_box">
                         <property name="orientation">vertical</property>

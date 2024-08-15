@@ -23,12 +23,15 @@ from gi.repository import GLib
 from gi.repository import Gio
 from gi.repository import Vte
 from gi.repository import Gdk
+from gi.repository import Panel
 
 import subprocess
 import re
 import threading
 import time
 import os
+import json
+import nbformat
 from pprint import pprint
 
 from .jupyter_server import JupyterServer
@@ -36,19 +39,16 @@ from .cell_ui import CellUI
 from .cell import Cell, CellType
 from .output import Output, OutputType
 from .command_line import CommandLine
+from .notebook import Notebook
+from .notebook_view import NotebookView
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/window.ui')
 class PlanetnineWindow(Adw.ApplicationWindow):
     __gtype_name__ = 'PlanetnineWindow'
 
     toolbar_view = Gtk.Template.Child()
-    terminal = Gtk.Template.Child()
-    cells_list_box = Gtk.Template.Child()
-    list_drop_target = Gtk.Template.Child()
-
-    queue = []
-
-    cache_dir = os.environ["XDG_CACHE_HOME"]
+    # terminal = Gtk.Template.Child()
+    # grid = Gtk.Template.Child()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -60,52 +60,33 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         # self.jupyter_server.start()
 
-        self.terminal.set_color_background(Gdk.RGBA(alpha=1))
+        # self.terminal.set_color_background(Gdk.RGBA(alpha=1))
 
-        self.cells_model = Gio.ListStore()
+        widget = Panel.Widget()
+        widget.set_child(NotebookView())
 
-        self.cells_list_box.bind_model(
-            self.cells_model,
-            self.create_widgets
-        )
-
-        self.list_drop_target.set_gtypes([Cell])
-        self.list_drop_target.set_actions(Gdk.DragAction.MOVE)
+        # self.grid.add(widget)
 
         self.create_action('add-text-block', lambda *args: self.add_block(Cell(CellType.TEXT)))
         self.create_action('add-code-block', lambda *args: self.add_block(Cell(CellType.CODE)))
 
-        self.add_block(Cell(CellType.CODE))
-
         self.command_line = CommandLine()
-
-    def create_widgets(self, cell):
-        return CellUI(cell)
-
-    def add_block(self, cell):
-        if self.cells_model.get_n_items() > 1:
-            index = self.get_selected_cell_index()
-            self.cells_model.insert(index + 1, cell)
-        else:
-            self.cells_model.append(cell)
-
-        found, position = self.cells_model.find(cell)
-
-        if found:
-            self.set_selected_cell_index(position)
 
     def on_jupyter_server_started(self, server):
         server.get_kernel_specs(lambda suc, specs: pprint(specs))
         server.start_kernel_by_name("python3", lambda *args: print("kernel started"))
 
     def on_jupyter_server_has_new_line(self, server, line):
-        self.terminal.feed([ord(char) for char in line + "\r\n"])
+        # self.terminal.feed([ord(char) for char in line + "\r\n"])
+        pass
 
     def on_cell_request_delete(self, cell_iu, cell):
-        found, position = self.cells_model.find(cell)
+        found, position = self.notebook_model.find(cell)
+
+        print(found, position, cell, cell_ui)
 
         if found:
-            self.cells_model.remove(position)
+            self.notebook_model.remove(position)
 
     @Gtk.Template.Callback("on_run_button_clicked")
     def on_run_button_clicked(self, btn):
@@ -127,16 +108,16 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     @Gtk.Template.Callback("on_restart_button_clicked")
     def on_restart_button_clicked(self, btn):
         print("RESTART")
-        self.jupyter_server.restart_kernel(2)
+        self.jupyter_server.restart_kernel(2, lambda *args: print("restarted"))
 
     @Gtk.Template.Callback("on_restart_and_run_button_clicked")
     def on_restart_and_run_button_clicked(self, btn):
         print("RESTART and run!")
-        self.jupyter_server.restart_kernel(2)
+        self.jupyter_server.restart_kernel(2, lambda *args: print("restarted"))
 
         first_code_cell = None
 
-        for index, cell in enumerate(self.cells_model):
+        for index, cell in enumerate(self.notebook_model):
             if not first_code_cell:
                 if cell.cell_type == CellType.CODE:
                     first_code_cell = cell
@@ -145,12 +126,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 self.queue.append(cell)
         self.run_cell(first_code_cell)
 
-    def get_selected_cell(self):
-        cell_ui = self.cells_list_box.get_selected_row().get_child()
-        return cell_ui.cell
+
 
     def run_cell(self, cell):
-        found, position = self.cells_model.find(cell)
+        found, position = self.notebook_model.find(cell)
 
         if found:
             # select cell
@@ -201,55 +180,49 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         else:
             self.select_next_cell()
 
-    def select_next_cell(self):
-        pass
-
     def create_action(self, name, callback):
         action = Gio.SimpleAction.new(name, None)
         action.connect("activate", callback)
         self.add_action(action)
         return action
 
-    def get_selected_cell_index(self):
-        selected_cell = self.cells_list_box.get_selected_row()
+    @Gtk.Template.Callback("on_open_notebook_clicked")
+    def on_open_notebook_clicked(self, btn):
+        self.open_notebook()
 
-        self.cells_list_box.get_row_at_index
-        for index in range(0, self.cells_model.get_n_items()):
-            if self.cells_list_box.get_row_at_index(index) == selected_cell:
-                return index
+    def open_notebook(self):
+        file_filter = Gtk.FileFilter(name=_("All supported formats"))
+        file_filter.add_pattern("*.ipynb")
+        filter_list = Gio.ListStore.new(Gtk.FileFilter())
+        filter_list.append(file_filter)
 
-        return self.cells_model.get_n_items() - 1
+        dialog = Gtk.FileDialog(
+            title=_("Open File"),
+            filters=filter_list,
+        )
 
-    def set_selected_cell_index(self, index):
-        self.cells_list_box.select_row(self.cells_list_box.get_row_at_index(index))
+        dialog.open(self, None, self.on_open_notebook_response)
 
-    @Gtk.Template.Callback("on_drop_target_drop")
-    def on_drop_target_drop(self, drop_target, cell, x, y):
-        target_row = self.cells_list_box.get_row_at_y(y)
-
-        for index, model_cell in enumerate(self.cells_model):
-            if cell == model_cell:
-                cell_index = index
-
-        if not target_row:
-            self.cells_model.remove(cell_index)
-            self.cells_model.append(cell)
+    def on_open_notebook_response(self, dialog, response):
+        try:
+            file_path = dialog.open_finish(response)
+        except:
             return
 
-        target_index = target_row.get_index()
+        with open(file_path, 'r') as file:
+            file_content = file.read()
+            notebook_node = nbformat.reads(file_content, as_version=4)
 
-        self.cells_model.remove(cell_index)
-        self.cells_model.insert(target_index, cell)
+            notebook = Notebook.new_from_json(notebook_node)
 
-    @Gtk.Template.Callback("on_drop_target_motion")
-    def on_drop_target_motion(self, drop_target, x, y):
-        target_row = self.cells_list_box.get_row_at_y(y)
+            self.cells_list_box.bind_model(
+                notebook,
+                self.create_widgets
+            )
+            self.notebook_model = notebook
 
-        if target_row:
-            self.cells_list_box.drag_highlight_row(target_row)
+            pprint(notebook.get_notebook_node())
 
-        return Gdk.DragAction.MOVE
-
-    @Gtk.Template.Callback("on_drop_target_leave")
-    def on_drop_target_leave(self, drop_target):
-        self.cells_list_box.drag_unhighlight_row()
+    @Gtk.Template.Callback("on_create_frame")
+    def on_create_frame(self, grid):
+        return Panel.Frame()

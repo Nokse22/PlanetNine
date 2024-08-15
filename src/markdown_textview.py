@@ -32,6 +32,9 @@ class MarkdownTextView(Gtk.TextView):
 
     def __init__(self):
         super().__init__()
+
+        self.set_css_name("markdownview")
+
         self.set_wrap_mode(Gtk.WrapMode.WORD)
         self.set_monospace(True)
 
@@ -46,7 +49,12 @@ class MarkdownTextView(Gtk.TextView):
 
         self.buffer.create_tag("bold", weight=Pango.Weight.BOLD)
         self.buffer.create_tag("italic", style=Pango.Style.ITALIC)
-        self.buffer.create_tag("code", style=Pango.Style.OBLIQUE)
+        self.buffer.create_tag("code", style=Pango.Style.OBLIQUE, background="#f0f0f0")
+        self.buffer.create_tag("bold_italic", weight=Pango.Weight.BOLD, style=Pango.Style.ITALIC)
+        self.buffer.create_tag("block_code", family="Monospace", background="#f0f0f0")
+        self.buffer.create_tag("link", foreground="blue", underline=Pango.Underline.SINGLE)
+        self.buffer.create_tag("quote", style=Pango.Style.ITALIC, foreground="#6a737d", left_margin=20)
+
 
         self.full_line_tags = [
             ("# ", "h1"),
@@ -59,7 +67,10 @@ class MarkdownTextView(Gtk.TextView):
 
         self.in_line_tags = [
             ("**", "bold"),
+            ("***", "bold_italic"),
+            ("___", "bold_italic"),
             ("*", "italic"),
+            ("_", "italic"),
             ("`", "code"),
         ]
 
@@ -67,8 +78,62 @@ class MarkdownTextView(Gtk.TextView):
         self.buffer.connect_after("insert-text", self.on_text_inserted)
         self.buffer.connect("delete-range", self.on_text_deleted)
 
+    def set_text(self, text):
+        self.buffer.set_text(text)
+        self.update_all()
+
+    def update_all(self):
+        start_iter = self.buffer.get_start_iter()
+        end_iter = self.buffer.get_end_iter()
+
+        text = self.buffer.get_text(start_iter, end_iter, True)
+
+        # Remove all tags first
+        self.buffer.remove_all_tags(start_iter, end_iter)
+
+        # Apply full line tags
+        for line_start, line_tag in self.full_line_tags:
+            pattern = re.compile(f'^{re.escape(line_start)}(.*)$', re.MULTILINE)
+            for match in pattern.finditer(text):
+                start_pos = match.start(1)
+                end_pos = match.end(1)
+                iter_start = self.buffer.get_iter_at_offset(start_pos)
+                iter_end = self.buffer.get_iter_at_offset(end_pos)
+                self.buffer.apply_tag_by_name(line_tag, iter_start, iter_end)
+
+        # Apply in-line tags
+        for inline_tag, tag_name in self.in_line_tags:
+            pattern = re.compile(f'{re.escape(inline_tag)}(.*?){re.escape(inline_tag)}')
+            for match in pattern.finditer(text):
+                start_pos = match.start(1)
+                end_pos = match.end(1)
+                iter_start = self.buffer.get_iter_at_offset(start_pos)
+                iter_end = self.buffer.get_iter_at_offset(end_pos)
+                self.buffer.apply_tag_by_name(tag_name, iter_start, iter_end)
+
+        # Apply multiline code block tags
+        block_code_pattern = re.compile(r'```(.*?)```', re.DOTALL)
+        for match in block_code_pattern.finditer(text):
+            start_pos = match.start(1)
+            end_pos = match.end(1)
+            iter_start = self.buffer.get_iter_at_offset(start_pos)
+            iter_end = self.buffer.get_iter_at_offset(end_pos)
+            self.buffer.apply_tag_by_name("block_code", iter_start, iter_end)
+
+        # Apply link tags
+        link_pattern = re.compile(r'\[(.*?)\]\((.*?)\)')
+        for match in link_pattern.finditer(text):
+            link_text_start = match.start(1)
+            link_text_end = match.end(1)
+            iter_start = self.buffer.get_iter_at_offset(link_text_start)
+            iter_end = self.buffer.get_iter_at_offset(link_text_end)
+            self.buffer.apply_tag_by_name("link", iter_start, iter_end)
+
     def on_text_changed(self, buffer):
         self.emit("changed", buffer)
+
+        self.update_all()
+        return
 
         cursor_iter = buffer.get_iter_at_mark(buffer.get_insert())
         line_start_iter = cursor_iter.copy()
@@ -103,6 +168,9 @@ class MarkdownTextView(Gtk.TextView):
                         break
 
     def on_text_deleted(self, buffer, start, end):
+        self.update_all()
+        return
+
         deleted_text = buffer.get_text(start, end, False)
 
         for tag, tag_name in self.in_line_tags:

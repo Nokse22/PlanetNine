@@ -146,13 +146,13 @@ class JupyterServer(GObject.GObject):
         asyncio.create_task(self.__restart_kernel(kernel_id, callback, *args))
 
     async def __restart_kernel(self, kernel_id, callback, *args):
-        callback(kernel_id, *args)
+        callback(False, kernel_id, *args)
 
     def shutdown_kernel(self, kernel_id, callback, *args):
         asyncio.create_task(self.__shutdown_kernel(kernel_id, callback, *args))
 
     async def __shutdown_kernel(self, kernel_id, callback, *args):
-        callback(kernel_id, *args)
+        callback(False, kernel_id, *args)
 
     def run_code(self, code, callback, **kwargs):
         asyncio.create_task(self.__run_code(code, callback, **kwargs))
