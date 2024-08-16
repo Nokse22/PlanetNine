@@ -57,7 +57,7 @@ class JupyterServer(GObject.GObject):
 
         self.sandboxed = True
 
-        self.client = jupyter_client.AsyncKernelClient()
+        # self.sessions = Gio.ListStore(Session)
 
         self.data_dir = os.environ["XDG_DATA_HOME"]
 

@@ -10,6 +10,7 @@
         "--socket=fallback-x11",
         "--device=dri",
         "--socket=wayland",
+        "-filesystem=~/.local/share/jupyter",
         "--talk-name=org.freedesktop.Flatpak"
     ],
     "cleanup" : [

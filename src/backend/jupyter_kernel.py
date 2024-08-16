@@ -57,7 +57,7 @@ class JupyterKernel(GObject.GObject):
         self.data_dir = os.environ["XDG_DATA_HOME"]
 
     def connect_to_kernel(self, kernel_id):
-        connection_file_path = f"{self.data_dir}/jupyter/runtime/kernel-{kernel_id}.json"
+        connection_file_path = f"{self.data_dir if self.sandboxed else os.path.join(self.data_dir, './local/share')}/jupyter/runtime/kernel-{kernel_id}.json"
 
         with open(connection_file_path) as f:
             connection_info = json.load(f)

@@ -150,7 +150,6 @@ class NotebookView(Gtk.ScrolledWindow):
         output = Output(OutputType.STREAM)
         output.text = line + '\n'
         cell.add_output(output)
-        print(line)
 
     def run_code_callback(self, msg, cell):
         msg_type = msg['header']['msg_type']
@@ -187,6 +186,9 @@ class NotebookView(Gtk.ScrolledWindow):
                 if self.queue != []:
                     cell=self.queue.pop(0)
                     self.run_cell(cell)
+                    found, position = self.notebook_model.find(cell)
+                    if found:
+                        self.set_selected_cell_index(position)
                 else:
                     self.select_next_cell()
 
@@ -223,7 +225,10 @@ class NotebookView(Gtk.ScrolledWindow):
         return cell_ui.cell
 
     def select_next_cell(self):
-        pass
+        cell = self.get_selected_cell()
+        found, position = self.notebook_model.find(cell)
+        if found and position != self.notebook_model.get_n_items() - 1:
+            self.set_selected_cell_index(position + 1)
 
     def get_selected_cell_index(self):
         selected_cell = self.cells_list_box.get_selected_row()
@@ -263,6 +268,26 @@ class NotebookView(Gtk.ScrolledWindow):
 
         if target_row:
             self.cells_list_box.drag_highlight_row(target_row)
+
+        vadjustment = self.get_vadjustment()
+
+        visible_height = vadjustment.get_page_size()
+        content_height = vadjustment.get_upper()
+
+        current_scroll_position = vadjustment.get_value()
+
+        margin = 50
+
+        relative_y = y - current_scroll_position
+
+        if relative_y < margin:
+            delta = (margin - relative_y) / margin * 20
+            new_value = max(current_scroll_position - delta, 0)
+            vadjustment.set_value(new_value)
+        elif relative_y > visible_height - margin:
+            delta = (relative_y - (visible_height - margin)) / margin * 20
+            new_value = min(current_scroll_position + delta, content_height - visible_height)
+            vadjustment.set_value(new_value)
 
         return Gdk.DragAction.MOVE
 

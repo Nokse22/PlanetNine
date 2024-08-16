@@ -98,6 +98,7 @@ class Cell(GObject.GObject):
     def get_cell_node(self):
         if self.cell_type == CellType.TEXT:
             cell_node = nbformat.v4.new_markdown_cell()
+            cell_node.source = self.source
             return cell_node
 
         cell_node = nbformat.v4.new_code_cell()
