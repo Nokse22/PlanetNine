@@ -39,11 +39,6 @@ from pprint import pprint
 class JupyterKernel(GObject.GObject):
     __gtype_name__ = 'JupyterKernel'
 
-    # __gsignals__ = {
-    #     'started': (GObject.SignalFlags.RUN_FIRST, None, ()),
-    #     'new-line': (GObject.SignalFlags.RUN_FIRST, None, (str,)),
-    # }
-
     sandboxed = GObject.Property(type=bool, default=True)
 
     name = GObject.Property(type=str, default='')

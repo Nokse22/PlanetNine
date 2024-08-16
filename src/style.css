@@ -12,8 +12,12 @@ list row {
 
 list row:selected frame{
   background-color:transparent;
-  border: 1px alpha(@accent_color, 0.3) solid;
+  border: 2px alpha(@accent_color, 0.5) solid;
   transition: border ease-in-out 100ms;
+}
+
+list row frame{
+  border-width: 2px;
 }
 
 list row:selected .markdown-view{
@@ -46,14 +50,14 @@ list row:selected .markdown-view{
   background-color: var(--sidebar-bg-color);
 }
 
-kernelmanager list{
-  border: none;
-  padding: 3px;
+listview {
+  background-color:transparent;
+  padding: 6px;
 }
 
-kernelmanager list row{
-  padding-top: 6px;
-  padding-bottom: 6px;
+listview row{
+  padding: 3px;
+  border-radius: 6px;
 }
 
 /* Style from libpanel */

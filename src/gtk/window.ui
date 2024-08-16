@@ -29,6 +29,11 @@
                     <property name="width-request">200</property>
                     <property name="menu-model">run-menu</property>
                     <property name="action-name">win.run-selected-cell</property>
+                    <child type="prefix">
+                      <object class="GtkLabel" id="omni_label">
+                        <property name="label" translatable="yes">No Kernel</property>
+                      </object>
+                    </child>
                   </object>
                 </property>
                 <child type="start">
@@ -214,6 +219,22 @@
                     </property>
                   </object>
                 </child>
+                <child type="prefix">
+                  <object class="GtkBox">
+                    <property name="spacing">12</property>
+                    <child>
+                      <object class="GtkImage">
+                        <property name="icon-name">network-server-symbolic</property>
+                        <property name="pixel-size">12</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="server_status_label">
+                        <property name="label">Server Not Connected</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
               </object>
             </property>
           </object>
@@ -221,6 +242,28 @@
       </object>
     </property>
   </template>
+  <object class="AdwAlertDialog" id="select_kernel_dialog">
+    <property name="body">Select a kernel for this notebook.</property>
+    <property name="close-response">cancel</property>
+    <property name="default-response">select</property>
+    <responses>
+      <response id="cancel" translatable="yes">_Cancel</response>
+      <response id="select" translatable="yes" appearance="suggested" enabled="false">_Select</response>
+    </responses>
+    <property name="extra-child">
+      <object class="GtkListBox">
+        <child>
+          <object class="AdwComboRow" id="select_kernel_combo_row">
+            <property name="title">Kernel</property>
+          </object>
+        </child>
+        <style>
+          <class name="boxed-list"/>
+        </style>
+      </object>
+    </property>
+    <property name="heading">Select Kernel</property>
+  </object>
   <menu id="add-menu">
     <section>
       <item>

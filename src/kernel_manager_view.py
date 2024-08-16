@@ -22,11 +22,31 @@ gi.require_version('Gtk', '4.0')
 from gi.repository import Gtk, GObject, Gio
 from gi.repository import Panel
 
+from .notebook import Notebook
+
+class KernelSession(GObject.GObject):
+    __gtype_name__ = 'KernelSession'
+
+    name = ""
+
+    notebook_store = None
+
+    def __init__(self, _name=""):
+        super().__init__()
+
+        self.name = _name
+
+        self.notebook_store = Gio.ListStore.new(Notebook)
+
 class KernelInfo(GObject.GObject):
+    __gtype_name__ = 'KernelInfo'
+
     name = ""
     display_name = ""
     language = ""
     interrupt_mode = ""
+
+    session_store = None
 
     def __init__(self):
         super().__init__()
@@ -35,6 +55,11 @@ class KernelInfo(GObject.GObject):
         self.display_name = ""
         self.language = ""
         self.interrupt_mode = ""
+
+        self.session_store = Gio.ListStore.new(KernelSession)
+
+        self.session_store.append(KernelSession("prova"))
+        self.session_store.append(KernelSession("prova 2"))
 
     @classmethod
     def new_from_specs(cls, specs):
@@ -57,10 +82,6 @@ class KernelManager(Panel.Widget):
         # 'changed': (GObject.SignalFlags.RUN_FIRST, None, (Gtk.TextBuffer,)),
     }
 
-    # web_kit_view = Gtk.Template.Child()
-    # uri_entry = Gtk.Template.Child()
-    avalaible_kernel_list_box = Gtk.Template.Child()
-
     default_kernel_name = ""
 
     def __init__(self):
@@ -68,21 +89,65 @@ class KernelManager(Panel.Widget):
 
         self.set_css_name("kernelmanager")
 
-        self.avalaible_kernel_model = Gio.ListStore()
+        self.kernels_model = Gio.ListStore.new(KernelInfo)
 
-        self.avalaible_kernel_list_box.bind_model(
-            self.avalaible_kernel_model,
-            self.create_kernel_widgets
-        )
+        self.tree_list_model = Gtk.TreeListModel.new(self.kernels_model, False, True, self.create_sub_model)
+
+        self.selection_model = Gtk.NoSelection(model=self.tree_list_model)
+
+        self.list_view = Gtk.ListView.new(self.selection_model, self.create_item_factory())
+
+        self.set_child(self.list_view)
 
         self.default_kernel_name = ""
 
-    def create_kernel_widgets(self, kernel_info):
-        return Gtk.Label(label=kernel_info.name)
+    def create_sub_model(self, item):
+        if isinstance(item, KernelInfo):
+            return Gtk.TreeListModel.new(item.session_store, False, True, self.create_sub_model)
+
+        elif isinstance(item, KernelSession):
+            return Gtk.TreeListModel.new(item.notebook_store, False, True, self.create_sub_model)
+
+        elif isinstance(item, Notebook):
+            return Gio.ListStore.new(Gtk.StringObject)
+
+    def create_item_factory(self):
+        factory = Gtk.SignalListItemFactory()
+
+        factory.connect("setup", self.on_setup)
+        factory.connect("bind", self.on_bind)
+
+        return factory
+
+    def on_setup(self, factory, list_item):
+        label = Gtk.Label(xalign=0)
+        label.set_margin_start(10)
+        label.set_margin_end(10)
+        label.set_margin_top(5)
+        label.set_margin_bottom(5)
+        list_item.set_child(label)
+
+    def on_bind(self, factory, list_item):
+        item = list_item.get_item().get_item()
+        label = list_item.get_child()
+
+        print("ITEM: ", item)
+
+        if isinstance(item, KernelInfo):
+            label.set_text(item.display_name)
+
+        elif isinstance(item, KernelSession):
+            label.set_text(item.name)
+
+        elif isinstance(item, Notebook):
+            label.set_text(item.name)
+
+        else:
+            label.set_text("Unknown")
 
     def parse(self, spes_json):
         # print(spes_json)
 
         for kernel_name, kernel_spec in spes_json['kernelspecs'].items():
             kernel_info = KernelInfo.new_from_specs(kernel_spec)
-            self.avalaible_kernel_model.append(kernel_info)
+            self.kernels_model.append(kernel_info)

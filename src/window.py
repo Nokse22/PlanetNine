@@ -56,6 +56,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     omni_bar = Gtk.Template.Child()
     kernel_status_menu = Gtk.Template.Child()
     kernel_manager_view = Gtk.Template.Child()
+    select_kernel_dialog = Gtk.Template.Child()
+    select_kernel_combo_row = Gtk.Template.Child()
+    omni_label = Gtk.Template.Child()
+    server_status_label = Gtk.Template.Child()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -97,6 +101,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     def shutdown_kernel(self, *args):
         print("Shutdown")
 
+        self.select_kernel_dialog.present(self)
+
     def add_cell_to_selected_notebook(self, cell):
         notebook = self.get_selected_notebook()
         notebook.add_cell(cell)
@@ -106,6 +112,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         notebook.run_selected_cell()
 
     def on_jupyter_server_started(self, server):
+        self.server_status_label.set_label(_("Server Connected"))
         server.get_kernel_specs(self.on_got_kernel_specs)
         server.start_kernel_by_name("python3", self.on_kernel_started, self.get_selected_notebook())
 
@@ -121,6 +128,15 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     def start_kernel(self, *args):
         print("start_kernel")
 
+        self.jupyter_server.new_session("python3", "Session1", self.new_session_callback)
+
+    def new_session_callback(self, succ, session):
+        pprint(session)
+
+        k_id = session['kernel']['id']
+
+        self.jupyter_server.get_kernel_info(k_id, lambda suc, info: pprint(info))
+
     def on_jupyter_server_has_new_line(self, server, line):
         self.terminal.feed([ord(char) for char in line + "\r\n"])
 
@@ -128,7 +144,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         print("RESTART")
         # self.jupyter_server.restart_kernel(2, lambda *args: print("restarted"))
 
-        self.get_selected_notebook()
+        # self.get_selected_notebook()
+
+        self.jupyter_server.get_sessions(lambda succ, sessions: pprint(sessions))
 
     def restart_kernel_and_run(self, *args):
         print("RESTART and run!")
@@ -204,8 +222,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.set_kernel_info(kernel_name, status)
 
     def set_kernel_info(self, kernel_name, status):
-        string = f"{kernel_name} | {status}"
-        self.kernel_status_menu.set_label(string)
+        self.kernel_status_menu.set_label(status)
+        self.omni_label.set_label(kernel_name)
 
     @Gtk.Template.Callback("on_create_frame")
     def on_create_frame(self, grid):

@@ -126,3 +126,52 @@ class JupyterServer(GObject.GObject):
             GLib.idle_add(callback, True, kernel_specs, *args)
         else:
             GLib.idle_add(callback, False, None, *args)
+
+    def get_sessions(self, callback, *args):
+        asyncio.create_task(self.__get_sessions(callback, *args))
+
+    async def __get_sessions(self, callback, *args):
+        response = requests.get(f'{self.address}/api/sessions', params={"token": self.token})
+
+        if response.status_code == 200:
+            sessions = response.json()
+            GLib.idle_add(callback, True, sessions, *args)
+        else:
+            GLib.idle_add(callback, False, None, *args)
+
+    def new_session(self, kernel_name, session_name, callback, *args):
+        asyncio.create_task(self.__new_session(kernel_name, session_name, callback, *args))
+
+    async def __new_session(self, kernel_name, session_name, callback, *args):
+        response = requests.post(
+            f'{self.address}/api/sessions',
+            params={"token": self.token},
+            json={
+                "kernel": {
+                    "name": kernel_name
+                },
+                "name": session_name,
+                "path": f"/",
+                "type": "notebook"
+            }
+        )
+
+        if response.status_code == 201:
+            session = response.json()
+            location_url = response.headers.get('Location', None)
+            print("Location URL:", location_url)
+            GLib.idle_add(callback, True, session, *args)
+        else:
+            GLib.idle_add(callback, False, None, *args)
+
+    def get_kernel_info(self, kernel_id, callback, *args):
+        asyncio.create_task(self.__get_kernel_info(kernel_id, callback, *args))
+
+    async def __get_kernel_info(self, kernel_id, callback, *args):
+        response = requests.get(f'{self.address}/api/kernels/{kernel_id}', params={"token": self.token})
+
+        if response.status_code == 200:
+            sessions = response.json()
+            GLib.idle_add(callback, True, sessions, *args)
+        else:
+            GLib.idle_add(callback, False, None, *args)

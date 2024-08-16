@@ -30,19 +30,20 @@ planetnine_sources = [
   '__init__.py',
   'main.py',
   'window.py',
-  'jupyter_server.py',
   'cell.py',
   'cell_ui.py',
   'output.py',
   'markdown_textview.py',
   'terminal_textview.py',
-  'command_line.py',
   'notebook.py',
   'notebook_view.py',
-  'jupyter_kernel.py',
   'browser_page.py',
   'image_view.py',
-  'kernel_manager_view.py'
+  'kernel_manager_view.py',
+
+  'backend/command_line.py',
+  'backend/jupyter_kernel.py',
+  'backend/jupyter_server.py',
 ]
 
 install_data(planetnine_sources, install_dir: moduledir)
