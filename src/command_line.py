@@ -27,6 +27,7 @@ import threading
 import time
 import json
 import os
+import asyncio
 
 from pprint import pprint
 
@@ -36,19 +37,10 @@ class CommandLine(GObject.GObject):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def run_command(self, commands, **kwargs):
-        callback = None
-        args = []
+    def run_command(self, commands, callback, *args):
+        asyncio.create_task(self.__run_command(commands, callback, *args))
 
-        if "args" in kwargs:
-            args = kwargs["args"]
-        if "callback" in kwargs:
-            callback = kwargs["callback"]
-
-        thread = threading.Thread(target=self.__run_command, args=[commands, callback, *args], daemon=True)
-        thread.start()
-
-    def __run_command(self, commands, callback, *args):
+    async def __run_command(self, commands, callback, *args):
         process = Gio.Subprocess.new(
             commands,
             Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_MERGE
@@ -58,8 +50,10 @@ class CommandLine(GObject.GObject):
         stdout_stream = Gio.DataInputStream.new(stdout)
 
         while True:
-            line, _ = stdout_stream.read_line_utf8(None)
-            if line is None:
+            line, _ = await stdout_stream.read_line_async(0)
+            line = line.decode('utf-8')
+
+            if line == '':
                 break
-            if callback:
-                callback(line, *args)
+
+            callback(line, *args)

@@ -80,7 +80,7 @@ class NotebookView(Gtk.ScrolledWindow):
 
         self.queue = []
 
-        self.add_block(Cell(CellType.CODE))
+        self.add_cell(Cell(CellType.CODE))
 
         self._kernel_name = ""
 
@@ -113,6 +113,18 @@ class NotebookView(Gtk.ScrolledWindow):
         else:
             self.select_next_cell()
 
+    def run_all_cells(self):
+        first_code_cell = None
+
+        for index, cell in enumerate(self.notebook_model):
+            if not first_code_cell:
+                if cell.cell_type == CellType.CODE:
+                    first_code_cell = cell
+                    continue
+            if cell.cell_type == CellType.CODE:
+                self.queue.append(cell)
+        self.run_cell(first_code_cell)
+
     def run_cell(self, cell):
         found, position = self.notebook_model.find(cell)
 
@@ -121,8 +133,10 @@ class NotebookView(Gtk.ScrolledWindow):
             pass
 
         if cell.source.startswith("%"):
+            cell.reset_output()
             self.command_line.run_command(
                 cell.source[1:].split(" "),
+                self.run_command_callback,
                 cell
             )
         else:
@@ -133,7 +147,10 @@ class NotebookView(Gtk.ScrolledWindow):
             )
 
     def run_command_callback(self, line, cell):
-        cell.add_stream(line + '\n')
+        output = Output(OutputType.STREAM)
+        output.text = line + '\n'
+        cell.add_output(output)
+        print(line)
 
     def run_code_callback(self, msg, cell):
         msg_type = msg['header']['msg_type']
@@ -189,7 +206,7 @@ class NotebookView(Gtk.ScrolledWindow):
         if found:
             self.notebook_model.remove(position)
 
-    def add_block(self, cell):
+    def add_cell(self, cell):
         if self.notebook_model.get_n_items() > 1:
             index = self.get_selected_cell_index()
             self.notebook_model.insert(index + 1, cell)

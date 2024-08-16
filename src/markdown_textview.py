@@ -228,3 +228,11 @@ class MarkdownTextView(Gtk.TextView):
                         buffer.delete(start_iter, loc)
                     else:
                         buffer.insert(loc, new_order_bullet, -1)
+
+    def __on_unrealized(self, *args):
+        self.buffer.disconnect_by_func(self.on_text_changed)
+        self.buffer.disconnect_by_func(self.on_text_inserted)
+        self.buffer.disconnect_by_func(self.on_text_deleted)
+
+    def __del__(self, *args):
+        print(f"DELETING {self}")

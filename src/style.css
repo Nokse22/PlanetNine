@@ -42,6 +42,20 @@ list row:selected .markdown-view{
   background-color: transparent;
 }
 
+.sidebar-color {
+  background-color: var(--sidebar-bg-color);
+}
+
+kernelmanager list{
+  border: none;
+  padding: 3px;
+}
+
+kernelmanager list row{
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
 /* Style from libpanel */
 
 paneltogglebutton.drag-active button:not(:checked) {

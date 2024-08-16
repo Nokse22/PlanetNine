@@ -123,6 +123,6 @@ class JupyterServer(GObject.GObject):
 
         if response.status_code == 200:
             kernel_specs = response.json()
-            callback(True, kernel_specs, *args)
+            GLib.idle_add(callback, True, kernel_specs, *args)
         else:
-            callback(False, None, *args)
+            GLib.idle_add(callback, False, None, *args)

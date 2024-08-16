@@ -16,7 +16,7 @@
               <object class="GtkListBox" id="cells_list_box">
                 <property name="margin-start">12</property>
                 <property name="margin-end">12</property>
-                <property name="margin-top">6</property>
+                <property name="margin-top">24</property>
                 <property name="margin-bottom">100</property>
                 <property name="selection-mode">single</property>
               </object>

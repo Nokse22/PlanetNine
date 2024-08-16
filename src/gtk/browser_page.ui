@@ -1,0 +1,46 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Created with Cambalache 0.90.4 -->
+<interface>
+  <!-- interface-name brow.ui -->
+  <requires lib="gtk" version="4.12"/>
+  <requires lib="libadwaita" version="1.4"/>
+  <requires lib="webkitgtk" version="6.0"/>
+  <template class="BrowserPage" parent="PanelWidget">
+    <child>
+      <object class="AdwToolbarView" id="toolbar_view">
+        <property name="content">
+          <object class="WebKitWebView" id="web_kit_view"/>
+        </property>
+        <child type="top">
+          <object class="GtkBox">
+            <property name="halign">center</property>
+            <property name="spacing">6</property>
+            <property name="margin-top">6</property>
+            <property name="margin-bottom">6</property>
+            <child>
+              <object class="GtkButton">
+                <property name="icon-name">back-symbolic</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton">
+                <property name="icon-name">forward-symbolic</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton">
+                <property name="icon-name">reload-symbolic</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkEntry" id="uri_entry">
+                <property name="placeholder-text">Address</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>
+

@@ -42,6 +42,8 @@ from .command_line import CommandLine
 from .notebook import Notebook
 from .notebook_view import NotebookView
 from .jupyter_kernel import JupyterKernel
+from .browser_page import BrowserPage
+from .kernel_manager_view import KernelManager
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/window.ui')
 class PlanetnineWindow(Adw.ApplicationWindow):
@@ -53,6 +55,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     grid = Gtk.Template.Child()
     omni_bar = Gtk.Template.Child()
     kernel_status_menu = Gtk.Template.Child()
+    kernel_manager_view = Gtk.Template.Child()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -66,65 +69,72 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.terminal.set_color_background(Gdk.RGBA(alpha=1))
 
-        self.create_action('add-text-block', lambda *args: self.add_block(Cell(CellType.TEXT)))
-        self.create_action('add-code-block', lambda *args: self.add_block(Cell(CellType.CODE)))
+        self.create_action('add-text-block', lambda *args: self.add_cell_to_selected_notebook(Cell(CellType.TEXT)))
+        self.create_action('add-code-block', lambda *args: self.add_cell_to_selected_notebook(Cell(CellType.CODE)))
+        self.create_action('new-notebook', lambda *args: self.add_notebook_page(Notebook(name="Untitled.ipynb")))
 
-        self.create_action('run-selected-cell', self.on_run_selected_cell)
+        self.create_action('run-selected-cell', self.run_selected_cell)
+        self.create_action('shutdown-kernel', self.shutdown_kernel)
+        self.create_action('stop-execution', self.run_selected_cell)
+        self.create_action('start-kernel', self.start_kernel)
+        self.create_action('restart-kernel', self.restart_kernel)
+        self.create_action('restart-kernel-and-run', self.restart_kernel_and_run)
+        self.create_action('start-server', self.start_server)
+
+        self.create_action('open-notebook', self.open_notebook)
+
+        self.create_action('new-browser-page', self.open_browser_page)
 
         self.command_line = CommandLine()
 
         self.previously_presented_widget = None
 
-    def on_run_selected_cell(self, *args):
-        notebook = self.get_selected_notebook()
+        self.add_notebook_page(Notebook(name="Untitled.ipynb"))
 
+    def start_server(self, *args):
+        self.jupyter_server.start()
+
+    def shutdown_kernel(self, *args):
+        print("Shutdown")
+
+    def add_cell_to_selected_notebook(self, cell):
+        notebook = self.get_selected_notebook()
+        notebook.add_cell(cell)
+
+    def run_selected_cell(self, *args):
+        notebook = self.get_selected_notebook()
         notebook.run_selected_cell()
 
     def on_jupyter_server_started(self, server):
-        server.get_kernel_specs(lambda suc, specs: pprint(specs))
+        server.get_kernel_specs(self.on_got_kernel_specs)
         server.start_kernel_by_name("python3", self.on_kernel_started, self.get_selected_notebook())
+
+    def on_got_kernel_specs(self, success, specs):
+        if success:
+            self.kernel_manager_view.parse(specs)
 
     def on_kernel_started(self, successful, kernel_client, notebook):
         print(kernel_client)
 
         notebook.set_kernel(kernel_client)
 
+    def start_kernel(self, *args):
+        print("start_kernel")
+
     def on_jupyter_server_has_new_line(self, server, line):
         self.terminal.feed([ord(char) for char in line + "\r\n"])
 
-    @Gtk.Template.Callback("on_run_button_clicked")
-    def on_run_button_clicked(self, btn):
-        notebook = self.get_selected_notebook()
-
-        notebook.run_selected_cell()
-
-    @Gtk.Template.Callback("on_stop_button_clicked")
-    def on_stop_button_clicked(self, btn):
-        print("STOP!")
-        self.jupyter_server.start()
-
-    @Gtk.Template.Callback("on_restart_button_clicked")
-    def on_restart_button_clicked(self, btn):
+    def restart_kernel(self, *args):
         print("RESTART")
         # self.jupyter_server.restart_kernel(2, lambda *args: print("restarted"))
 
         self.get_selected_notebook()
 
-    @Gtk.Template.Callback("on_restart_and_run_button_clicked")
-    def on_restart_and_run_button_clicked(self, btn):
+    def restart_kernel_and_run(self, *args):
         print("RESTART and run!")
-        self.jupyter_server.restart_kernel(2, lambda *args: print("restarted"))
-
-        first_code_cell = None
-
-        for index, cell in enumerate(self.notebook_model):
-            if not first_code_cell:
-                if cell.cell_type == CellType.CODE:
-                    first_code_cell = cell
-                    continue
-            if cell.cell_type == CellType.CODE:
-                self.queue.append(cell)
-        self.run_cell(first_code_cell)
+        notebook = self.get_selected_notebook()
+        notebook.jupyter_kernel.restart_kernel(2, lambda *args: print("restarted"))
+        notebook.run_all_cells()
 
     def get_selected_notebook(self):
         return self.grid.get_most_recent_frame().get_visible_child().get_child()
@@ -135,11 +145,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.add_action(action)
         return action
 
-    @Gtk.Template.Callback("on_open_notebook_clicked")
-    def on_open_notebook_clicked(self, btn):
-        self.open_notebook()
+    def open_browser_page(self, *args):
+        page = BrowserPage()
+        self.grid.add(page)
 
-    def open_notebook(self):
+    def open_notebook(self, *args):
         file_filter = Gtk.FileFilter(name=_("All supported formats"))
         file_filter.add_pattern("*.ipynb")
         filter_list = Gio.ListStore.new(Gtk.FileFilter())
@@ -165,15 +175,18 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             notebook = Notebook.new_from_json(notebook_node)
             notebook.name = os.path.basename(file_path)
 
-            widget = Panel.Widget(
-                icon_name="python-symbolic",
-                title=notebook.name
-            )
-            widget.connect("presented", self.on_widget_presented)
-            save_delegate = Panel.SaveDelegate()
-            widget.set_save_delegate(save_delegate)
-            widget.set_child(NotebookView(notebook))
-            self.grid.add(widget)
+            self.add_notebook_page(notebook)
+
+    def add_notebook_page(self, notebook):
+        widget = Panel.Widget(
+            icon_name="python-symbolic",
+            title=notebook.name
+        )
+        widget.connect("presented", self.on_widget_presented)
+        save_delegate = Panel.SaveDelegate()
+        widget.set_save_delegate(save_delegate)
+        widget.set_child(NotebookView(notebook))
+        self.grid.add(widget)
 
     def on_widget_presented(self, widget):
         widget = widget.get_child()
@@ -199,10 +212,21 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         new_frame = Panel.Frame()
         new_frame.set_placeholder(
             Adw.StatusPage(
-                title="No pages open"
+                title="No Notebooks Open",
+                child=Gtk.Button(
+                    css_classes=["suggested-action", "pill"],
+                    action_name="win.open-notebook",
+                    label=_("Open Notebook"),
+                    halign=Gtk.Align.CENTER
+                )
             )
         )
         tab_bar = Panel.FrameTabBar()
         new_frame.set_header(tab_bar)
 
         return new_frame
+
+    @Gtk.Template.Callback("on_key_pressed")
+    def on_key_pressed(self, controller, keyval, keycode, state):
+        print(keyval, keycode, state)
+

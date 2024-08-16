@@ -32,10 +32,13 @@ class Notebook(Gio.ListStore):
 
     name = GObject.Property(type=str, default="")
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
 
-        self.name = ""
+        if 'name' in kwargs:
+            self.name = kwargs['name']
+        else:
+            self.name = ""
 
     @classmethod
     def new_from_json(cls, notebook_node):

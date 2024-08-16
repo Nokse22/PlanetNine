@@ -57,6 +57,8 @@ class PlanetnineApplication(Adw.Application):
         self.create_action('about', self.on_about_action)
         self.create_action('preferences', self.on_preferences_action)
 
+        self.create_action('run', self.on_run_action, ['<ctrl>Escape'])
+
     def do_activate(self):
         """Called when the application is activated.
 
@@ -67,6 +69,9 @@ class PlanetnineApplication(Adw.Application):
         if not win:
             win = PlanetnineWindow(application=self)
         win.present()
+
+    def on_run_action(self, *args):
+        self.props.active_window.run_selected_cell()
 
     def on_about_action(self, *args):
         """Callback for the app.about action."""

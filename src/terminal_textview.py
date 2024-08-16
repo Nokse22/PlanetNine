@@ -131,4 +131,3 @@ class TerminalTextView(Gtk.TextView):
         if self.current_tags['underline'] is not None:
             tags.append(buffer.create_tag(underline=self.current_tags['underline']))
         return tags
-

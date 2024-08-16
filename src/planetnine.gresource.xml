@@ -7,6 +7,8 @@
     <file preprocess="xml-stripblanks">gtk/cell.ui</file>
     <file preprocess="xml-stripblanks">gtk/cell_drag.ui</file>
     <file preprocess="xml-stripblanks">gtk/notebook_view.ui</file>
+    <file preprocess="xml-stripblanks">gtk/browser_page.ui</file>
+    <file preprocess="xml-stripblanks">gtk/kernel_manager_view.ui</file>
     <file preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
 
     <file>icons/16x16/actions/arrow-circular-small-top-right-symbolic.svg</file>
@@ -14,5 +16,6 @@
     <file>icons/16x16/actions/seek-forward-large-symbolic.svg</file>
     <file>icons/16x16/actions/stop-symbolic.svg</file>
     <file>icons/16x16/actions/python-symbolic.svg</file>
+    <file>icons/16x16/actions/terminal-symbolic.svg</file>
   </gresource>
 </gresources>
