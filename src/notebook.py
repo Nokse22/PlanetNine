@@ -31,6 +31,7 @@ class Notebook(Gio.ListStore):
     __gtype_name__ = 'Notebook'
 
     name = GObject.Property(type=str, default="")
+    jupyter_kernel = None
 
     def __init__(self, **kwargs):
         super().__init__()
@@ -39,6 +40,8 @@ class Notebook(Gio.ListStore):
             self.name = kwargs['name']
         else:
             self.name = ""
+
+        self.jupyter_kernel = None
 
     @classmethod
     def new_from_json(cls, notebook_node):

@@ -36,15 +36,46 @@ import jupyter_client
 
 from pprint import pprint
 
+class JupyterKernelInfo(GObject.GObject):
+    __gtype_name__ = 'JupyterKernelInfo'
+
+    name = ""
+    display_name = ""
+    language = ""
+    interrupt_mode = ""
+
+    def __init__(self, _display_name=""):
+        super().__init__()
+
+        self.name = ""
+        self.display_name = _display_name
+        self.language = ""
+        self.interrupt_mode = ""
+        self.kernel_id = ""
+
+    @classmethod
+    def new_from_specs(cls, specs):
+        instance = cls()
+
+        instance.name = specs['name']
+        instance.display_name = specs['spec']['display_name']
+        instance.language = specs['spec']['language']
+        instance.interrupt_mode = specs['spec']['interrupt_mode']
+
+        return instance
+
 class JupyterKernel(GObject.GObject):
     __gtype_name__ = 'JupyterKernel'
 
     sandboxed = GObject.Property(type=bool, default=True)
-
     name = GObject.Property(type=str, default='')
+    kernel_id = GObject.Property(type=str, default='')
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, name, kernel_id):
+        super().__init__()
+
+        self.name = name
+        self.kernel_id = kernel_id
 
         self.thread = None
         self.address = ""
@@ -56,8 +87,10 @@ class JupyterKernel(GObject.GObject):
 
         self.data_dir = os.environ["XDG_DATA_HOME"]
 
-    def connect_to_kernel(self, kernel_id):
-        connection_file_path = f"{self.data_dir if self.sandboxed else os.path.join(self.data_dir, './local/share')}/jupyter/runtime/kernel-{kernel_id}.json"
+        self.__connect()
+
+    def __connect(self):
+        connection_file_path = f"{self.data_dir}/jupyter/runtime/kernel-{self.kernel_id}.json"
 
         with open(connection_file_path) as f:
             connection_info = json.load(f)

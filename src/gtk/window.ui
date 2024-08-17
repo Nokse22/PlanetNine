@@ -17,6 +17,8 @@
     <property name="content">
       <object class="PanelDock" id="dock">
         <property name="reveal-start">true</property>
+        <property name="start-width">250</property>
+        <property name="end-width">250</property>
         <property name="vexpand">true</property>
         <child>
           <object class="AdwToolbarView" id="toolbar_view">
@@ -58,6 +60,13 @@
                     <property name="menu-model">primary_menu</property>
                   </object>
                 </child>
+                <child type="end">
+                  <object class="PanelToggleButton">
+                    <property name="dock">dock</property>
+                    <property name="area">end</property>
+                    <property name="tooltip-text" translatable="yes">Toggle Right Panel</property>
+                  </object>
+                </child>
               </object>
             </child>
             <property name="content">
@@ -69,6 +78,7 @@
         </child>
         <child type="start">
           <object class="AdwToolbarView">
+            <property name="width-request">200</property>
             <style>
               <class name="sidebar-color"></class>
             </style>
@@ -77,9 +87,26 @@
                 <property name="show-end-title-buttons">false</property>
               </object>
             </child>
-            <child type="bottom">
-              <object class="PanelStatusbar">
-                <property name="visible">false</property>
+            <property name="content">
+              <object class="PanelPaned">
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="PanelFrame" id="start_sidebar_panel_frame">
+                  </object>
+                </child>
+              </object>
+            </property>
+          </object>
+        </child>
+        <child type="end">
+          <object class="AdwToolbarView">
+            <property name="width-request">200</property>
+            <style>
+              <class name="sidebar-color"></class>
+            </style>
+            <child type="top">
+              <object class="AdwHeaderBar">
+                <property name="show-start-title-buttons">false</property>
               </object>
             </child>
             <property name="content">
@@ -87,28 +114,6 @@
                 <property name="orientation">vertical</property>
                 <child>
                   <object class="PanelFrame">
-                    <child>
-                      <object class="PanelWidget">
-                        <property name="title">Workspace</property>
-                        <property name="tooltip">Workspace</property>
-                        <property name="can-maximize">true</property>
-                        <property name="icon-name">folder-symbolic</property>
-                        <child>
-                          <object class="GtkLabel">
-                            <property name="label">Project tree/folder ?</property>
-                            <property name="vexpand">true</property>
-                            <property name="hexpand">true</property>
-                            <style>
-                              <class name="title-2"></class>
-                            </style>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="KernelManager" id="kernel_manager_view">
-                      </object>
-                    </child>
                   </object>
                 </child>
               </object>
@@ -211,8 +216,19 @@
                   <property name="popover">
                     <object class="GtkPopover">
                       <property name="child">
-                        <object class="GtkLabel">
-                            <property name="label">Kernel Something</property>
+                        <object class="GtkBox">
+                          <property name="orientation">vertical</property>
+                          <property name="spacing">6</property>
+                            <child>
+                              <object class="GtkLabel" id="">
+                                <property name="label">Executed 0/10 Cells</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="label">Elapsed Time: 00:00</property>
+                              </object>
+                            </child>
                           </object>
                         </property>
                       </object>
@@ -248,7 +264,7 @@
     <property name="default-response">select</property>
     <responses>
       <response id="cancel" translatable="yes">_Cancel</response>
-      <response id="select" translatable="yes" appearance="suggested" enabled="false">_Select</response>
+      <response id="select" translatable="yes" appearance="suggested">_Select</response>
     </responses>
     <property name="extra-child">
       <object class="GtkListBox">
@@ -264,14 +280,34 @@
     </property>
     <property name="heading">Select Kernel</property>
   </object>
+  <object class="AdwAlertDialog" id="shutdown_kernel_dialog">
+    <property name="body">The kernel will be shutdown</property>
+    <property name="close-response">cancel</property>
+    <property name="default-response">shutdown</property>
+    <responses>
+      <response id="cancel" translatable="yes">_Cancel</response>
+      <response id="shutdown" translatable="yes" appearance="destructive">Shutdown</response>
+    </responses>
+    <property name="heading">Shutdown Kernel</property>
+  </object>
+  <object class="AdwAlertDialog" id="restart_kernel_dialog">
+    <property name="body">The kernel will be restarted</property>
+    <property name="close-response">cancel</property>
+    <property name="default-response">restart</property>
+    <responses>
+      <response id="cancel" translatable="yes">_Cancel</response>
+      <response id="restart" translatable="yes" appearance="destructive">Restart</response>
+    </responses>
+    <property name="heading">Restart Kernel</property>
+  </object>
   <menu id="add-menu">
     <section>
       <item>
-        <attribute name="label">Text</attribute>
+        <attribute name="label">New Text Cell</attribute>
         <attribute name="action">win.add-text-block</attribute>
       </item>
       <item>
-        <attribute name="label">Raw</attribute>
+        <attribute name="label">New Raw Cell</attribute>
         <attribute name="action">win.add-text-block</attribute>
       </item>
     </section>
@@ -301,6 +337,7 @@
       <item>
         <attribute name="label" translatable="yes">New Notebook</attribute>
         <attribute name="action">win.new-notebook</attribute>
+        <attribute name="target"></attribute>
       </item>
       <item>
         <attribute name="label" translatable="yes">New Browser Page</attribute>

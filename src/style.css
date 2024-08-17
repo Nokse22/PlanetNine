@@ -1,33 +1,33 @@
-list {
+list.notebook-list {
   background-color: transparent;
   border: 1px solid @window_bg_color;
 }
 
-list row {
+list.notebook-list row {
   background-color:transparent;
   padding-top: 3px;
   padding-bottom: 3px;
   border-radius: 12px;
 }
 
-list row:selected frame{
+list.notebook-list row:selected frame{
   background-color:transparent;
   border: 2px alpha(@accent_color, 0.5) solid;
   transition: border ease-in-out 100ms;
 }
 
-list row frame{
+list.notebook-list row frame{
   border-width: 2px;
 }
 
-list row:selected .markdown-view{
-  border: 1px alpha(@accent_color, 0.4) solid;
+list.notebook-list row:selected .markdown-view{
+  border: 2px alpha(@accent_color, 0.4) solid;
 }
 
 .markdown-view {
   background-color: transparent;
   color: @window_fg_color;
-  border: 1px transparent solid;
+  border: 2px transparent solid;
   border-radius: 12px;
   transition: border ease-in-out 200ms;
 }

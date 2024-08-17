@@ -76,8 +76,6 @@ class NotebookView(Gtk.ScrolledWindow):
 
         self.command_line = CommandLine()
 
-        self.jupyter_kernel = None
-
         self.queue = []
 
         self.add_cell(Cell(CellType.CODE))
@@ -139,8 +137,8 @@ class NotebookView(Gtk.ScrolledWindow):
                 self.run_command_callback,
                 cell
             )
-        else:
-            self.jupyter_kernel.run_code(
+        elif self.notebook_model.jupyter_kernel:
+            self.notebook_model.jupyter_kernel.run_code(
                 cell.source,
                 self.run_code_callback,
                 cell
@@ -159,6 +157,9 @@ class NotebookView(Gtk.ScrolledWindow):
             output = Output(OutputType.STREAM)
             output.parse(content)
             cell.add_output(output)
+
+            self._kernel_status = "busy"
+            self.emit("kernel-info-changed", self._kernel_name, self._kernel_status)
 
         elif msg_type == 'execute_input':
             count = content['execution_count']
@@ -179,7 +180,6 @@ class NotebookView(Gtk.ScrolledWindow):
             status = content['execution_state']
 
             self._kernel_status = status
-
             self.emit("kernel-info-changed", self._kernel_name, self._kernel_status)
 
             if status == "idle":
@@ -193,9 +193,9 @@ class NotebookView(Gtk.ScrolledWindow):
                     self.select_next_cell()
 
     def set_kernel(self, jupyter_kernel):
-        self.jupyter_kernel = jupyter_kernel
+        self.notebook_model.jupyter_kernel = jupyter_kernel
         self.kernel_name = jupyter_kernel.name
-        print("NAME: ", self.kernel_name)
+        print("NAME: ", self.kernel_name, self.notebook_model.jupyter_kernel)
 
     def create_widgets(self, cell):
         cell = CellUI(cell)
@@ -294,4 +294,5 @@ class NotebookView(Gtk.ScrolledWindow):
     @Gtk.Template.Callback("on_drop_target_leave")
     def on_drop_target_leave(self, drop_target):
         self.cells_list_box.drag_unhighlight_row()
+
 

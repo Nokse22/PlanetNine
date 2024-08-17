@@ -19,6 +19,9 @@
                 <property name="margin-top">24</property>
                 <property name="margin-bottom">100</property>
                 <property name="selection-mode">single</property>
+                <style>
+                  <class name="notebook-list"></class>
+                </style>
               </object>
             </child>
             <child>

@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Created with Cambalache 0.90.4 -->
+<interface>
+  <!-- interface-name launcher.ui -->
+  <requires lib="gtk" version="4.0"/>
+  <requires lib="libadwaita" version="1.1"/>
+  <template class="Launcher" parent="AdwBin">
+    <child>
+      <object class="AdwPreferencesPage">
+        <child>
+          <object class="AdwPreferencesGroup">
+            <property name="hexpand">True</property>
+            <property name="hexpand-set">True</property>
+            <property name="title">Notebook</property>
+            <child>
+              <object class="GtkListBox" id="notebook_listbox">
+                <property name="selection-mode">none</property>
+                <style>
+                  <class name="boxed-list-separate"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwPreferencesGroup">
+            <property name="hexpand">True</property>
+            <property name="hexpand-set">True</property>
+            <property name="title">Console</property>
+            <child>
+              <object class="GtkListBox" id="console_listbox">
+                <property name="selection-mode">none</property>
+                <style>
+                  <class name="boxed-list-separate"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>
+

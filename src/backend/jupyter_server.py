@@ -36,7 +36,20 @@ import jupyter_client
 
 from pprint import pprint
 
-from .jupyter_kernel import JupyterKernel
+from .jupyter_kernel import JupyterKernel, JupyterKernelInfo
+
+class Session(GObject.GObject):
+    __gtype_name__ = 'Session'
+
+    name = ""
+    kernel = None
+    notebook_store = None
+
+    def __init__(self, _name=""):
+        super().__init__()
+
+        self.name = _name
+        self.notebook_store = Gio.ListStore.new(Notebook)
 
 class JupyterServer(GObject.GObject):
     __gtype_name__ = 'JupyterServer'
@@ -48,6 +61,10 @@ class JupyterServer(GObject.GObject):
 
     sandboxed = GObject.Property(type=bool, default=True)
 
+    avalaible_kernels = Gio.ListStore()
+    kernels = Gio.ListStore()
+    default_kernel_name = GObject.Property(type=str, default="")
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -57,7 +74,10 @@ class JupyterServer(GObject.GObject):
 
         self.sandboxed = True
 
-        # self.sessions = Gio.ListStore(Session)
+        self.sessions = Gio.ListStore.new(Session)
+        self.kernels = Gio.ListStore.new(JupyterKernel)
+        self.avalaible_kernels = Gio.ListStore.new(JupyterKernelInfo)
+        self.default_kernel_name = ""
 
         self.data_dir = os.environ["XDG_DATA_HOME"]
 
@@ -95,17 +115,21 @@ class JupyterServer(GObject.GObject):
         asyncio.create_task(self.__start_kernel_by_name(kernel_name, callback, *args))
 
     async def __start_kernel_by_name(self, kernel_name, callback, *args):
-        response = requests.post(
-            f'{self.address}/api/kernels',
-            params={"token": self.token},
-            json={"name": kernel_name}
-        )
+        try:
+            response = await asyncio.to_thread(
+                requests.post,
+                f'{self.address}/api/kernels',
+                params={"token": self.token},
+                json={"name": kernel_name if kernel_name != "" else self.default_kernel_name}
+            )
+        except:
+            callback(False, None, *args)
+            return
 
         if response.status_code == 201:
             kernel_info = response.json()
-            kernel = JupyterKernel()
-            kernel.name = kernel_name
-            kernel.connect_to_kernel(kernel_info['id'])
+            kernel = JupyterKernel(kernel_info['name'], kernel_info['id'])
+            self.kernels.append(kernel)
             callback(True, kernel, *args)
         else:
             callback(False, None, *args)
@@ -119,31 +143,56 @@ class JupyterServer(GObject.GObject):
         asyncio.create_task(self.__get_kernel_specs(callback, *args))
 
     async def __get_kernel_specs(self, callback, *args):
-        response = requests.get(f'{self.address}/api/kernelspecs', params={"token": self.token})
+        try:
+            response = await asyncio.to_thread(
+                requests.get,
+                f'{self.address}/api/kernelspecs',
+                params={"token": self.token}
+            )
+        except:
+            callback(False, None, *args)
+            return
 
         if response.status_code == 200:
             kernel_specs = response.json()
-            GLib.idle_add(callback, True, kernel_specs, *args)
+            pprint(kernel_specs)
+            self.default_kernel_name = kernel_specs['default']
+            for name, kernel_spec in kernel_specs['kernelspecs'].items():
+                kernel_info = JupyterKernelInfo.new_from_specs(kernel_spec)
+                print(kernel_info)
+                self.avalaible_kernels.append(kernel_info)
+            callback(True, kernel_specs, *args)
         else:
-            GLib.idle_add(callback, False, None, *args)
+            callback(False, None, *args)
 
     def get_sessions(self, callback, *args):
         asyncio.create_task(self.__get_sessions(callback, *args))
 
     async def __get_sessions(self, callback, *args):
-        response = requests.get(f'{self.address}/api/sessions', params={"token": self.token})
+        try:
+            response = await asyncio.to_thread(
+                requests.get,
+                f'{self.address}/api/sessions',
+                params={"token": self.token}
+            )
+        except:
+            callback(False, None, *args)
+            return
 
         if response.status_code == 200:
             sessions = response.json()
-            GLib.idle_add(callback, True, sessions, *args)
+            callback(True, sessions, *args)
         else:
-            GLib.idle_add(callback, False, None, *args)
+            callback(False, None, *args)
 
     def new_session(self, kernel_name, session_name, callback, *args):
-        asyncio.create_task(self.__new_session(kernel_name, session_name, callback, *args))
+        asyncio.create_task(
+            self.__new_session(kernel_name, session_name, callback, *args)
+        )
 
-    async def __new_session(self, kernel_name, session_name, callback, *args):
-        response = requests.post(
+    async def __new_session(self, kernel_name, session_name, notebook_path, callback, *args):
+        response = await asyncio.to_thread(
+            requests.post,
             f'{self.address}/api/sessions',
             params={"token": self.token},
             json={
@@ -151,7 +200,7 @@ class JupyterServer(GObject.GObject):
                     "name": kernel_name
                 },
                 "name": session_name,
-                "path": f"/",
+                "path": notebook_path,
                 "type": "notebook"
             }
         )
@@ -159,19 +208,78 @@ class JupyterServer(GObject.GObject):
         if response.status_code == 201:
             session = response.json()
             location_url = response.headers.get('Location', None)
-            print("Location URL:", location_url)
-            GLib.idle_add(callback, True, session, *args)
+            callback(True, session, *args)
         else:
-            GLib.idle_add(callback, False, None, *args)
+            callback(False, None, *args)
 
     def get_kernel_info(self, kernel_id, callback, *args):
-        asyncio.create_task(self.__get_kernel_info(kernel_id, callback, *args))
+        asyncio.create_task(
+            self.__get_kernel_info(kernel_id, callback, *args)
+        )
 
     async def __get_kernel_info(self, kernel_id, callback, *args):
-        response = requests.get(f'{self.address}/api/kernels/{kernel_id}', params={"token": self.token})
+        response = await asyncio.to_thread(
+            requests.get,
+            f'{self.address}/api/kernels/{kernel_id}',
+            params={"token": self.token}
+        )
 
         if response.status_code == 200:
             sessions = response.json()
-            GLib.idle_add(callback, True, sessions, *args)
+            callback(True, sessions, *args)
         else:
-            GLib.idle_add(callback, False, None, *args)
+            callback(False, None, *args)
+
+    def shutdown_kernel(self, kernel_id, callback, *args):
+        asyncio.create_task(
+            self.__shutdown_kernel(kernel_id, callback, *args)
+        )
+
+    async def __shutdown_kernel(self, kernel_id, callback, *args):
+        response = await asyncio.to_thread(
+            requests.delete,
+            f'{self.address}/api/kernels/{kernel_id}',
+            params={"token": self.token}
+        )
+
+        if response.status_code == 200:
+            for index, kernel in enumerate(self.kernels):
+                if kernel.kernel_id == kernel_id:
+                    self.kernels.remove(index)
+            callback(True, *args)
+        else:
+            callback(False, *args)
+
+    def restart_kernel(self, kernel_id, callback, *args):
+        asyncio.create_task(
+            self.__restart_kernel(kernel_id, callback, *args)
+        )
+
+    async def __restart_kernel(self, kernel_id, callback, *args):
+        response = await asyncio.to_thread(
+            requests.post,
+            f'{self.address}/api/kernels/{kernel_id}/restart',
+            params={"token": self.token}
+        )
+
+        if response.status_code == 200:
+            callback(True, *args)
+        else:
+            callback(False, *args)
+
+    def interrupt_kernel(self, kernel_id, callback, *args):
+        asyncio.create_task(
+            self.__interrupt_kernel(kernel_id, callback, *args)
+        )
+
+    async def __interrupt_kernel(self, kernel_id, callback, *args):
+        response = await asyncio.to_thread(
+            requests.post,
+            f'{self.address}/api/kernels/{kernel_id}/interrupt',
+            params={"token": self.token}
+        )
+
+        if response.status_code == 200:
+            callback(True, *args)
+        else:
+            callback(False, *args)

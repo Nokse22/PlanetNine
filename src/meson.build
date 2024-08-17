@@ -40,6 +40,8 @@ planetnine_sources = [
   'browser_page.py',
   'image_view.py',
   'kernel_manager_view.py',
+  'workspace_view.py',
+  'launcher.py',
 
   'backend/command_line.py',
   'backend/jupyter_kernel.py',
