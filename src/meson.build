@@ -42,6 +42,7 @@ planetnine_sources = [
   'kernel_manager_view.py',
   'workspace_view.py',
   'launcher.py',
+  'console_page.py',
 
   'backend/command_line.py',
   'backend/jupyter_kernel.py',

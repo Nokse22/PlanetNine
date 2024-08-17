@@ -99,18 +99,6 @@ class JupyterKernel(GObject.GObject):
         self.kernel_client.load_connection_info(connection_info)
         self.kernel_client.start_channels()
 
-    def restart_kernel(self, kernel_id, callback, *args):
-        asyncio.create_task(self.__restart_kernel(kernel_id, callback, *args))
-
-    async def __restart_kernel(self, kernel_id, callback, *args):
-        callback(False, kernel_id, *args)
-
-    def shutdown_kernel(self, kernel_id, callback, *args):
-        asyncio.create_task(self.__shutdown_kernel(kernel_id, callback, *args))
-
-    async def __shutdown_kernel(self, kernel_id, callback, *args):
-        callback(False, kernel_id, *args)
-
     def run_code(self, code, callback, *args):
         asyncio.create_task(self.__run_code(code, callback, *args))
 
@@ -121,7 +109,11 @@ class JupyterKernel(GObject.GObject):
         msg_id = self.kernel_client.execute(code)
 
         while True:
-            msg = await self.kernel_client.get_iopub_msg()
+            try:
+                msg = await self.kernel_client.get_iopub_msg()
+            except:
+                callback(msg, *args)
+                return
 
             if msg['header']['msg_type'] == 'status':
                 status = msg['content']['execution_state']

@@ -26,6 +26,7 @@ from gi.repository import Panel
 
 import os
 import nbformat
+import logging
 from pprint import pprint
 
 from .jupyter_server import JupyterServer
@@ -37,6 +38,7 @@ from .browser_page import BrowserPage
 from .kernel_manager_view import KernelManagerView
 from .workspace_view import WorkspaceView
 from .launcher import Launcher
+from .console_page import ConsolePage
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/window.ui')
@@ -88,6 +90,12 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             'new-notebook',
             GLib.VariantType.new("s"),
             self.on_new_notebook_action
+        )
+
+        self.create_action_with_target(
+            'new-console',
+            GLib.VariantType.new("s"),
+            self.on_new_console_action
         )
 
         self.create_action('run-selected-cell', self.run_selected_cell)
@@ -142,8 +150,19 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             notebook_view
         )
 
-    def on_kernel_started(self, success, kernel, notebook):
-        notebook.set_kernel(kernel)
+    def on_new_console_action(self, action, variant):
+        console = ConsolePage()
+
+        self.grid.add(console)
+
+        self.jupyter_server.start_kernel_by_name(
+            variant.get_string(),
+            self.on_kernel_started,
+            console
+        )
+
+    def on_kernel_started(self, success, kernel, page):
+        page.set_kernel(kernel)
 
     def start_server(self, *args):
         self.jupyter_server.start()
@@ -176,25 +195,28 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #   RESTART_KERNEL
     #
 
-    def restart_kernel_by_id(self, kernel_id):
+    def restart_kernel_by_id(self, kernel_id, callback=None):
         self.restart_kernel_dialog.choose(
             self,
             None,
             self.on_restart_kernel_choosen,
-            kernel_id
+            kernel_id,
+            callback
         )
 
-    def on_restart_kernel_choosen(self, dialog, result, kernel_id):
+    def on_restart_kernel_choosen(self, dialog, result, kernel_id, callback=None):
         choice = dialog.choose_finish(result)
 
         if choice == 'restart':
             self.jupyter_server.restart_kernel(
                 kernel_id,
-                self.on_kernel_is_restarted
+                self.on_kernel_is_restarted,
+                callback
             )
 
-    def on_kernel_is_restarted(self, success):
+    def on_kernel_is_restarted(self, success, callback):
         print("Restarted")
+        callback()
 
     #
     #   INTERRUPT KERNEL
@@ -234,11 +256,17 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     def restart_kernel_and_run(self, *args):
         notebook = self.get_selected_notebook()
-        notebook.jupyter_kernel.restart_kernel(2, lambda *args: print("restarted"))
-        notebook.run_all_cells()
+        kernel_id = notebook.notebook_model.jupyter_kernel.kernel_id
+        self.restart_kernel_by_id(
+            kernel_id,
+            lambda: notebook.run_all_cells()
+        )
 
     def get_selected_notebook(self):
-        return self.grid.get_most_recent_frame().get_visible_child().get_child()
+        try:
+            return self.grid.get_most_recent_frame().get_visible_child().get_child()
+        except Exception as e:
+            logging.Logger.debug(f"{e}")
 
     def create_action(self, name, callback):
         action = Gio.SimpleAction.new(name, None)

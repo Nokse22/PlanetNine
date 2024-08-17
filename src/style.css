@@ -1,6 +1,5 @@
 list.notebook-list {
   background-color: transparent;
-  border: 1px solid @window_bg_color;
 }
 
 list.notebook-list row {
@@ -22,6 +21,17 @@ list.notebook-list row frame{
 
 list.notebook-list row:selected .markdown-view{
   border: 2px alpha(@accent_color, 0.4) solid;
+}
+
+list.console {
+  background-color: transparent;
+}
+
+list.console row {
+  background-color:transparent;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  border-radius: 12px;
 }
 
 .markdown-view {

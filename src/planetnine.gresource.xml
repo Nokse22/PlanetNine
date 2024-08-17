@@ -11,6 +11,7 @@
     <file preprocess="xml-stripblanks">gtk/kernel_manager_view.ui</file>
     <file preprocess="xml-stripblanks">gtk/launcher.ui</file>
     <file preprocess="xml-stripblanks">gtk/workspace_view.ui</file>
+    <file preprocess="xml-stripblanks">gtk/console_page.ui</file>
     <file preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
 
     <file>icons/16x16/actions/arrow-circular-small-top-right-symbolic.svg</file>
@@ -21,5 +22,6 @@
     <file>icons/16x16/actions/terminal-symbolic.svg</file>
     <file>icons/16x16/actions/right-symbolic.svg</file>
     <file>icons/16x16/actions/processor-symbolic.svg</file>
+    <file>icons/16x16/actions/arrow-turn-right-up-symbolic.svg</file>
   </gresource>
 </gresources>
