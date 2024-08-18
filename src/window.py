@@ -27,13 +27,16 @@ from gi.repository import Panel
 import os
 import nbformat
 import logging
+import asyncio
 from pprint import pprint
+
+from .async_helpers import dialog_choose_async
 
 from .jupyter_server import JupyterServer
 from .cell import Cell, CellType
 from .command_line import CommandLine
 from .notebook import Notebook
-from .notebook_view import NotebookView
+from .notebook_page import NotebookPage
 from .browser_page import BrowserPage
 from .kernel_manager_view import KernelManagerView
 from .workspace_view import WorkspaceView
@@ -60,6 +63,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+        Gio.Subprocess.new(
+            ['pylsp', '--tcp', '--host', '127.0.0.1', '--port', '2087'],
+            Gio.SubprocessFlags.NONE
+        )
+
         self.jupyter_server = JupyterServer()
 
         self.jupyter_server.connect("started", self.on_jupyter_server_started)
@@ -79,12 +87,16 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.terminal.set_color_background(Gdk.RGBA(alpha=1))
 
         self.create_action(
-            'add-text-block',
+            'add-text-cell',
             lambda *_: self.add_cell_to_selected_notebook(Cell(CellType.TEXT))
         )
         self.create_action(
-            'add-code-block',
+            'add-code-cell',
             lambda *_: self.add_cell_to_selected_notebook(Cell(CellType.CODE))
+        )
+        self.create_action(
+            'add-raw-cell',
+            lambda *_: self.add_cell_to_selected_notebook(Cell(CellType.TEXT))
         )
         self.create_action_with_target(
             'new-notebook',
@@ -103,18 +115,19 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.create_action_with_target(
             'shutdown-kernel',
             GLib.VariantType.new("s"),
-            lambda _, variant: self.shutdown_kernel_by_id(variant.get_string())
+            self.shutdown_kernel_by_id
         )
         self.create_action_with_target(
             'interrupt-kernel',
             GLib.VariantType.new("s"),
-            lambda _, variant: self.interrupt_kernel_by_id(variant.get_string())
+            self.interrupt_kernel_by_id
         )
         self.create_action_with_target(
             'restart-kernel',
             GLib.VariantType.new("s"),
-            lambda _, variant: self.restart_kernel_by_id(variant.get_string())
+            self.restart_kernel_by_id
         )
+
         self.create_action('restart-kernel-and-run', self.restart_kernel_and_run)
         self.create_action('start-server', self.start_server)
 
@@ -130,39 +143,45 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.grid.add(widget)
         widget.close()
 
+    #
+    #   NEW NOTEBOOK WITH KERNEL NAME
+    #
+
     def on_new_notebook_action(self, action, variant):
+        asyncio.create_task(self.__on_new_notebook_action(variant.get_string()))
+
+    async def __on_new_notebook_action(self, kernel_name):
         notebook = Notebook(name="Untitled.ipynb")
 
-        widget = Panel.Widget(
-            icon_name="python-symbolic",
-            title=notebook.name
-        )
-        widget.connect("presented", self.on_widget_presented)
-        save_delegate = Panel.SaveDelegate()
-        widget.set_save_delegate(save_delegate)
-        notebook_view = NotebookView(notebook)
-        widget.set_child(notebook_view)
-        self.grid.add(widget)
+        notebook_page = NotebookPage(notebook)
+        notebook_page.connect("presented", self.on_widget_presented)
+        self.grid.add(notebook_page)
 
-        self.jupyter_server.start_kernel_by_name(
-            variant.get_string(),
-            self.on_kernel_started,
-            notebook_view
-        )
+        success, kernel = await self.jupyter_server.start_kernel_by_name(kernel_name)
+
+        if success:
+            notebook_page.set_kernel(kernel)
+
+    #
+    #   NEW CONSOLE WITH KERNEL NAME
+    #
 
     def on_new_console_action(self, action, variant):
+        asyncio.create_task(self.__on_new_console_action(variant.get_string()))
+
+    async def __on_new_console_action(self, kernel_name):
         console = ConsolePage()
 
         self.grid.add(console)
 
-        self.jupyter_server.start_kernel_by_name(
-            variant.get_string(),
-            self.on_kernel_started,
-            console
-        )
+        success, kernel = await self.jupyter_server.start_kernel_by_name(kernel_name)
 
-    def on_kernel_started(self, success, kernel, page):
-        page.set_kernel(kernel)
+        if success:
+            console.set_kernel(kernel)
+
+    #
+    #   START SERVER
+    #
 
     def start_server(self, *args):
         self.jupyter_server.start()
@@ -171,65 +190,49 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #   SHUTDOWN KERNEL
     #
 
-    def shutdown_kernel_by_id(self, kernel_id):
-        self.shutdown_kernel_dialog.choose(
-            self,
-            None,
-            self.on_shutdown_kernel_choosen,
-            kernel_id
-        )
+    def shutdown_kernel_by_id(self, action, variant):
+        asyncio.create_task(self.__shutdown_kernel_by_id(variant.get_string()))
 
-    def on_shutdown_kernel_choosen(self, dialog, result, kernel_id):
-        choice = dialog.choose_finish(result)
+    async def __shutdown_kernel_by_id(self, kernel_id):
+        choice = await dialog_choose_async(self, self.shutdown_kernel_dialog)
 
         if choice == 'shutdown':
-            self.jupyter_server.shutdown_kernel(
-                kernel_id,
-                self.on_kernel_is_shutdown
-            )
-
-    def on_kernel_is_shutdown(self, success):
-        pass
+            success = await self.jupyter_server.shutdown_kernel(kernel_id)
+            if success:
+                print("kernel has shut down")
+            else:
+                print("kernel has NOT shut down")
 
     #
     #   RESTART_KERNEL
     #
 
-    def restart_kernel_by_id(self, kernel_id, callback=None):
-        self.restart_kernel_dialog.choose(
-            self,
-            None,
-            self.on_restart_kernel_choosen,
-            kernel_id,
-            callback
-        )
+    def restart_kernel_by_id(self, action, variant):
+        asyncio.create_task(self.__restart_kernel_by_id(variant.get_string()))
 
-    def on_restart_kernel_choosen(self, dialog, result, kernel_id, callback=None):
-        choice = dialog.choose_finish(result)
+    async def __restart_kernel_by_id(self, kernel_id):
+        choice = await dialog_choose_async(self, self.restart_kernel_dialog)
 
         if choice == 'restart':
-            self.jupyter_server.restart_kernel(
-                kernel_id,
-                self.on_kernel_is_restarted,
-                callback
-            )
-
-    def on_kernel_is_restarted(self, success, callback):
-        print("Restarted")
-        callback()
+            success = await self.jupyter_server.restart_kernel(kernel_id)
+            if success:
+                print("kernel has restarted")
+            else:
+                print("kernel has NOT restarted")
 
     #
     #   INTERRUPT KERNEL
     #
 
-    def interrupt_kernel_by_id(self, kernel_id):
-        self.jupyter_server.interrupt_kernel(
-            kernel_id,
-            self.on_kernel_is_interrupted
-        )
+    def interrupt_kernel_by_id(self, action, variant):
+        asyncio.create_task(self.__restart_kernel_by_id(variant.get_string()))
 
-    def on_kernel_is_interrupted(self, success):
-        print("Interrupted")
+    def __interrupt_kernel_by_id(self, kernel_id):
+        success = self.jupyter_server.interrupt_kernel(kernel_id)
+        if success:
+            print("kernel has been interrupted")
+        else:
+            print("kernel has NOT been interrupted")
 
     #
     #
@@ -245,11 +248,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     def on_jupyter_server_started(self, server):
         self.server_status_label.set_label(_("Server Connected"))
-        self.jupyter_server.get_kernel_specs(self.on_got_kernel_specs)
-
-    def on_got_kernel_specs(self, success, specs):
-        if not success:
-            self.jupyter_server.get_kernel_specs(self.on_got_kernel_specs)
 
     def on_jupyter_server_has_new_line(self, server, line):
         self.terminal.feed([ord(char) for char in line + "\r\n"])
@@ -264,7 +262,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     def get_selected_notebook(self):
         try:
-            return self.grid.get_most_recent_frame().get_visible_child().get_child()
+            return self.grid.get_most_recent_frame().get_visible_child()
         except Exception as e:
             logging.Logger.debug(f"{e}")
 
@@ -317,22 +315,22 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         widget.connect("presented", self.on_widget_presented)
         save_delegate = Panel.SaveDelegate()
         widget.set_save_delegate(save_delegate)
-        widget.set_child(NotebookView(notebook))
+        widget.set_child(NotebookPage(notebook))
         self.grid.add(widget)
 
     def on_widget_presented(self, widget):
         widget = widget.get_child()
 
-        if isinstance(self.previously_presented_widget, NotebookView):
+        if isinstance(self.previously_presented_widget, NotebookPage):
             self.previously_presented_widget.disconnect_by_func(self.on_kernel_info_changed)
 
-        if isinstance(widget, NotebookView):
+        if isinstance(widget, NotebookPage):
             widget.connect("kernel-info-changed", self.on_kernel_info_changed)
             self.set_kernel_info(widget.kernel_name, widget.kernel_status)
 
         self.previously_presented_widget = widget
 
-    def on_kernel_info_changed(self, notebook_view, kernel_name, status):
+    def on_kernel_info_changed(self, notebook_page, kernel_name, status):
         self.set_kernel_info(kernel_name, status)
 
     def set_kernel_info(self, kernel_name, status):

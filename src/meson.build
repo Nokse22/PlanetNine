@@ -36,13 +36,17 @@ planetnine_sources = [
   'markdown_textview.py',
   'terminal_textview.py',
   'notebook.py',
-  'notebook_view.py',
+  'notebook_page.py',
   'browser_page.py',
   'image_view.py',
   'kernel_manager_view.py',
   'workspace_view.py',
   'launcher.py',
   'console_page.py',
+
+  'async_helpers.py',
+
+  'completion_providers.py',
 
   'backend/command_line.py',
   'backend/jupyter_kernel.py',

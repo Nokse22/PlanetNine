@@ -18,18 +18,21 @@
             <property name="margin-top">6</property>
             <property name="margin-bottom">6</property>
             <child>
-              <object class="GtkButton">
+              <object class="GtkButton" id="back_button">
                 <property name="icon-name">back-symbolic</property>
+                <signal name="clicked" handler="on_back_clicked"/>
               </object>
             </child>
             <child>
-              <object class="GtkButton">
+              <object class="GtkButton" id="forward_button">
                 <property name="icon-name">forward-symbolic</property>
+                <!-- <signal name="clicked" handler="on_forward_clicked"/> -->
               </object>
             </child>
             <child>
-              <object class="GtkButton">
+              <object class="GtkButton" id="reload_button">
                 <property name="icon-name">reload-symbolic</property>
+                <!-- <signal name="clicked" handler="on_reload_clicked"/> -->
               </object>
             </child>
             <child>

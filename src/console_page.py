@@ -20,19 +20,33 @@
 from gi.repository import Gtk, GObject, Adw
 from gi.repository import Panel, GtkSource
 
+import sys
+
+from .completion_providers import LSPCompletionProvider, WordsCompletionProvider
+
 GObject.type_register(Panel.Widget)
+
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/console_page.ui')
 class ConsolePage(Panel.Widget):
     __gtype_name__ = 'ConsolePage'
 
+    source_view = Gtk.Template.Child()
     code_buffer = Gtk.Template.Child()
+    send_button = Gtk.Template.Child()
 
     def __init__(self):
         super().__init__()
 
+        self.actions_signals = []
+        self.bindings = []
+
+        self.connect("unrealize", self.__on_unrealized)
+
+        self.send_button.connect("clicked", self.on_send_clicked)
+
         lm = GtkSource.LanguageManager()
-        lang = lm.get_language("python")
+        lang = lm.get_language("python3")
         self.code_buffer.set_language(lang)
         self.code_buffer.set_highlight_syntax(True)
 
@@ -40,9 +54,17 @@ class ConsolePage(Panel.Widget):
         scheme = sm.get_scheme("Adwaita-dark")
         self.code_buffer.set_style_scheme(scheme)
 
-        style_manager = Adw.StyleManager.get_default()
-        style_manager.connect("notify::dark", self.update_style_scheme)
+        self.style_manager = Adw.StyleManager.get_default()
+        self.style_manager.connect("notify::dark", self.update_style_scheme)
         self.update_style_scheme()
+
+        completion = self.source_view.get_completion()
+
+        completion_words = WordsCompletionProvider()
+        completion_words.register(self.code_buffer)
+
+        completion.add_provider(completion_words)
+        # completion.add_provider(PyLSPCompletionProvider())
 
     def set_kernel(self, jupyter_kernel):
         print(jupyter_kernel)
@@ -55,7 +77,6 @@ class ConsolePage(Panel.Widget):
         scheme = sm.get_scheme(scheme_name)
         self.code_buffer.set_style_scheme(scheme)
 
-    @Gtk.Template.Callback("on_send_clicked")
     def on_send_clicked(self, *args):
         self.run_code()
 
@@ -73,8 +94,7 @@ class ConsolePage(Panel.Widget):
         elif self.notebook_model.jupyter_kernel:
             self.notebook_model.jupyter_kernel.run_code(
                 content,
-                self.run_code_callback,
-                cell
+                self.run_code_callback
             )
 
     # def run_command_callback(self, line, cell):
@@ -82,7 +102,7 @@ class ConsolePage(Panel.Widget):
     #     output.text = line + '\n'
     #     cell.add_output(output)
 
-    def run_code_callback(self, msg, cell):
+    def run_code_callback(self, msg):
         msg_type = msg['header']['msg_type']
         content = msg['content']
 
@@ -121,7 +141,18 @@ class ConsolePage(Panel.Widget):
         return self.code_buffer.get_text(start, end, True)
 
     def __on_unrealized(self, *args):
-        pass
+        self.style_manager.disconnect_by_func(self.update_style_scheme)
+        self.send_button.disconnect_by_func(self.on_send_clicked)
+
+        for action, callback in self.actions_signals:
+            action.disconnect_by_func(callback)
+
+        for binding in self.bindings:
+            binding.unbind()
+
+        self.disconnect_by_func(self.__on_unrealized)
+
+        print("unrealize:", sys.getrefcount(self))
 
     def __del__(self, *args):
         print(f"DELETING {self}")

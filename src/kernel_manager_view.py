@@ -129,6 +129,9 @@ class KernelManagerView(Panel.Widget):
     def on_setup(self, factory, list_item):
         list_item.set_child(RowWidget())
 
+        for kernel in self.running_kernels_model:
+            print(kernel)
+
     @Gtk.Template.Callback("on_bind")
     def on_bind(self, factory, list_item):
         item = list_item.get_item()
@@ -161,11 +164,11 @@ class KernelManagerView(Panel.Widget):
             menu_model = Gio.Menu()
             menu_item = Gio.MenuItem()
             menu_item.set_label("New Notebook from Kernel")
-            menu_item.set_action_and_target_value("win.new-notebook")
+            menu_item.set_action_and_target_value("win.new-notebook", GLib.Variant("s", item.kernel_id))
             menu_model.append_item(menu_item)
             menu_item = Gio.MenuItem()
             menu_item.set_label("New Console from Kernel")
-            menu_item.set_action_and_target_value("win.new-console")
+            menu_item.set_action_and_target_value("win.new-console", GLib.Variant("s", item.kernel_id))
             menu_model.append_item(menu_item)
             menu_item = Gio.MenuItem()
             menu_item.set_label("Restart")

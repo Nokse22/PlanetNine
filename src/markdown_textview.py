@@ -17,10 +17,9 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import gi
-gi.require_version('Gtk', '4.0')
 from gi.repository import Gtk, Pango, GObject
 
+import sys
 import re
 
 class MarkdownTextView(Gtk.TextView):
@@ -32,6 +31,8 @@ class MarkdownTextView(Gtk.TextView):
 
     def __init__(self):
         super().__init__()
+
+        self.connect("unrealize", self.__on_unrealized)
 
         self.set_css_name("markdownview")
 
@@ -233,6 +234,10 @@ class MarkdownTextView(Gtk.TextView):
         self.buffer.disconnect_by_func(self.on_text_changed)
         self.buffer.disconnect_by_func(self.on_text_inserted)
         self.buffer.disconnect_by_func(self.on_text_deleted)
+
+        self.disconnect_by_func(self.__on_unrealized)
+
+        print("unrealize:", sys.getrefcount(self))
 
     def __del__(self, *args):
         print(f"DELETING {self}")

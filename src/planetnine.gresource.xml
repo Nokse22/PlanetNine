@@ -6,7 +6,7 @@
     <file preprocess="xml-stripblanks">gtk/window.ui</file>
     <file preprocess="xml-stripblanks">gtk/cell.ui</file>
     <file preprocess="xml-stripblanks">gtk/cell_drag.ui</file>
-    <file preprocess="xml-stripblanks">gtk/notebook_view.ui</file>
+    <file preprocess="xml-stripblanks">gtk/notebook_page.ui</file>
     <file preprocess="xml-stripblanks">gtk/browser_page.ui</file>
     <file preprocess="xml-stripblanks">gtk/kernel_manager_view.ui</file>
     <file preprocess="xml-stripblanks">gtk/launcher.ui</file>

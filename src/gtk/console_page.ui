@@ -51,7 +51,7 @@
                         <property name="propagate-natural-height">True</property>
                         <property name="max-content-height">300</property>
                         <child>
-                          <object class="GtkSourceView">
+                          <object class="GtkSourceView" id="source_view">
                             <property name="monospace">True</property>
                             <property name="auto-indent">True</property>
                             <property name="top-margin">12</property>
@@ -68,7 +68,6 @@
                                 <property name="enable-undo">True</property>
                                 <property name="highlight-syntax">True</property>
                                 <property name="highlight-matching-brackets">True</property>
-                                <signal name="changed" handler="on_source_changed"/>
                               </object>
                             </property>
                           </object>
@@ -78,12 +77,11 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkButton">
+                  <object class="GtkButton" id="send_button">
                     <property name="valign">center</property>
                     <property name="icon-name">arrow-turn-right-up-symbolic</property>
                     <property name="css-classes">suggested-action
 circular</property>
-                    <signal name="clicked" handler="on_send_clicked"/>
                   </object>
                 </child>
               </object>

@@ -20,23 +20,17 @@
 from gi.repository import GLib
 from gi.repository import Gio
 from gi.repository import GObject
-from gi.events import GLibEventLoopPolicy
 
-import subprocess
 import re
-import threading
-import time
-import json
 import os
-
 import asyncio
-
 import requests
-import jupyter_client
 
 from pprint import pprint
 
 from .jupyter_kernel import JupyterKernel, JupyterKernelInfo
+from .notebook import Notebook
+
 
 class Session(GObject.GObject):
     __gtype_name__ = 'Session'
@@ -50,6 +44,7 @@ class Session(GObject.GObject):
 
         self.name = _name
         self.notebook_store = Gio.ListStore.new(Notebook)
+
 
 class JupyterServer(GObject.GObject):
     __gtype_name__ = 'JupyterServer'
@@ -111,10 +106,15 @@ class JupyterServer(GObject.GObject):
                     self.token = match.group(3)
                     self.emit("started")
 
-    def start_kernel_by_name(self, kernel_name, callback, *args):
-        asyncio.create_task(self.__start_kernel_by_name(kernel_name, callback, *args))
+                    asyncio.create_task(self.get_avalaible_kernels())
 
-    async def __start_kernel_by_name(self, kernel_name, callback, *args):
+    async def get_avalaible_kernels(self):
+        while True:
+            success, kernel_specs = await self.get_kernel_specs()
+            if success:
+                break
+
+    async def start_kernel_by_name(self, kernel_name):
         try:
             response = await asyncio.to_thread(
                 requests.post,
@@ -122,36 +122,28 @@ class JupyterServer(GObject.GObject):
                 params={"token": self.token},
                 json={"name": kernel_name if kernel_name != "" else self.default_kernel_name}
             )
-        except:
-            callback(False, None, *args)
-            return
+        except Exception as e:
+            print(e)
+            return False, None
 
         if response.status_code == 201:
             kernel_info = response.json()
             kernel = JupyterKernel(kernel_info['name'], kernel_info['id'])
             self.kernels.append(kernel)
-            callback(True, kernel, *args)
+            return True, kernel
         else:
-            callback(False, None, *args)
+            return False, None
 
-    def get_kernel_specs(self, callback, *args):
-        """
-        Returns data about the default kernel and avalaible kernels.
-
-        callback(successful, kernel_specs, args)
-        """
-        asyncio.create_task(self.__get_kernel_specs(callback, *args))
-
-    async def __get_kernel_specs(self, callback, *args):
+    async def get_kernel_specs(self):
         try:
             response = await asyncio.to_thread(
                 requests.get,
                 f'{self.address}/api/kernelspecs',
                 params={"token": self.token}
             )
-        except:
-            callback(False, None, *args)
-            return
+        except Exception as e:
+            print(e)
+            return False, None
 
         if response.status_code == 200:
             kernel_specs = response.json()
@@ -159,127 +151,118 @@ class JupyterServer(GObject.GObject):
             self.default_kernel_name = kernel_specs['default']
             for name, kernel_spec in kernel_specs['kernelspecs'].items():
                 kernel_info = JupyterKernelInfo.new_from_specs(kernel_spec)
-                print(kernel_info)
                 self.avalaible_kernels.append(kernel_info)
-            callback(True, kernel_specs, *args)
+            return True, kernel_specs
         else:
-            callback(False, None, *args)
+            return False, None
 
-    def get_sessions(self, callback, *args):
-        asyncio.create_task(self.__get_sessions(callback, *args))
-
-    async def __get_sessions(self, callback, *args):
+    async def get_sessions(self):
         try:
             response = await asyncio.to_thread(
                 requests.get,
                 f'{self.address}/api/sessions',
                 params={"token": self.token}
             )
-        except:
-            callback(False, None, *args)
-            return
+        except Exception as e:
+            print(e)
+            return False, None
 
         if response.status_code == 200:
             sessions = response.json()
-            callback(True, sessions, *args)
+            return True, sessions
         else:
-            callback(False, None, *args)
+            return False, None
 
-    def new_session(self, kernel_name, session_name, callback, *args):
-        asyncio.create_task(
-            self.__new_session(kernel_name, session_name, callback, *args)
-        )
-
-    async def __new_session(self, kernel_name, session_name, notebook_path, callback, *args):
-        response = await asyncio.to_thread(
-            requests.post,
-            f'{self.address}/api/sessions',
-            params={"token": self.token},
-            json={
-                "kernel": {
-                    "name": kernel_name
-                },
-                "name": session_name,
-                "path": notebook_path,
-                "type": "notebook"
-            }
-        )
+    async def new_session(self, kernel_name, session_name, notebook_path):
+        try:
+            response = await asyncio.to_thread(
+                requests.post,
+                f'{self.address}/api/sessions',
+                params={"token": self.token},
+                json={
+                    "kernel": {
+                        "name": kernel_name
+                    },
+                    "name": session_name,
+                    "path": notebook_path,
+                    "type": "notebook"
+                }
+            )
+        except Exception as e:
+            print(e)
+            return False, None
 
         if response.status_code == 201:
             session = response.json()
-            location_url = response.headers.get('Location', None)
-            callback(True, session, *args)
+            return True, session
         else:
-            callback(False, None, *args)
+            return False, None
 
-    def get_kernel_info(self, kernel_id, callback, *args):
-        asyncio.create_task(
-            self.__get_kernel_info(kernel_id, callback, *args)
-        )
-
-    async def __get_kernel_info(self, kernel_id, callback, *args):
-        response = await asyncio.to_thread(
-            requests.get,
-            f'{self.address}/api/kernels/{kernel_id}',
-            params={"token": self.token}
-        )
+    async def get_kernel_info(self, kernel_id):
+        try:
+            response = await asyncio.to_thread(
+                requests.get,
+                f'{self.address}/api/kernels/{kernel_id}',
+                params={"token": self.token}
+            )
+        except Exception as e:
+            print(e)
+            return False, None
 
         if response.status_code == 200:
             sessions = response.json()
-            callback(True, sessions, *args)
+            return True, sessions
         else:
-            callback(False, None, *args)
+            return False, None
 
-    def shutdown_kernel(self, kernel_id, callback, *args):
-        asyncio.create_task(
-            self.__shutdown_kernel(kernel_id, callback, *args)
-        )
+    async def shutdown_kernel(self, kernel_id):
+        try:
+            response = await asyncio.to_thread(
+                requests.delete,
+                f'{self.address}/api/kernels/{kernel_id}',
+                params={"token": self.token}
+            )
+        except Exception as e:
+            print(e)
+            return False
 
-    async def __shutdown_kernel(self, kernel_id, callback, *args):
-        response = await asyncio.to_thread(
-            requests.delete,
-            f'{self.address}/api/kernels/{kernel_id}',
-            params={"token": self.token}
-        )
-
-        if response.status_code == 200:
+        if response.status_code == 204:
             for index, kernel in enumerate(self.kernels):
                 if kernel.kernel_id == kernel_id:
                     self.kernels.remove(index)
-            callback(True, *args)
+            return True
         else:
-            callback(False, *args)
+            return False
 
-    def restart_kernel(self, kernel_id, callback, *args):
-        asyncio.create_task(
-            self.__restart_kernel(kernel_id, callback, *args)
-        )
-
-    async def __restart_kernel(self, kernel_id, callback, *args):
-        response = await asyncio.to_thread(
-            requests.post,
-            f'{self.address}/api/kernels/{kernel_id}/restart',
-            params={"token": self.token}
-        )
+    async def restart_kernel(self, kernel_id):
+        try:
+            response = await asyncio.to_thread(
+                requests.post,
+                f'{self.address}/api/kernels/{kernel_id}/restart',
+                params={"token": self.token}
+            )
+        except Exception as e:
+            print(e)
+            return False
 
         if response.status_code == 200:
-            callback(True, *args)
+            return True
         else:
-            callback(False, *args)
+            return False
 
-    def interrupt_kernel(self, kernel_id, callback, *args):
-        asyncio.create_task(
-            self.__interrupt_kernel(kernel_id, callback, *args)
-        )
-
-    async def __interrupt_kernel(self, kernel_id, callback, *args):
-        response = await asyncio.to_thread(
-            requests.post,
-            f'{self.address}/api/kernels/{kernel_id}/interrupt',
-            params={"token": self.token}
-        )
+    async def interrupt_kernel(self, kernel_id):
+        try:
+            response = await asyncio.to_thread(
+                requests.post,
+                f'{self.address}/api/kernels/{kernel_id}/interrupt',
+                params={"token": self.token}
+            )
+        except Exception as e:
+            print(e)
+            return False
 
         if response.status_code == 200:
-            callback(True, *args)
+            return True
         else:
-            callback(False, *args)
+            return False
+

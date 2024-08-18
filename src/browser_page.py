@@ -20,6 +20,8 @@
 from gi.repository import Gtk, GObject
 from gi.repository import Panel, WebKit
 
+import sys
+
 GObject.type_register(WebKit.WebView)
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/browser_page.ui')
@@ -33,9 +35,21 @@ class BrowserPage(Panel.Widget):
     web_kit_view = Gtk.Template.Child()
     uri_entry = Gtk.Template.Child()
     toolbar_view = Gtk.Template.Child()
+    back_button = Gtk.Template.Child()
+    forward_button = Gtk.Template.Child()
+    reload_button = Gtk.Template.Child()
 
     def __init__(self):
         super().__init__()
+
+        self.actions_signals = []
+        self.bindings = []
+
+        self.connect("unrealize", self.__on_unrealized)
+
+        self.back_button.connect("clicked", self.on_back_clicked)
+        self.forward_button.connect("clicked", self.on_forward_clicked)
+        self.reload_button.connect("clicked", self.on_reload_clicked)
 
         self.web_kit_view.load_uri("https://www.gnome.org/")
 
@@ -55,8 +69,30 @@ class BrowserPage(Panel.Widget):
         self.uri_entry.get_buffer().set_text(uri, len(uri))
         self.toolbar_view.set_reveal_top_bars(True)
 
-    def __on_unrealized(self, *args):
+    def on_back_clicked(self, *args):
         pass
+
+    def on_forward_clicked(self, *args):
+        pass
+
+    def on_reload_clicked(self, *args):
+        pass
+
+    def __on_unrealized(self, *args):
+        self.web_kit_view.disconnect_by_func(self.on_uri_changed)
+        self.back_button.disconnect_by_func(self.on_back_clicked)
+        self.forward_button.disconnect_by_func(self.on_forward_clicked)
+        self.reload_button.disconnect_by_func(self.on_reload_clicked)
+
+        for action, callback in self.actions_signals:
+            action.disconnect_by_func(callback)
+
+        for binding in self.bindings:
+            binding.unbind()
+
+        self.disconnect_by_func(self.__on_unrealized)
+
+        print("unrealize:", sys.getrefcount(self))
 
     def __del__(self, *args):
         print(f"DELETING {self}")

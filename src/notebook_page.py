@@ -17,32 +17,25 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Adw
 from gi.repository import Gtk
-from gi.repository import GLib
-from gi.repository import Gio
-from gi.repository import GObject, WebKit
-from gi.repository import GtkSource, GLib
-from gi.repository import Gdk, GdkPixbuf, Pango
+from gi.repository import GObject
+from gi.repository import Gdk
+from gi.repository import Panel
 
-from pprint import pprint
-from enum import IntEnum
-
-import hashlib
-import base64
 import os
+import sys
 
-from .markdown_textview import MarkdownTextView
-from .terminal_textview import TerminalTextView
 from .cell import Cell, CellType
 from .cell_ui import CellUI
-from .output import Output, OutputType, DataType
+from .output import Output, OutputType
 from .notebook import Notebook
 from .command_line import CommandLine
+from .completion_providers import LSPCompletionProvider, WordsCompletionProvider
 
-@Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/notebook_view.ui')
-class NotebookView(Gtk.ScrolledWindow):
-    __gtype_name__ = 'NotebookView'
+
+@Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/notebook_page.ui')
+class NotebookPage(Panel.Widget):
+    __gtype_name__ = 'NotebookPage'
 
     __gsignals__ = {
         'kernel-info-changed': (GObject.SignalFlags.RUN_FIRST, None, (str,str,)),
@@ -50,6 +43,7 @@ class NotebookView(Gtk.ScrolledWindow):
 
     cells_list_box = Gtk.Template.Child()
     list_drop_target = Gtk.Template.Child()
+    scrolled_window = Gtk.Template.Child()
 
     queue = []
 
@@ -61,10 +55,19 @@ class NotebookView(Gtk.ScrolledWindow):
     def __init__(self, _notebook_model=None):
         super().__init__()
 
+        self.connect("unrealize", self.__on_unrealized)
+
+        self.list_drop_target.connect("drop", self.on_drop_target_drop)
+        self.list_drop_target.connect("motion", self.on_drop_target_motion)
+        self.list_drop_target.connect("leave", self.on_drop_target_leave)
+
         if _notebook_model:
             self.notebook_model = _notebook_model
         else:
             self.notebook_model = Notebook()
+
+        self.words_provider = WordsCompletionProvider()
+        self.lsp_provider = LSPCompletionProvider()
 
         self.cells_list_box.bind_model(
             self.notebook_model,
@@ -200,6 +203,8 @@ class NotebookView(Gtk.ScrolledWindow):
     def create_widgets(self, cell):
         cell = CellUI(cell)
         cell.connect("request-delete", self.on_cell_request_delete)
+        cell.add_provider(self.words_provider)
+        cell.add_provider(self.lsp_provider)
         return cell
 
     def on_cell_request_delete(self, cell_ui):
@@ -207,6 +212,9 @@ class NotebookView(Gtk.ScrolledWindow):
 
         if found:
             self.notebook_model.remove(position)
+            cell_ui.disconnect_by_func(self.on_cell_request_delete)
+
+            del cell_ui
 
     def add_cell(self, cell):
         if self.notebook_model.get_n_items() > 1:
@@ -243,7 +251,6 @@ class NotebookView(Gtk.ScrolledWindow):
     def set_selected_cell_index(self, index):
         self.cells_list_box.select_row(self.cells_list_box.get_row_at_index(index))
 
-    @Gtk.Template.Callback("on_drop_target_drop")
     def on_drop_target_drop(self, drop_target, cell, x, y):
         target_row = self.cells_list_box.get_row_at_y(y)
 
@@ -255,21 +262,19 @@ class NotebookView(Gtk.ScrolledWindow):
         if cell_index:
             self.notebook_model.remove(cell_index)
 
-        if not target_row:
-            self.notebook_model.append(cell)
-
-        else:
+        if target_row:
             target_index = target_row.get_index()
             self.notebook_model.insert(target_index, cell)
+        else:
+            self.notebook_model.append(cell)
 
-    @Gtk.Template.Callback("on_drop_target_motion")
     def on_drop_target_motion(self, drop_target, x, y):
         target_row = self.cells_list_box.get_row_at_y(y)
 
         if target_row:
             self.cells_list_box.drag_highlight_row(target_row)
 
-        vadjustment = self.get_vadjustment()
+        vadjustment = self.scrolled_window.get_vadjustment()
 
         visible_height = vadjustment.get_page_size()
         content_height = vadjustment.get_upper()
@@ -291,8 +296,17 @@ class NotebookView(Gtk.ScrolledWindow):
 
         return Gdk.DragAction.MOVE
 
-    @Gtk.Template.Callback("on_drop_target_leave")
     def on_drop_target_leave(self, drop_target):
         self.cells_list_box.drag_unhighlight_row()
 
+    def __on_unrealized(self, *args):
+        self.list_drop_target.disconnect_by_func(self.on_drop_target_drop)
+        self.list_drop_target.disconnect_by_func(self.on_drop_target_motion)
+        self.list_drop_target.disconnect_by_func(self.on_drop_target_leave)
 
+        self.disconnect_by_func(self.__on_unrealized)
+
+        print("unrealize:", sys.getrefcount(self))
+
+    def __del__(self, *args):
+        print(f"DELETING {self}")

@@ -11,7 +11,8 @@
         "--device=dri",
         "--socket=wayland",
         "-filesystem=~/.local/share/jupyter",
-        "--talk-name=org.freedesktop.Flatpak"
+        "--talk-name=org.freedesktop.Flatpak",
+        "--env=GOBJECT_DEBUG=instance-count"
     ],
     "cleanup" : [
         "/include",
@@ -58,6 +59,7 @@
                 }
             ]
         },
+        "python3-python-lsp-server.json",
         {
             "name" : "planetnine",
             "builddir" : true,

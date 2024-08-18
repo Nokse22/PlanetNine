@@ -19,24 +19,21 @@
 
 from gi.repository import Adw
 from gi.repository import Gtk
-from gi.repository import GLib
 from gi.repository import Gio
 from gi.repository import GObject, WebKit
-from gi.repository import GtkSource, GLib
-from gi.repository import Gdk, GdkPixbuf, Pango
-
-from pprint import pprint
-from enum import IntEnum
+from gi.repository import GtkSource
+from gi.repository import Gdk, GdkPixbuf
 
 import hashlib
 import base64
 import os
-import copy
+import sys
 
 from .markdown_textview import MarkdownTextView
 from .terminal_textview import TerminalTextView
 from .cell import Cell, CellType
-from .output import Output, OutputType, DataType
+from .output import OutputType, DataType
+
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/cell.ui')
 class CellUI(Gtk.Box):
@@ -46,6 +43,7 @@ class CellUI(Gtk.Box):
         'request-delete': (GObject.SignalFlags.RUN_FIRST, None, ()),
     }
 
+    source_view = Gtk.Template.Child()
     code_buffer = Gtk.Template.Child()
     output_scrolled_window = Gtk.Template.Child()
     count_label = Gtk.Template.Child()
@@ -54,6 +52,7 @@ class CellUI(Gtk.Box):
     output_box = Gtk.Template.Child()
     right_click_menu = Gtk.Template.Child()
     drag_source = Gtk.Template.Child()
+    click_gesture = Gtk.Template.Child()
 
     cell = None
 
@@ -63,6 +62,19 @@ class CellUI(Gtk.Box):
 
     def __init__(self, cell):
         super().__init__()
+
+        self.actions_signals = []
+        self.bindings = []
+        self.providers = []
+
+        self.connect("unrealize", self.__on_unrealized)
+
+        self.code_buffer.connect("changed", self.on_source_changed)
+        self.drag_source.connect("prepare", self.on_drag_source_prepare)
+        self.drag_source.connect("drag-begin", self.on_drag_source_begin)
+        self.drag_source.connect("drag-end", self.on_drag_source_end)
+        self.click_gesture.connect("released", self.on_click_released)
+        self.markdown_text_view.connect("changed", self.on_source_changed)
 
         self.cell = cell
 
@@ -75,8 +87,8 @@ class CellUI(Gtk.Box):
         scheme = sm.get_scheme("Adwaita-dark")
         self.code_buffer.set_style_scheme(scheme)
 
-        style_manager = Adw.StyleManager.get_default()
-        style_manager.connect("notify::dark", self.update_style_scheme)
+        self.style_manager = Adw.StyleManager.get_default()
+        self.style_manager.connect("notify::dark", self.update_style_scheme)
         self.update_style_scheme()
 
         self.text_buffer = self.markdown_text_view.get_buffer()
@@ -97,9 +109,9 @@ class CellUI(Gtk.Box):
 
         self.insert_action_group("cell", self.action_group)
 
-        self.bind_property("source", self.cell, "source")
-        self.bind_property("cell_type", self.cell, "cell_type")
-        self.cell.connect("notify::outputs", lambda *args: print("outputs changed"))
+        self.bindings.append(self.bind_property("source", self.cell, "source"))
+        self.bindings.append(self.bind_property("cell_type", self.cell, "cell_type"))
+
         self.cell.connect("execution-count-changed", self.on_execution_count_changed)
         self.cell.connect("output-added", self.on_add_output)
         self.cell.connect("output-reset", self.on_reset_output)
@@ -131,6 +143,12 @@ class CellUI(Gtk.Box):
         self._cell_type = value
 
         self.set_content(content)
+
+    def add_provider(self, provider):
+        provider.register(self.code_buffer)
+        self.source_view.get_completion().add_provider(provider)
+
+        self.providers.append(provider)
 
     def set_content(self, value):
         if self._cell_type == CellType.TEXT:
@@ -226,7 +244,6 @@ class CellUI(Gtk.Box):
         scheme = sm.get_scheme(scheme_name)
         self.code_buffer.set_style_scheme(scheme)
 
-    @Gtk.Template.Callback("on_click_released")
     def on_click_released(self, gesture, n_press, click_x, click_y):
         if n_press != 1:
             return
@@ -264,13 +281,12 @@ class CellUI(Gtk.Box):
         action = Gio.SimpleAction.new(name, None)
         action.connect("activate", callback)
         self.action_group.add_action(action)
+        self.actions_signals.append((action, callback))
         return action
 
-    @Gtk.Template.Callback("on_source_changed")
     def on_source_changed(self, buffer, *args):
         self.notify("source")
 
-    @Gtk.Template.Callback("on_drag_source_prepare")
     def on_drag_source_prepare(self, source, x, y):
         value = GObject.Value()
         value.init(Cell)
@@ -278,7 +294,6 @@ class CellUI(Gtk.Box):
 
         return Gdk.ContentProvider.new_for_value(value)
 
-    @Gtk.Template.Callback("on_drag_source_begin")
     def on_drag_source_begin(self, source, drag):
         builder = Gtk.Builder.new_from_resource('/io/github/nokse22/PlanetNine/gtk/cell_drag.ui')
         drag_widget = builder.get_object('drag_widget')
@@ -291,7 +306,6 @@ class CellUI(Gtk.Box):
 
         drag.set_hotspot(0, 0)
 
-    @Gtk.Template.Callback("on_drag_source_end")
     def on_drag_source_end(self, source, drag, delete_data):
         print("how do i delete", source, drag, delete_data)
         self.emit("request-delete")
@@ -304,3 +318,34 @@ class CellUI(Gtk.Box):
 
     def on_add_output(self, cell, output):
         self.add_output(output)
+
+    def __on_unrealized(self, *args):
+        self.style_manager.disconnect_by_func(self.update_style_scheme)
+        self.cell.disconnect_by_func(self.on_execution_count_changed)
+        self.cell.disconnect_by_func(self.on_add_output)
+        self.cell.disconnect_by_func(self.on_reset_output)
+        self.code_buffer.disconnect_by_func(self.on_source_changed)
+        self.drag_source.disconnect_by_func(self.on_drag_source_prepare)
+        self.drag_source.disconnect_by_func(self.on_drag_source_begin)
+        self.drag_source.disconnect_by_func(self.on_drag_source_end)
+        self.click_gesture.disconnect_by_func(self.on_click_released)
+        self.markdown_text_view.disconnect_by_func(self.on_source_changed)
+
+        for action, callback in self.actions_signals:
+            action.disconnect_by_func(callback)
+
+        for binding in self.bindings:
+            binding.unbind()
+
+        for provider in self.providers:
+            provider.unregister(self.code_buffer)
+            self.source_view.get_completion().remove_provider(provider)
+
+        self.disconnect_by_func(self.__on_unrealized)
+
+        print("unrealize: ", sys.getrefcount(self))
+
+        del self.cell
+
+    def __del__(self, *args):
+        print(f"DELETING {self}")

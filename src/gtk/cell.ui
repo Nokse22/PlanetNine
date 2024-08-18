@@ -9,16 +9,12 @@
     <child>
       <object class="AdwBin">
         <child>
-          <object class="GtkGestureClick">
+          <object class="GtkGestureClick" id="click_gesture">
             <property name="button">3</property>
-            <signal name="released" handler="on_click_released"/>
           </object>
         </child>
         <child>
           <object class="GtkDragSource" id="drag_source">
-            <signal name="prepare" handler="on_drag_source_prepare"/>
-            <signal name="drag-begin" handler="on_drag_source_begin"/>
-            <signal name="drag-end" handler="on_drag_source_end"/>
           </object>
         </child>
         <property name="width-request">45</property>
@@ -52,7 +48,7 @@
                     <property name="height-request">50</property>
                     <property name="width-request">200</property>
                     <child>
-                      <object class="GtkSourceView">
+                      <object class="GtkSourceView" id="source_view">
                         <property name="monospace">True</property>
                         <property name="auto-indent">True</property>
                         <property name="top-margin">12</property>
@@ -69,7 +65,6 @@
                             <property name="enable-undo">True</property>
                             <property name="highlight-syntax">True</property>
                             <property name="highlight-matching-brackets">True</property>
-                            <signal name="changed" handler="on_source_changed"/>
                           </object>
                         </property>
                       </object>
@@ -105,7 +100,6 @@
                 <property name="bottom-margin">12</property>
                 <property name="left-margin">12</property>
                 <property name="right-margin">6</property>
-                <signal name="changed" handler="on_source_changed"/>
                 <style>
                   <class name="markdown-view"/>
                 </style>

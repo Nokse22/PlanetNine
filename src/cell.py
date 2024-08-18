@@ -1,4 +1,4 @@
-# window.py
+# cell.py
 #
 # Copyright 2024 Nokse
 #
@@ -26,10 +26,12 @@ from enum import IntEnum
 
 from .output import Output, OutputType
 
+
 class CellType(IntEnum):
     CODE = 0
     TEXT = 1
     RAW = 2
+
 
 class Cell(GObject.GObject):
     __gtype_name__ = 'Cell'
