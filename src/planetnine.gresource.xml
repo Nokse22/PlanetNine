@@ -18,10 +18,22 @@
     <file>icons/16x16/actions/play-symbolic.svg</file>
     <file>icons/16x16/actions/seek-forward-large-symbolic.svg</file>
     <file>icons/16x16/actions/stop-symbolic.svg</file>
-    <file>icons/16x16/actions/python-symbolic.svg</file>
     <file>icons/16x16/actions/terminal-symbolic.svg</file>
     <file>icons/16x16/actions/right-symbolic.svg</file>
     <file>icons/16x16/actions/processor-symbolic.svg</file>
     <file>icons/16x16/actions/arrow-turn-right-up-symbolic.svg</file>
+    <file>icons/16x16/actions/view-list-symbolic.svg</file>
+
+    <file>icons/16x16/mimetypes/image-symbolic.svg</file>
+    <file>icons/16x16/mimetypes/text-json-symbolic.svg</file>
+    <file>icons/16x16/mimetypes/text-symbolic.svg</file>
+    <file>icons/16x16/mimetypes/paper-symbolic.svg</file>
+    <file>icons/16x16/mimetypes/text-markdown-symbolic.svg</file>
+    <file>icons/16x16/mimetypes/text-xml-symbolic.svg</file>
+    <file>icons/16x16/mimetypes/text-html-symbolic.svg</file>
+    <file>icons/16x16/mimetypes/text-sql-symbolic.svg</file>
+    <file>icons/16x16/mimetypes/text-x-python-symbolic.svg</file>
+    <file>icons/16x16/mimetypes/application-pdf-symbolic.svg</file>
+
   </gresource>
 </gresources>

@@ -10,23 +10,8 @@
     <property name="icon-name">folder-symbolic</property>
     <property name="can-maximize">true</property>
     <child>
-      <object class="GtkScrolledWindow">
+      <object class="GtkScrolledWindow" id="scrolled_window">
         <property name="hscrollbar-policy">never</property>
-        <child>
-          <object class="GtkBox">
-            <property name="orientation">vertical</property>
-            <child>
-              <object class="GtkListView" id="workspace_list_view">
-                <property name="factory">
-                  <object class="GtkSignalListItemFactory">
-                    <signal name="setup" handler="on_setup"></signal>
-                    <signal name="bind" handler="on_bind"></signal>
-                  </object>
-                </property>
-              </object>
-            </child>
-          </object>
-        </child>
       </object>
     </child>
   </template>
