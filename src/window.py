@@ -401,6 +401,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.grid.add(page)
 
     def open_notebook(self, *args):
+        asyncio.create_task(self.__open_notebook_file())
+
+    async def __open_notebook_file(self):
         file_filter = Gtk.FileFilter(name=_("All supported formats"))
         file_filter.add_pattern("*.ipynb")
         filter_list = Gio.ListStore.new(Gtk.FileFilter())
@@ -411,10 +414,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             filters=filter_list,
         )
 
-        dialog.open(self, None, self.on_open_notebook_response)
-
-    def on_open_notebook_response(self, dialog, response):
-        file_path = dialog.open_finish(response)
+        file_path = await dialog.open(self)
 
         with open(file_path, 'r') as file:
             file_content = file.read()
@@ -423,18 +423,16 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             notebook = Notebook.new_from_json(notebook_node)
             notebook.name = os.path.basename(file_path)
 
-            self.add_notebook_page(notebook, "python3")
+            notebook_page = NotebookPage(notebook)
 
-    def add_notebook_page(self, notebook, kernel_name):
-        widget = Panel.Widget(
-            icon_name="python-symbolic",
-            title=notebook.name
-        )
-        widget.connect("presented", self.on_widget_presented)
-        save_delegate = Panel.SaveDelegate()
-        widget.set_save_delegate(save_delegate)
-        widget.set_child(NotebookPage(notebook))
-        self.grid.add(widget)
+            notebook_page.connect("presented", self.on_widget_presented)
+
+            self.grid.add(notebook_page)
+
+            success, kernel = await self.jupyter_server.start_kernel_by_name("")
+
+            if success:
+                notebook_page.set_kernel(kernel)
 
     def on_widget_presented(self, widget):
         widget = widget.get_child()
