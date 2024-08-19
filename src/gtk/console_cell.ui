@@ -6,6 +6,7 @@
   <requires lib="gtksource" version="5.0"/>
   <template class="ConsoleCell" parent="GtkBox">
     <property name="valign">start</property>
+    <property name="height-request">45</property>
     <child>
       <object class="AdwBin">
         <child>
@@ -36,7 +37,8 @@
         <property name="hexpand">True</property>
         <child>
           <object class="GtkSourceView" id="source_view">
-            <property name="vexpand">True</property>
+            <property name="height-request">50</property>
+            <property name="width-request">200</property>
             <property name="monospace">True</property>
             <property name="editable">False</property>
             <property name="auto-indent">True</property>

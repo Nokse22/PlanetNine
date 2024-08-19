@@ -33,6 +33,7 @@ from pprint import pprint
 from .async_helpers import dialog_choose_async
 
 from .jupyter_server import JupyterServer
+from .jupyter_kernel import JupyterKernel, JupyterKernelInfo
 from .cell import Cell, CellType
 from .command_line import CommandLine
 from .notebook import Notebook
@@ -83,9 +84,21 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.workspace_view = WorkspaceView()
         self.start_sidebar_panel_frame.add(self.workspace_view)
 
+        root_model = Gio.ListStore()
+        root_model.append(self.jupyter_server.avalaible_kernels)
+        root_model.append(self.jupyter_server.kernels)
+
+        self.all_kernels = Gtk.TreeListModel.new(root_model, False, True, self.create_sub_models)
+
+        self.select_kernel_combo_row.set_model(self.all_kernels)
+
         self.jupyter_server.start()
 
         self.terminal.set_color_background(Gdk.RGBA(alpha=1))
+
+        #
+        #   NEW CELL ON VISIBLE NOTEBOOK
+        #
 
         self.create_action(
             'add-text-cell',
@@ -99,44 +112,86 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             'add-raw-cell',
             lambda *_: self.add_cell_to_selected_notebook(Cell(CellType.TEXT))
         )
+
+        #
+        #   NEW NOTEBOOK/CONSOLE/CODE WITH NEW KERNEL BY NAME
+        #
+        #   if name is empty it will start the default kernel
+        #
+
         self.create_action_with_target(
-            'new-notebook',
+            'new-notebook-name',
             GLib.VariantType.new("s"),
             self.on_new_notebook_action
         )
 
         self.create_action_with_target(
-            'new-console',
+            'new-console-name',
             GLib.VariantType.new("s"),
             self.on_new_console_action
         )
 
         self.create_action_with_target(
-            'new-code',
+            'new-code-name',
             GLib.VariantType.new("s"),
             self.on_new_code_action
         )
 
-        self.create_action('run-selected-cell', self.run_selected_cell)
+        #
+        #   NEW NOTEBOOK/CONSOLE/CODE WITH EXISTING KERNEL BY ID
+        #
 
         self.create_action_with_target(
-            'shutdown-kernel',
+            'new-notebook-id',
+            GLib.VariantType.new("s"),
+            self.on_new_notebook_action
+        )
+
+        self.create_action_with_target(
+            'new-console-id',
+            GLib.VariantType.new("s"),
+            self.on_new_console_action
+        )
+
+        self.create_action_with_target(
+            'new-code-id',
+            GLib.VariantType.new("s"),
+            self.on_new_code_action
+        )
+
+        #
+        #   OPERATION ON RUNNING KERNEL
+        #
+
+        self.create_action_with_target(
+            'shutdown-kernel-id',
             GLib.VariantType.new("s"),
             self.shutdown_kernel_by_id
         )
         self.create_action_with_target(
-            'interrupt-kernel',
+            'interrupt-kernel-id',
             GLib.VariantType.new("s"),
             self.interrupt_kernel_by_id
         )
         self.create_action_with_target(
-            'restart-kernel',
+            'restart-kernel-id',
             GLib.VariantType.new("s"),
             self.restart_kernel_by_id
         )
 
+        #
+        #   ACTIONS FOR THE VIEWED NOTEBOOK/CODE/CONSOLE
+        #
+
+        self.create_action('run-selected-cell', self.run_selected_cell)
         self.create_action('restart-kernel-and-run', self.restart_kernel_and_run)
-        self.create_action('start-server', self.start_server)
+        self.create_action('start-server-visible', self.start_server)
+        self.create_action('change-kernel', self.change_kernel)
+        self.create_action('restart-kernel-visible', self.restart_kernel)
+
+        #
+        #   OTHER ACTIONS
+        #
 
         self.create_action('open-notebook', self.open_notebook)
 
@@ -262,6 +317,30 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
     #
 
+    def change_kernel(self, action, target):
+        notebook = self.get_selected_notebook()
+        asyncio.create_task(self.__change_kernel(notebook))
+
+    async def __change_kernel(self, notebook):
+        self.select_kernel_combo_row.set_selected(1) # 2 + len of avalab kernels + pos in kernels
+
+        choice = await dialog_choose_async(self, self.select_kernel_dialog)
+
+        kernel = self.select_kernel_combo_row.get_selected_item().get_item()
+        print(kernel, choice)
+
+        if choice == 'select':
+            if isinstance(kernel, JupyterKernelInfo):
+                success, new_kernel = await self.jupyter_server.start_kernel_by_name(kernel.name)
+                if success:
+                    print("kernel has restarted")
+                    notebook.set_kernel(new_kernel)
+                else:
+                    print("kernel has NOT restarted")
+            elif isinstance(kernel, JupyterKernel):
+                notebook.set_kernel(kernel)
+                print("kernel changed")
+
     def add_cell_to_selected_notebook(self, cell):
         notebook = self.get_selected_notebook()
         notebook.add_cell(cell)
@@ -276,13 +355,23 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     def on_jupyter_server_has_new_line(self, server, line):
         self.terminal.feed([ord(char) for char in line + "\r\n"])
 
+    def restart_kernel(self, *args):
+        notebook = self.get_selected_notebook()
+        if notebook:
+            kernel_id = notebook.notebook_model.jupyter_kernel.kernel_id
+            self.restart_kernel_by_id(
+                kernel_id,
+                lambda: notebook.run_all_cells()
+            )
+
     def restart_kernel_and_run(self, *args):
         notebook = self.get_selected_notebook()
-        kernel_id = notebook.notebook_model.jupyter_kernel.kernel_id
-        self.restart_kernel_by_id(
-            kernel_id,
-            lambda: notebook.run_all_cells()
-        )
+        if notebook:
+            kernel_id = notebook.notebook_model.jupyter_kernel.kernel_id
+            self.restart_kernel_by_id(
+                kernel_id,
+                lambda: notebook.run_all_cells()
+            )
 
     def get_selected_notebook(self):
         try:
@@ -290,6 +379,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         except Exception as e:
             logging.Logger.debug(f"{e}")
+
+    #
+    #
+    #
 
     def create_action(self, name, callback):
         action = Gio.SimpleAction.new(name, None)
@@ -375,3 +468,40 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     def on_key_pressed(self, controller, keyval, keycode, state):
         print(keyval, keycode, state)
 
+    def create_sub_models(self, item):
+        if isinstance(item, Gio.ListStore):
+            return item
+        return None
+
+    @Gtk.Template.Callback("on_select_kernel_setup")
+    def on_select_kernel_setup(self, factory, list_item):
+        list_item.set_child(
+            Gtk.Label(
+                xalign=0,
+                margin_top=6,
+                margin_bottom=6,
+                margin_start=6,
+                margin_end=6
+            )
+        )
+
+    @Gtk.Template.Callback("on_select_kernel_bind")
+    def on_select_kernel_bind(self, factory, list_item):
+        item = list_item.get_item().get_item()
+        widget = list_item.get_child()
+
+        print("bind")
+
+        if isinstance(item, JupyterKernelInfo):
+            widget.set_label(item.display_name)
+
+        elif isinstance(item, JupyterKernel):
+            widget.set_label(item.display_name)
+
+        else:
+            widget.set_label("Running Kernels")
+            list_item.set_selectable(False)
+            list_item.set_activatable(False)
+            list_item.set_focusable(False)
+
+        # widget.set_label(item.display_name)

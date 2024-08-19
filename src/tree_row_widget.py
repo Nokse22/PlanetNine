@@ -17,26 +17,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gtk, Adw, Gio, GObject
-from enum import IntEnum
-
-import os
-
-
-class NodeType(IntEnum):
-    ROOT = 0
-    FILE = 1
-    FOLDER = 2
-
-
-class TreeNode(GObject.Object):
-    def __init__(self, node_path, node_type, children=None):
-        super().__init__()
-        self.node_path = node_path
-        self.node_type = node_type
-        self.children = children or []
-
-        self.display_name = os.path.basename(self.node_path)
+from gi.repository import Gtk, Adw, Gio
 
 
 class TreeWidget(Adw.Bin):
@@ -52,7 +33,7 @@ class TreeWidget(Adw.Bin):
         )
 
         self.expander = Gtk.TreeExpander.new()
-        # self.expander.set_hide_expander(True)
+        self.expander.set_hide_expander(True)
         self.expander.set_indent_for_icon(False)
 
         self.label = Gtk.Label(
@@ -62,6 +43,7 @@ class TreeWidget(Adw.Bin):
 
         self.image = Gtk.Image(icon_name="python-symbolic", margin_end=6)
 
+        self.show_menu = True
         self.menu_model = Gio.Menu()
 
         box.append(self.expander)
@@ -84,7 +66,7 @@ class TreeWidget(Adw.Bin):
         self.menu_model = model
 
     def on_click_released(self, gesture, n_press, click_x, click_y):
-        if gesture.get_current_button() == 3:
+        if gesture.get_current_button() == 3 and self.show_menu:
             if n_press != 1:
                 return
 
@@ -105,3 +87,6 @@ class TreeWidget(Adw.Bin):
     def collapse(self):
         list_row = self.expander.get_list_row()
         list_row.set_expanded(False)
+
+    def set_show_menu(self, value):
+        self.show_menu =value

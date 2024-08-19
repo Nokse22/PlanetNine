@@ -52,8 +52,7 @@ class WorkspaceView(Panel.Widget):
     def __init__(self):
         super().__init__()
 
-        self.root = TreeNode("/home/user/.var/app", NodeType.ROOT, [
-        ])
+        self.root = TreeNode("/home/user/.var/app", NodeType.ROOT, [])
 
         tree_model = Gio.ListStore.new(TreeNode)
         tree_model.append(self.root)

@@ -32,7 +32,7 @@ list.console row {
   padding-top: 3px;
   padding-bottom: 3px;
   border-radius: 12px;
-  border: 1px alpha(@accent_color, 0.4) solid;
+  border: 1px alpha(transparent, 0.4) solid;
 }
 
 .console-cell-sourceview {

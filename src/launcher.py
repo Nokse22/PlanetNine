@@ -47,7 +47,7 @@ class Launcher(Adw.Bin):
         button_row = Adw.ButtonRow(
             title=item.display_name,
             end_icon_name="right-symbolic",
-            action_name="win.new-notebook",
+            action_name="win.new-notebook-name",
             action_target=GLib.Variant("s", item.name)
         )
         return button_row
@@ -56,7 +56,7 @@ class Launcher(Adw.Bin):
         button_row = Adw.ButtonRow(
             title=item.display_name,
             end_icon_name="right-symbolic",
-            action_name="win.new-console",
+            action_name="win.new-console-name",
             action_target=GLib.Variant("s", item.name)
         )
         return button_row

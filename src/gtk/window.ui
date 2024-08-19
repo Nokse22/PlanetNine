@@ -4,7 +4,7 @@
   <requires lib="Adw" version="1.0"/>
   <requires lib="Vte" version="3.91" />
   <template class="PlanetnineWindow" parent="AdwApplicationWindow">
-    <property name="title" translatable="yes">PlanetNine</property>
+    <property name="title" translatable="yes">Planet Nine</property>
     <property name="default-width">1100</property>
     <property name="default-height">800</property>
     <property name="width-request">360</property>
@@ -268,9 +268,16 @@
     </responses>
     <property name="extra-child">
       <object class="GtkListBox">
+        <property name="selection-mode">none</property>
         <child>
           <object class="AdwComboRow" id="select_kernel_combo_row">
             <property name="title">Kernel</property>
+            <property name="factory">
+              <object class="GtkSignalListItemFactory">
+                <signal name="setup" handler="on_select_kernel_setup"/>
+                <signal name="bind" handler="on_select_kernel_bind"/>
+              </object>
+            </property>
           </object>
         </child>
         <style>
@@ -316,7 +323,7 @@
     <section>
       <item>
         <attribute name="label">Restart Kernel</attribute>
-        <attribute name="action">win.restart-kernel</attribute>
+        <attribute name="action">win.restart-kernel-visible</attribute>
       </item>
       <item>
         <attribute name="label">Restart Kernel and Run</attribute>
@@ -332,17 +339,17 @@
     <section>
       <item>
         <attribute name="label" translatable="yes">New Notebook</attribute>
-        <attribute name="action">win.new-notebook</attribute>
+        <attribute name="action">win.new-notebook-name</attribute>
         <attribute name="target"></attribute>
       </item>
       <item>
         <attribute name="label" translatable="yes">New Console</attribute>
-        <attribute name="action">win.new-console</attribute>
+        <attribute name="action">win.new-console-name</attribute>
         <attribute name="target"></attribute>
       </item>
       <item>
         <attribute name="label" translatable="yes">New Code Page</attribute>
-        <attribute name="action">win.new-code</attribute>
+        <attribute name="action">win.new-code-name</attribute>
         <attribute name="target"></attribute>
       </item>
     </section>

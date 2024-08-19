@@ -133,7 +133,7 @@ class NotebookPage(Panel.Widget):
             # select cell
             pass
 
-        if cell.source.startswith("%"):
+        if cell.source.startswith("!"):
             cell.reset_output()
             self.command_line.run_command(
                 cell.source[1:].split(" "),
@@ -141,11 +141,14 @@ class NotebookPage(Panel.Widget):
                 cell
             )
         elif self.notebook_model.jupyter_kernel:
-            self.notebook_model.jupyter_kernel.run_code(
+            self.notebook_model.jupyter_kernel.execute(
                 cell.source,
                 self.run_code_callback,
                 cell
             )
+            print("running code")
+        else:
+            print(f"can't run code: {self.notebook_model.jupyter_kernel}")
 
     def run_command_callback(self, line, cell):
         output = Output(OutputType.STREAM)

@@ -24,6 +24,8 @@ import os
 import asyncio
 import jupyter_client
 
+from pprint import pprint
+
 
 class JupyterKernelInfo(GObject.GObject):
     __gtype_name__ = 'JupyterKernelInfo'
@@ -65,7 +67,9 @@ class JupyterKernel(GObject.GObject):
         super().__init__()
 
         self.name = name
+        self.display_name = name.title() + " " + kernel_id[:5]
         self.kernel_id = kernel_id
+        self.status = ""
 
         self.thread = None
         self.address = ""
@@ -79,6 +83,11 @@ class JupyterKernel(GObject.GObject):
 
         self.__connect()
 
+        # asyncio.create_task(self.__get_control_msg())
+        # asyncio.create_task(self.__get_iopub_msg())
+        # asyncio.create_task(self.__get_stdin_msg())
+        # asyncio.create_task(self.__get_shell_msg())
+
     def __connect(self):
         connection_file_path = f"{self.data_dir}/jupyter/runtime/kernel-{self.kernel_id}.json"
 
@@ -89,19 +98,67 @@ class JupyterKernel(GObject.GObject):
         self.kernel_client.load_connection_info(connection_info)
         self.kernel_client.start_channels()
 
-    def run_code(self, code, callback, *args):
-        asyncio.create_task(self.__run_code(code, callback, *args))
+        print(f"Kernel Started: \n{self.kernel_client.comm_info()}")
 
-    async def __run_code(self, code, callback, *args):
+    async def __get_control_msg(self):
+        while True:
+            try:
+                msg = await self.kernel_client.get_control_msg()
+                print("CONTROL MSG:")
+                pprint(msg)
 
-        await self.kernel_client.wait_for_ready()
+            except Exception as e:
+                print(f"Exception while getting control msg:\n{e}")
 
-        msg_id = self.kernel_client.execute(code)
-
+    async def __get_iopub_msg(self):
         while True:
             try:
                 msg = await self.kernel_client.get_iopub_msg()
-            except:
+                print("IOPUB MSG:")
+                pprint(msg)
+
+                if msg['header']['msg_type'] == 'status':
+                    self.status = msg['content']['execution_state']
+            except Exception as e:
+                print(f"Exception while getting iopub msg:\n{e}")
+
+    async def __get_shell_msg(self):
+        while True:
+            try:
+                msg = await self.kernel_client.get_shell_msg()
+                print("SHELL MSG:")
+                pprint(msg)
+
+            except Exception as e:
+                print(f"Exception while getting shell msg:\n{e}")
+
+    async def __get_stdin_msg(self):
+        while True:
+            try:
+                msg = await self.kernel_client.get_stdin_msg()
+                print("STDIN MSG:")
+                pprint(msg)
+
+            except Exception as e:
+                print(f"Exception while getting stdin msg:\n{e}")
+
+    def execute(self, code, callback, *args):
+        asyncio.create_task(self.__execute(code, callback, *args))
+
+    async def __execute(self, code, callback, *args):
+
+        await self.kernel_client.wait_for_ready()
+
+        msg = self.kernel_client.execute(code)
+
+        print(f"Code executed: {msg}")
+
+        while True:
+            try:
+                print("waiting for message")
+                msg = await self.kernel_client.get_iopub_msg()
+            except Exception as e:
+                print(f"Error while executing code: \n{e}")
                 callback(msg, *args)
                 return
 

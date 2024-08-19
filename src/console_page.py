@@ -102,7 +102,7 @@ class ConsolePage(Panel.Widget):
         elif self.jupyter_kernel:
             cell = self.add_run_cell(content)
             self.code_buffer.set_text("")
-            self.jupyter_kernel.run_code(
+            self.jupyter_kernel.execute(
                 content,
                 self.run_code_callback,
                 cell
