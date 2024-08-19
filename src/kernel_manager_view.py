@@ -76,14 +76,6 @@ class KernelManagerView(Panel.Widget):
 
         self.default_kernel_name = ""
 
-    # def create_model_func(self, item):
-    #     if (item.node_type == NodeType.FOLDER or item.node_type == NodeType.ROOT):
-    #         child_model = Gio.ListStore.new(TreeNode)
-    #         for child in item.children:
-    #             child_model.append(child)
-    #         return child_model
-    #     return None
-
     def create_avalaible_kernels_sub_model(self, item):
         if isinstance(item, TreeNode):
             return self.avalaible_kernels_model
@@ -137,14 +129,14 @@ class KernelManagerView(Panel.Widget):
             menu_model.append_item(menu_item)
 
             menu_item = Gio.MenuItem()
-            menu_item.set_label("New Console from Kernel")
+            menu_item.set_label("New Code from Kernel")
             menu_item.set_action_and_target_value("win.new-code-name", GLib.Variant("s", item.name))
             menu_model.append_item(menu_item)
 
             widget.set_menu_model(menu_model)
 
         elif isinstance(item, JupyterKernel):
-            widget.set_text(item.name)
+            widget.set_text(item.display_name)
             widget.set_icon_name("text-x-python-symbolic")
 
             menu_model = Gio.Menu()

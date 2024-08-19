@@ -47,6 +47,7 @@ GObject.type_register(Panel.ToggleButton)
 
 asyncio.set_event_loop_policy(GLibEventLoopPolicy())
 
+
 class PlanetnineApplication(Adw.Application):
     """The main application singleton class."""
 

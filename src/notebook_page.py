@@ -31,6 +31,7 @@ from .output import Output, OutputType
 from .notebook import Notebook
 from .command_line import CommandLine
 from .completion_providers import LSPCompletionProvider, WordsCompletionProvider
+from .notebook_save_delegate import NotebookSaveDelegate
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/notebook_page.ui')
@@ -68,6 +69,12 @@ class NotebookPage(Panel.Widget):
 
         self.words_provider = WordsCompletionProvider()
         self.lsp_provider = LSPCompletionProvider()
+
+        self.save_delegate = NotebookSaveDelegate(self)
+        self.save_delegate.set_is_draft(True)
+        self.set_save_delegate(self.save_delegate)
+
+        self.set_modified(True)
 
         self.cells_list_box.bind_model(
             self.notebook_model,
@@ -301,6 +308,9 @@ class NotebookPage(Panel.Widget):
 
     def on_drop_target_leave(self, drop_target):
         self.cells_list_box.drag_unhighlight_row()
+
+    def do_close(self, *args):
+        print("close")
 
     def __on_unrealized(self, *args):
         self.list_drop_target.disconnect_by_func(self.on_drop_target_drop)

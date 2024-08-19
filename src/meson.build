@@ -47,6 +47,8 @@ planetnine_sources = [
   'code_page.py',
   'tree_row_widget.py',
 
+  'notebook_save_delegate.py',
+
   'async_helpers.py',
 
   'completion_providers.py',
