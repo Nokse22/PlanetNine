@@ -32,7 +32,19 @@ list.console row {
   padding-top: 3px;
   padding-bottom: 3px;
   border-radius: 12px;
+  border: 1px alpha(@accent_color, 0.4) solid;
 }
+
+.console-cell-sourceview {
+  background-color:transparent;
+}
+
+/* .overlay-label { */
+/*   background-color:var(--window-bg-color); */
+/*   border-radius: 3px; */
+/*   padding: 3px; */
+/*   border: 1px alpha(var(--borders), 0.4) solid; */
+/* } */
 
 /* listview.workspace row:selected { */
 /*   background-color:transparent; */

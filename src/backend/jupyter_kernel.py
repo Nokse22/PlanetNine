@@ -17,24 +17,13 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import GLib
-from gi.repository import Gio
 from gi.repository import GObject
-from gi.events import GLibEventLoopPolicy
 
-import subprocess
-import re
-import threading
-import time
 import json
 import os
-
 import asyncio
-
-import requests
 import jupyter_client
 
-from pprint import pprint
 
 class JupyterKernelInfo(GObject.GObject):
     __gtype_name__ = 'JupyterKernelInfo'
@@ -63,6 +52,7 @@ class JupyterKernelInfo(GObject.GObject):
         instance.interrupt_mode = specs['spec']['interrupt_mode']
 
         return instance
+
 
 class JupyterKernel(GObject.GObject):
     __gtype_name__ = 'JupyterKernel'

@@ -12,6 +12,8 @@
     <file preprocess="xml-stripblanks">gtk/launcher.ui</file>
     <file preprocess="xml-stripblanks">gtk/workspace_view.ui</file>
     <file preprocess="xml-stripblanks">gtk/console_page.ui</file>
+    <file preprocess="xml-stripblanks">gtk/console_cell.ui</file>
+    <file preprocess="xml-stripblanks">gtk/code_page.ui</file>
     <file preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
 
     <file>icons/16x16/actions/arrow-circular-small-top-right-symbolic.svg</file>
@@ -23,17 +25,20 @@
     <file>icons/16x16/actions/processor-symbolic.svg</file>
     <file>icons/16x16/actions/arrow-turn-right-up-symbolic.svg</file>
     <file>icons/16x16/actions/view-list-symbolic.svg</file>
+    <file>icons/16x16/actions/earth-symbolic.svg</file>
+    <file>icons/16x16/actions/notepad-symbolic.svg</file>
 
     <file>icons/16x16/mimetypes/image-symbolic.svg</file>
     <file>icons/16x16/mimetypes/text-json-symbolic.svg</file>
     <file>icons/16x16/mimetypes/text-symbolic.svg</file>
-    <file>icons/16x16/mimetypes/paper-symbolic.svg</file>
     <file>icons/16x16/mimetypes/text-markdown-symbolic.svg</file>
     <file>icons/16x16/mimetypes/text-xml-symbolic.svg</file>
     <file>icons/16x16/mimetypes/text-html-symbolic.svg</file>
     <file>icons/16x16/mimetypes/text-sql-symbolic.svg</file>
     <file>icons/16x16/mimetypes/text-x-python-symbolic.svg</file>
     <file>icons/16x16/mimetypes/application-pdf-symbolic.svg</file>
+    <file>icons/16x16/mimetypes/paper-symbolic.svg</file>
+    <file>icons/16x16/mimetypes/unknown-symbolic.svg</file>
 
   </gresource>
 </gresources>

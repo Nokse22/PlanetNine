@@ -17,11 +17,14 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gtk, Gio, GObject, Adw, GLib, Gdk
+from gi.repository import Gtk, Gio, GObject, GLib, Gdk
 from gi.repository import Panel
+
 from enum import IntEnum
 import os
 import asyncio
+
+from .tree_row_widget import TreeWidget
 
 
 class NodeType(IntEnum):
@@ -40,74 +43,6 @@ class TreeNode(GObject.Object):
         self.display_name = os.path.basename(self.node_path)
 
 
-class TreeWidget(Adw.Bin):
-    def __init__(self):
-        super().__init__()
-
-        box = Gtk.Box(
-            spacing=6,
-            margin_start=6,
-            margin_end=10,
-            margin_top=6,
-            margin_bottom=6
-        )
-
-        self.expander = Gtk.TreeExpander.new()
-        self.expander.set_hide_expander(True)
-        self.expander.set_indent_for_icon(False)
-
-        self.label = Gtk.Label(
-            xalign=0,
-            ellipsize=3,
-        )
-
-        self.image = Gtk.Image(icon_name="python-symbolic", margin_end=6)
-
-        self.menu_model = Gio.Menu()
-
-        box.append(self.expander)
-        box.append(self.image)
-        box.append(self.label)
-
-        self.click_controller = Gtk.GestureClick(button=0)
-        self.click_controller.connect("released", self.on_click_released)
-        self.add_controller(self.click_controller)
-
-        self.set_child(box)
-
-    def set_text(self, text):
-        self.label.set_text(text)
-
-    def set_icon_name(self, icon_name):
-        self.image.set_from_icon_name(icon_name)
-
-    def set_menu_model(self, model):
-        self.menu_model = model
-
-    def on_click_released(self, gesture, n_press, click_x, click_y):
-        if gesture.get_current_button() == 3:
-            if n_press != 1:
-                return
-
-            widget = gesture.get_widget()
-            popover = Gtk.PopoverMenu(position=1, menu_model=self.menu_model)
-            popover.set_parent(widget)
-            popover.popup()
-
-            return True
-        elif gesture.get_current_button() == 1:
-            list_row = self.expander.get_list_row()
-            list_row.set_expanded(not list_row.get_expanded())
-
-    def expand(self):
-        list_row = self.expander.get_list_row()
-        list_row.set_expanded(True)
-
-    def collapse(self):
-        list_row = self.expander.get_list_row()
-        list_row.set_expanded(False)
-
-
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/workspace_view.ui')
 class WorkspaceView(Panel.Widget):
     __gtype_name__ = 'WorkspaceView'
@@ -124,6 +59,7 @@ class WorkspaceView(Panel.Widget):
         tree_model.append(self.root)
 
         tree_list_model = Gtk.TreeListModel.new(tree_model, False, True, self.create_model_func)
+        tree_list_model.set_autoexpand(False)
 
         selection_model = Gtk.NoSelection(model=tree_list_model)
 

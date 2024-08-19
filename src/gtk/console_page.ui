@@ -13,6 +13,7 @@
           <object class="GtkScrolledWindow">
             <property name="vexpand">True</property>
             <property name="vexpand-set">True</property>
+            <property name="css-classes">undershoot-bottom</property>
             <child>
               <object class="AdwClamp">
                 <property name="maximum-size">800</property>
@@ -20,7 +21,7 @@
                 <property name="margin-start">12</property>
                 <property name="margin-end">12</property>
                 <child>
-                  <object class="GtkListBox">
+                  <object class="GtkListBox" id="run_list_box">
                     <property name="margin-bottom">12</property>
                     <property name="margin-top">24</property>
                     <property name="css-classes">console</property>

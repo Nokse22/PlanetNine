@@ -6,6 +6,8 @@
   <requires lib="libadwaita" version="1.4"/>
   <requires lib="webkitgtk" version="6.0"/>
   <template class="BrowserPage" parent="PanelWidget">
+    <property name="title">Browser</property>
+    <property name="icon-name">earth-symbolic</property>
     <child>
       <object class="AdwToolbarView" id="toolbar_view">
         <property name="content">

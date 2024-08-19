@@ -79,7 +79,7 @@ class CellUI(Gtk.Box):
         self.cell = cell
 
         lm = GtkSource.LanguageManager()
-        lang = lm.get_language("python")
+        lang = lm.get_language("python3")
         self.code_buffer.set_language(lang)
         self.code_buffer.set_highlight_syntax(True)
 

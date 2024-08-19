@@ -43,6 +43,9 @@ planetnine_sources = [
   'workspace_view.py',
   'launcher.py',
   'console_page.py',
+  'console_cell.py',
+  'code_page.py',
+  'tree_row_widget.py',
 
   'async_helpers.py',
 

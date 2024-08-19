@@ -42,6 +42,7 @@ from .kernel_manager_view import KernelManagerView
 from .workspace_view import WorkspaceView
 from .launcher import Launcher
 from .console_page import ConsolePage
+from .code_page import CodePage
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/window.ui')
@@ -110,6 +111,12 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self.on_new_console_action
         )
 
+        self.create_action_with_target(
+            'new-code',
+            GLib.VariantType.new("s"),
+            self.on_new_code_action
+        )
+
         self.create_action('run-selected-cell', self.run_selected_cell)
 
         self.create_action_with_target(
@@ -144,7 +151,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         widget.close()
 
     #
-    #   NEW NOTEBOOK WITH KERNEL NAME
+    #   NEW NOTEBOOK PAGE WITH KERNEL NAME
     #
 
     def on_new_notebook_action(self, action, variant):
@@ -163,7 +170,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             notebook_page.set_kernel(kernel)
 
     #
-    #   NEW CONSOLE WITH KERNEL NAME
+    #   NEW CONSOLE PAGE WITH KERNEL NAME
     #
 
     def on_new_console_action(self, action, variant):
@@ -178,6 +185,23 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         if success:
             console.set_kernel(kernel)
+
+    #
+    #   NEW CODE PAGE WITH KERNEL NAME
+    #
+
+    def on_new_code_action(self, action, variant):
+        asyncio.create_task(self.__on_new_code_action(variant.get_string()))
+
+    async def __on_new_code_action(self, kernel_name):
+        code = CodePage()
+
+        self.grid.add(code)
+
+        success, kernel = await self.jupyter_server.start_kernel_by_name(kernel_name)
+
+        if success:
+            code.set_kernel(kernel)
 
     #
     #   START SERVER
@@ -263,6 +287,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     def get_selected_notebook(self):
         try:
             return self.grid.get_most_recent_frame().get_visible_child()
+
         except Exception as e:
             logging.Logger.debug(f"{e}")
 

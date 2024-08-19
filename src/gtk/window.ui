@@ -336,6 +336,18 @@
         <attribute name="target"></attribute>
       </item>
       <item>
+        <attribute name="label" translatable="yes">New Console</attribute>
+        <attribute name="action">win.new-console</attribute>
+        <attribute name="target"></attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">New Code Page</attribute>
+        <attribute name="action">win.new-code</attribute>
+        <attribute name="target"></attribute>
+      </item>
+    </section>
+    <section>
+      <item>
         <attribute name="label" translatable="yes">New Browser Page</attribute>
         <attribute name="action">win.new-browser-page</attribute>
       </item>

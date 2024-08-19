@@ -22,6 +22,8 @@ from gi.repository import Panel, GtkSource
 
 import sys
 
+from .console_cell import ConsoleCell
+from .output import Output, OutputType
 from .completion_providers import LSPCompletionProvider, WordsCompletionProvider
 
 GObject.type_register(Panel.Widget)
@@ -34,9 +36,12 @@ class ConsolePage(Panel.Widget):
     source_view = Gtk.Template.Child()
     code_buffer = Gtk.Template.Child()
     send_button = Gtk.Template.Child()
+    run_list_box = Gtk.Template.Child()
 
     def __init__(self):
         super().__init__()
+
+        self.jupyter_kernel = None
 
         self.actions_signals = []
         self.bindings = []
@@ -67,7 +72,7 @@ class ConsolePage(Panel.Widget):
         # completion.add_provider(PyLSPCompletionProvider())
 
     def set_kernel(self, jupyter_kernel):
-        print(jupyter_kernel)
+        self.jupyter_kernel = jupyter_kernel
 
     def update_style_scheme(self, *args):
         scheme_name = "Adwaita"
@@ -83,7 +88,10 @@ class ConsolePage(Panel.Widget):
     def run_code(self):
         content = self.get_content()
 
-        if content.startswith("%"):
+        if content == "":
+            return
+
+        if content.startswith("!"):
             # self.reset_output()
             # self.command_line.run_command(
             #     content[1:].split(" "),
@@ -91,10 +99,13 @@ class ConsolePage(Panel.Widget):
             #     cell
             # )
             pass
-        elif self.notebook_model.jupyter_kernel:
-            self.notebook_model.jupyter_kernel.run_code(
+        elif self.jupyter_kernel:
+            cell = self.add_run_cell(content)
+            self.code_buffer.set_text("")
+            self.jupyter_kernel.run_code(
                 content,
-                self.run_code_callback
+                self.run_code_callback,
+                cell
             )
 
     # def run_command_callback(self, line, cell):
@@ -102,38 +113,43 @@ class ConsolePage(Panel.Widget):
     #     output.text = line + '\n'
     #     cell.add_output(output)
 
-    def run_code_callback(self, msg):
+    def run_code_callback(self, msg, cell):
         msg_type = msg['header']['msg_type']
         content = msg['content']
 
-        # if msg_type == 'stream':
-        #     output = Output(OutputType.STREAM)
-        #     output.parse(content)
-        #     cell.add_output(output)
+        if msg_type == 'stream':
+            output = Output(OutputType.STREAM)
+            output.parse(content)
+            cell.add_output(output)
 
-        #     self._kernel_status = "busy"
-        #     self.emit("kernel-info-changed", self._kernel_name, self._kernel_status)
+            # self._kernel_status = "busy"
+            # self.emit("kernel-info-changed", self._kernel_name, self._kernel_status)
 
-        # elif msg_type == 'execute_input':
-        #     count = content['execution_count']
-        #     cell.execution_count = int(count)
-        #     cell.reset_output()
+        elif msg_type == 'execute_input':
+            count = content['execution_count']
+            cell.execution_count = int(count)
+            cell.reset_output()
 
-        # elif msg_type == 'display_data':
-        #     output = Output(OutputType.DISPLAY_DATA)
-        #     output.parse(content)
-        #     cell.add_output(output)
+        elif msg_type == 'display_data':
+            output = Output(OutputType.DISPLAY_DATA)
+            output.parse(content)
+            cell.add_output(output)
 
-        # elif msg_type == 'error':
-        #     output = Output(OutputType.ERROR)
-        #     output.parse(content)
-        #     cell.add_output(output)
+        elif msg_type == 'error':
+            output = Output(OutputType.ERROR)
+            output.parse(content)
+            cell.add_output(output)
 
-        # elif msg_type == 'status':
-        #     status = content['execution_state']
+        elif msg_type == 'status':
+            status = content['execution_state']
 
-        #     self._kernel_status = status
-        #     self.emit("kernel-info-changed", self._kernel_name, self._kernel_status)
+            # self._kernel_status = status
+            # self.emit("kernel-info-changed", self._kernel_name, self._kernel_status)
+
+    def add_run_cell(self, content):
+        cell = ConsoleCell(content)
+        self.run_list_box.append(cell)
+        return cell
 
     def get_content(self):
         start = self.code_buffer.get_start_iter()
