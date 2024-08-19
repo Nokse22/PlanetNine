@@ -32,7 +32,7 @@ class BrowserPage(Panel.Widget):
         # 'changed': (GObject.SignalFlags.RUN_FIRST, None, (Gtk.TextBuffer,)),
     }
 
-    web_kit_view = Gtk.Template.Child()
+    web_view = Gtk.Template.Child()
     uri_entry = Gtk.Template.Child()
     toolbar_view = Gtk.Template.Child()
     back_button = Gtk.Template.Child()
@@ -47,42 +47,56 @@ class BrowserPage(Panel.Widget):
 
         self.connect("unrealize", self.__on_unrealized)
 
+        self.uri_entry.connect("activate", self.on_entry_activated)
+
         self.back_button.connect("clicked", self.on_back_clicked)
         self.forward_button.connect("clicked", self.on_forward_clicked)
         self.reload_button.connect("clicked", self.on_reload_clicked)
 
-        self.web_kit_view.load_uri("https://www.gnome.org/")
+        self.web_view.connect("notify::uri", self.on_uri_changed)
+        self.web_view.connect("notify::title", self.on_title_changed)
 
-        self.web_kit_view.connect("notify::uri", self.on_uri_changed)
+        self.web_view.load_uri("https://www.gnome.org/")
 
     @classmethod
     def new_from_html(cls, html_string):
         instance = cls()
 
-        instance.web_kit_view.load_html(html_string)
+        instance.web_view.load_html(html_string)
         instance.toolbar_view.set_reveal_top_bars(False)
 
         return instance
+
+    def on_entry_activated(self, entry):
+        buffer = entry.get_buffer()
+
+        uri = buffer.get_text()
+
+        self.web_view.load_uri(uri)
 
     def on_uri_changed(self, web_view, *args):
         uri = web_view.get_uri()
         self.uri_entry.get_buffer().set_text(uri, len(uri))
         self.toolbar_view.set_reveal_top_bars(True)
 
+    def on_title_changed(self, web_view, *args):
+        self.set_title(web_view.get_title())
+
     def on_back_clicked(self, *args):
-        pass
+        self.web_view.go_back()
 
     def on_forward_clicked(self, *args):
-        pass
+        self.web_view.go_forward()
 
     def on_reload_clicked(self, *args):
-        pass
+        self.web_view.reload()
 
     def __on_unrealized(self, *args):
-        self.web_kit_view.disconnect_by_func(self.on_uri_changed)
+        self.web_view.disconnect_by_func(self.on_uri_changed)
         self.back_button.disconnect_by_func(self.on_back_clicked)
         self.forward_button.disconnect_by_func(self.on_forward_clicked)
         self.reload_button.disconnect_by_func(self.on_reload_clicked)
+        self.web_view.disconnect_by_func(self.on_title_changed)
 
         for action, callback in self.actions_signals:
             action.disconnect_by_func(callback)

@@ -11,35 +11,39 @@
     <child>
       <object class="AdwToolbarView" id="toolbar_view">
         <property name="content">
-          <object class="WebKitWebView" id="web_kit_view"/>
+          <object class="WebKitWebView" id="web_view"/>
         </property>
         <child type="top">
           <object class="GtkBox">
-            <property name="halign">center</property>
+            <property name="halign">fill</property>
             <property name="spacing">6</property>
             <property name="margin-top">6</property>
             <property name="margin-bottom">6</property>
+            <property name="margin-start">6</property>
+            <property name="margin-end">6</property>
             <child>
               <object class="GtkButton" id="back_button">
-                <property name="icon-name">back-symbolic</property>
+                <property name="icon-name">left-symbolic</property>
                 <signal name="clicked" handler="on_back_clicked"/>
               </object>
             </child>
             <child>
               <object class="GtkButton" id="forward_button">
-                <property name="icon-name">forward-symbolic</property>
+                <property name="icon-name">right-symbolic</property>
                 <!-- <signal name="clicked" handler="on_forward_clicked"/> -->
               </object>
             </child>
             <child>
               <object class="GtkButton" id="reload_button">
-                <property name="icon-name">reload-symbolic</property>
+                <property name="icon-name">arrow-circular-small-top-right-symbolic</property>
                 <!-- <signal name="clicked" handler="on_reload_clicked"/> -->
               </object>
             </child>
             <child>
               <object class="GtkEntry" id="uri_entry">
                 <property name="placeholder-text">Address</property>
+                <property name="halign">fill</property>
+                <property name="hexpand">true</property>
               </object>
             </child>
           </object>

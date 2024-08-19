@@ -111,8 +111,7 @@ class WorkspaceView(Panel.Widget):
             return
 
         for file in result:
-            last_part = os.path.basename(file.get_path())
-            self.root.children.append(TreeNode(last_part, NodeType.FILE))
+            self.root.children.append(TreeNode(file.get_path(), NodeType.FILE))
 
     def on_add_folder(self, *args):
         asyncio.create_task(self.__on_add_folder())

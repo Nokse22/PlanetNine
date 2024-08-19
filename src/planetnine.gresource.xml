@@ -21,6 +21,7 @@
     <file>icons/16x16/actions/seek-forward-large-symbolic.svg</file>
     <file>icons/16x16/actions/stop-symbolic.svg</file>
     <file>icons/16x16/actions/terminal-symbolic.svg</file>
+    <file>icons/16x16/actions/left-symbolic.svg</file>
     <file>icons/16x16/actions/right-symbolic.svg</file>
     <file>icons/16x16/actions/processor-symbolic.svg</file>
     <file>icons/16x16/actions/arrow-turn-right-up-symbolic.svg</file>
@@ -39,6 +40,7 @@
     <file>icons/16x16/mimetypes/application-pdf-symbolic.svg</file>
     <file>icons/16x16/mimetypes/paper-symbolic.svg</file>
     <file>icons/16x16/mimetypes/unknown-symbolic.svg</file>
+    <file>icons/16x16/mimetypes/octave-symbolic.svg</file>
 
   </gresource>
 </gresources>

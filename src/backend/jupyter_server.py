@@ -128,7 +128,11 @@ class JupyterServer(GObject.GObject):
 
         if response.status_code == 201:
             kernel_info = response.json()
-            kernel = JupyterKernel(kernel_info['name'], kernel_info['id'])
+            pprint(kernel_info)
+            for av_kernel_info in self.avalaible_kernels:
+                if kernel_name == av_kernel_info.name:
+                    k_language = av_kernel_info.language
+            kernel = JupyterKernel(kernel_info['name'], kernel_info['id'], k_language or "")
             self.kernels.append(kernel)
             return True, kernel
         else:

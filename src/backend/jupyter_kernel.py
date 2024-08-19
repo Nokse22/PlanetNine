@@ -63,12 +63,13 @@ class JupyterKernel(GObject.GObject):
     name = GObject.Property(type=str, default='')
     kernel_id = GObject.Property(type=str, default='')
 
-    def __init__(self, name, kernel_id):
+    def __init__(self, _name, _kernel_id, _language):
         super().__init__()
 
-        self.name = name
-        self.display_name = name.title() + " " + kernel_id[:5]
-        self.kernel_id = kernel_id
+        self.name = _name
+        self.display_name = _name.title() + " " + _kernel_id[:5]
+        self.language = _language
+        self.kernel_id = _kernel_id
         self.status = ""
 
         self.thread = None
