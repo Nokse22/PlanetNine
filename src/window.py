@@ -424,9 +424,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             notebook.name = os.path.basename(file_path)
 
             notebook_page = NotebookPage(notebook)
-
             notebook_page.connect("presented", self.on_widget_presented)
-
             self.grid.add(notebook_page)
 
             success, kernel = await self.jupyter_server.start_kernel_by_name("")
@@ -435,23 +433,24 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 notebook_page.set_kernel(kernel)
 
     def on_widget_presented(self, widget):
-        widget = widget.get_child()
 
         if isinstance(self.previously_presented_widget, NotebookPage):
-            self.previously_presented_widget.disconnect_by_func(self.on_kernel_info_changed)
+            self.previously_presented_widget.disconnect_by_func(self.update_kernel_info)
 
         if isinstance(widget, NotebookPage):
-            widget.connect("kernel-info-changed", self.on_kernel_info_changed)
-            self.set_kernel_info(widget.kernel_name, widget.kernel_status)
+            widget.connect("kernel-info-changed", self.update_kernel_info)
+            self.update_kernel_info(widget)
 
         self.previously_presented_widget = widget
 
-    def on_kernel_info_changed(self, notebook_page, kernel_name, status):
-        self.set_kernel_info(kernel_name, status)
-
-    def set_kernel_info(self, kernel_name, status):
-        self.kernel_status_menu.set_label(status)
-        self.omni_label.set_label(kernel_name or "No Kernel")
+    def update_kernel_info(self, notebook_page):
+        kernel = notebook_page.notebook_model.jupyter_kernel
+        if kernel:
+            self.kernel_status_menu.set_label(kernel.status)
+            self.omni_label.set_label(kernel.name)
+        else:
+            self.kernel_status_menu.set_label("")
+            self.omni_label.set_label("No Kernel")
 
     @Gtk.Template.Callback("on_create_frame")
     def on_create_frame(self, grid):

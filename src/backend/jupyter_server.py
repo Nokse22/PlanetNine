@@ -67,7 +67,7 @@ class JupyterServer(GObject.GObject):
         self.address = ""
         self.token = ""
 
-        self.sandboxed = True
+        self.sandboxed = False
 
         self.sessions = Gio.ListStore.new(Session)
         self.kernels = Gio.ListStore.new(JupyterKernel)

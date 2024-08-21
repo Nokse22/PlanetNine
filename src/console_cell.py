@@ -55,14 +55,7 @@ class ConsoleCell(Gtk.Box):
 
         self.connect("unrealize", self.__on_unrealized)
 
-        lm = GtkSource.LanguageManager()
-        lang = lm.get_language("python3")
-        self.code_buffer.set_language(lang)
         self.code_buffer.set_highlight_syntax(True)
-
-        sm = GtkSource.StyleSchemeManager()
-        scheme = sm.get_scheme("Adwaita-dark")
-        self.code_buffer.set_style_scheme(scheme)
 
         self.style_manager = Adw.StyleManager.get_default()
         self.style_manager.connect("notify::dark", self.update_style_scheme)
@@ -140,6 +133,11 @@ class ConsoleCell(Gtk.Box):
         sm = GtkSource.StyleSchemeManager()
         scheme = sm.get_scheme(scheme_name)
         self.code_buffer.set_style_scheme(scheme)
+
+    def set_language(self, lang_name):
+        lm = GtkSource.LanguageManager()
+        lang = lm.get_language(lang_name)
+        self.code_buffer.set_language(lang)
 
     def __on_unrealized(self, *args):
         self.style_manager.disconnect_by_func(self.update_style_scheme)

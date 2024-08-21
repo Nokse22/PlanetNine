@@ -21,7 +21,7 @@ from gi.repository import Adw
 from gi.repository import Gtk
 from gi.repository import Gio
 from gi.repository import GObject, WebKit
-from gi.repository import GtkSource
+from gi.repository import GtkSource, Spelling
 from gi.repository import Gdk, GdkPixbuf
 
 import hashlib
@@ -90,6 +90,17 @@ class CellUI(Gtk.Box):
         self.style_manager = Adw.StyleManager.get_default()
         self.style_manager.connect("notify::dark", self.update_style_scheme)
         self.update_style_scheme()
+
+        # ENABLE SPELL CHECK
+
+        checker = Spelling.Checker.get_default()
+        adapter = Spelling.TextBufferAdapter.new(self.code_buffer, checker)
+        extra_menu = adapter.get_menu_model()
+
+        self.source_view.set_extra_menu(extra_menu)
+        self.source_view.insert_action_group('spelling', adapter)
+
+        adapter.set_enabled(True)
 
         self.text_buffer = self.markdown_text_view.get_buffer()
 

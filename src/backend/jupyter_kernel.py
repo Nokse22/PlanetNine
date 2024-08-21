@@ -1,4 +1,4 @@
-# window.py
+# jupyter_kernel.py
 #
 # Copyright 2024 Nokse
 #
@@ -59,7 +59,6 @@ class JupyterKernelInfo(GObject.GObject):
 class JupyterKernel(GObject.GObject):
     __gtype_name__ = 'JupyterKernel'
 
-    sandboxed = GObject.Property(type=bool, default=True)
     name = GObject.Property(type=str, default='')
     kernel_id = GObject.Property(type=str, default='')
 
@@ -76,21 +75,23 @@ class JupyterKernel(GObject.GObject):
         self.address = ""
         self.token = ""
 
-        self.sandboxed = True
-
         self.kernel_client = jupyter_client.AsyncKernelClient()
 
-        self.data_dir = os.environ["XDG_DATA_HOME"]
+        self.data_dir = "/home/lorenzo/.local/share/" # os.environ["XDG_DATA_HOME"]
 
         self.__connect()
 
+        self.msg_callbacks = {}
+
         # asyncio.create_task(self.__get_control_msg())
-        # asyncio.create_task(self.__get_iopub_msg())
+        asyncio.create_task(self.__get_iopub_msg())
         # asyncio.create_task(self.__get_stdin_msg())
         # asyncio.create_task(self.__get_shell_msg())
 
     def __connect(self):
         connection_file_path = f"{self.data_dir}/jupyter/runtime/kernel-{self.kernel_id}.json"
+
+        print(connection_file_path)
 
         with open(connection_file_path) as f:
             connection_info = json.load(f)
@@ -118,10 +119,20 @@ class JupyterKernel(GObject.GObject):
                 print("IOPUB MSG:")
                 pprint(msg)
 
-                if msg['header']['msg_type'] == 'status':
+                msg_type = msg['header']['msg_type']
+                msg_id = msg['parent_header']['msg_id']
+
+                print("MSG ID: ", msg_id)
+
+                if msg_type == 'status':
                     self.status = msg['content']['execution_state']
+
+                else:
+                    if msg_id in self.msg_callbacks:
+                        self.msg_callbacks[msg_id][0](msg, self.msg_callbacks[msg_id][1])
+
             except Exception as e:
-                print(f"Exception while getting iopub msg:\n{e}")
+                print(f"Exception while getting iopub msg: {e}")
 
     async def __get_shell_msg(self):
         while True:
@@ -147,26 +158,8 @@ class JupyterKernel(GObject.GObject):
         asyncio.create_task(self.__execute(code, callback, *args))
 
     async def __execute(self, code, callback, *args):
-
         await self.kernel_client.wait_for_ready()
 
-        msg = self.kernel_client.execute(code)
+        msg_id = self.kernel_client.execute(code)
 
-        print(f"Code executed: {msg}")
-
-        while True:
-            try:
-                print("waiting for message")
-                msg = await self.kernel_client.get_iopub_msg()
-            except Exception as e:
-                print(f"Error while executing code: \n{e}")
-                callback(msg, *args)
-                return
-
-            if msg['header']['msg_type'] == 'status':
-                status = msg['content']['execution_state']
-                if status == "idle":
-                    callback(msg, *args)
-                    return
-
-            callback(msg, *args)
+        self.msg_callbacks[msg_id] = [callback, *args]

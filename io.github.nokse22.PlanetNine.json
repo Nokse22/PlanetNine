@@ -10,7 +10,7 @@
         "--socket=fallback-x11",
         "--device=dri",
         "--socket=wayland",
-        "-filesystem=~/.local/share/jupyter",
+        "-filesystem=XDG_DATA_HOME",
         "--talk-name=org.freedesktop.Flatpak",
         "--env=GOBJECT_DEBUG=instance-count"
     ],

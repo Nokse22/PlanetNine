@@ -26,6 +26,8 @@ from .jupyter_kernel import JupyterKernel, JupyterKernelInfo
 from .tree_row_widget import TreeWidget
 from enum import IntEnum
 
+from .converters import get_language_icon
+
 
 class NodeType(IntEnum):
     ROOT = 0
@@ -114,7 +116,7 @@ class KernelManagerView(Panel.Widget):
 
         elif isinstance(item, JupyterKernelInfo):
             widget.set_text(item.display_name)
-            widget.set_icon_name(language_to_icon(item.language))
+            widget.set_icon_name(get_language_icon(item.language))
 
             menu_model = Gio.Menu()
 
@@ -137,7 +139,7 @@ class KernelManagerView(Panel.Widget):
 
         elif isinstance(item, JupyterKernel):
             widget.set_text(item.display_name)
-            widget.set_icon_name(language_to_icon(item.language))
+            widget.set_icon_name(get_language_icon(item.language))
 
             menu_model = Gio.Menu()
             menu_item = Gio.MenuItem()
@@ -167,12 +169,3 @@ class KernelManagerView(Panel.Widget):
 
         else:
             widget.set_text("Unknown")
-
-
-def language_to_icon(lang):
-    languages_to_icon = {
-        "python": "text-x-python-symbolic",
-        "octave": "octave-symbolic",
-    }
-
-    return languages_to_icon.get(lang, "unknown-symbolic")

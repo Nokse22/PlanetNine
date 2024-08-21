@@ -18,13 +18,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from gi.repository import Gtk, GObject, Adw
-from gi.repository import Panel, GtkSource
+from gi.repository import Panel, GtkSource, Spelling
 
 import sys
 
 from .console_cell import ConsoleCell
 from .output import Output, OutputType
 from .completion_providers import LSPCompletionProvider, WordsCompletionProvider
+
+from .converters import get_language_highlight_name
 
 GObject.type_register(Panel.Widget)
 
@@ -50,6 +52,8 @@ class ConsolePage(Panel.Widget):
 
         self.send_button.connect("clicked", self.on_send_clicked)
 
+        # SET HIGHLIGH LANGUAGE
+
         lm = GtkSource.LanguageManager()
         lang = lm.get_language("python3")
         self.code_buffer.set_language(lang)
@@ -63,15 +67,34 @@ class ConsolePage(Panel.Widget):
         self.style_manager.connect("notify::dark", self.update_style_scheme)
         self.update_style_scheme()
 
+        # ENABLE SPELL CHECK
+
+        checker = Spelling.Checker.get_default()
+        adapter = Spelling.TextBufferAdapter.new(self.code_buffer, checker)
+        extra_menu = adapter.get_menu_model()
+
+        self.source_view.set_extra_menu(extra_menu)
+        self.source_view.insert_action_group('spelling', adapter)
+
+        adapter.set_enabled(True)
+
+        # ADD COMPLETION PROVIDERS
+
         completion = self.source_view.get_completion()
 
         completion_words = WordsCompletionProvider()
         completion_words.register(self.code_buffer)
 
         completion.add_provider(completion_words)
-        # completion.add_provider(PyLSPCompletionProvider())
+        # completion.add_provider(LSPCompletionProvider())
 
     def set_kernel(self, jupyter_kernel):
+        lm = GtkSource.LanguageManager()
+        lang_name = get_language_highlight_name(jupyter_kernel.language)
+        lang = lm.get_language(lang_name)
+        print(lm.get_language_ids())
+        self.code_buffer.set_language(lang)
+
         self.jupyter_kernel = jupyter_kernel
 
     def update_style_scheme(self, *args):
@@ -122,9 +145,6 @@ class ConsolePage(Panel.Widget):
             output.parse(content)
             cell.add_output(output)
 
-            # self._kernel_status = "busy"
-            # self.emit("kernel-info-changed", self._kernel_name, self._kernel_status)
-
         elif msg_type == 'execute_input':
             count = content['execution_count']
             cell.execution_count = int(count)
@@ -148,6 +168,8 @@ class ConsolePage(Panel.Widget):
 
     def add_run_cell(self, content):
         cell = ConsoleCell(content)
+        lang_name = get_language_highlight_name(self.jupyter_kernel.language)
+        cell.set_language(lang_name)
         self.run_list_box.append(cell)
         return cell
 

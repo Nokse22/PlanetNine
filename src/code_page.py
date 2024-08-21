@@ -21,6 +21,8 @@ from gi.repository import Gtk, GObject, Adw
 from gi.repository import Panel, GtkSource
 from gi.repository import Spelling
 
+from .converters import get_language_highlight_name
+
 import sys
 
 GObject.type_register(GtkSource.Map)
@@ -88,6 +90,11 @@ class CodePage(Panel.Widget):
         self.code_buffer.set_style_scheme(scheme)
 
     def set_kernel(self, jupyter_kernel):
+        lm = GtkSource.LanguageManager()
+        lang_name = get_language_highlight_name(jupyter_kernel.language)
+        lang = lm.get_language(lang_name)
+        self.code_buffer.set_language(lang)
+
         print(jupyter_kernel)
 
     def __on_unrealized(self, *args):

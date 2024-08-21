@@ -39,7 +39,7 @@ class NotebookPage(Panel.Widget):
     __gtype_name__ = 'NotebookPage'
 
     __gsignals__ = {
-        'kernel-info-changed': (GObject.SignalFlags.RUN_FIRST, None, (str,str,)),
+        'kernel-info-changed': (GObject.SignalFlags.RUN_FIRST, None, ()),
     }
 
     cells_list_box = Gtk.Template.Child()
@@ -49,9 +49,6 @@ class NotebookPage(Panel.Widget):
     queue = []
 
     cache_dir = os.environ["XDG_CACHE_HOME"]
-
-    _kernel_name = ""
-    _kernel_status = ""
 
     def __init__(self, _notebook_model=None):
         super().__init__()
@@ -89,26 +86,6 @@ class NotebookPage(Panel.Widget):
         self.queue = []
 
         self.add_cell(Cell(CellType.CODE))
-
-        self._kernel_name = ""
-
-    @GObject.Property(type=str, default="")
-    def kernel_name(self):
-        return self._kernel_name
-
-    @kernel_name.setter
-    def kernel_name(self, value):
-        self._kernel_name = value
-        self.emit("kernel-info-changed", self._kernel_name, self._kernel_status)
-
-    @GObject.Property(type=str, default="")
-    def kernel_status(self):
-        return self._kernel_status
-
-    @kernel_status.setter
-    def kernel_status(self, value):
-        self._kernel_status = value
-        self.emit("kernel-info-changed", self._kernel_name, self._kernel_status)
 
     def run_selected_cell(self):
         cell = self.get_selected_cell()
@@ -171,8 +148,7 @@ class NotebookPage(Panel.Widget):
             output.parse(content)
             cell.add_output(output)
 
-            self._kernel_status = "busy"
-            self.emit("kernel-info-changed", self._kernel_name, self._kernel_status)
+            self.emit("kernel-info-changed")
 
         elif msg_type == 'execute_input':
             count = content['execution_count']
@@ -192,8 +168,7 @@ class NotebookPage(Panel.Widget):
         elif msg_type == 'status':
             status = content['execution_state']
 
-            self._kernel_status = status
-            self.emit("kernel-info-changed", self._kernel_name, self._kernel_status)
+            self.emit("kernel-info-changed")
 
             if status == "idle":
                 if self.queue != []:
@@ -207,8 +182,7 @@ class NotebookPage(Panel.Widget):
 
     def set_kernel(self, jupyter_kernel):
         self.notebook_model.jupyter_kernel = jupyter_kernel
-        self.kernel_name = jupyter_kernel.name
-        print("NAME: ", self.kernel_name, self.notebook_model.jupyter_kernel)
+        self.emit("kernel-info-changed")
 
     def create_widgets(self, cell):
         cell = CellUI(cell)

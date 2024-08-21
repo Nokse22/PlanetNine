@@ -50,6 +50,7 @@ planetnine_sources = [
   'notebook_save_delegate.py',
 
   'async_helpers.py',
+  'converters.py',
 
   'completion_providers.py',
 

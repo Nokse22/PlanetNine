@@ -26,6 +26,8 @@ import asyncio
 
 from .tree_row_widget import TreeWidget
 
+from .converters import get_mime_icon
+
 
 class NodeType(IntEnum):
     ROOT = 0
@@ -241,44 +243,3 @@ class WorkspaceView(Panel.Widget):
         action.connect("activate", callback)
         self.action_group.add_action(action)
         return action
-
-
-def get_mime_icon(filename):
-    extension_to_icon = {
-        ".py": "text-x-python-symbolic",
-
-        ".ipynb": "jupyter-symbolic",
-
-        ".png": "image-symbolic",
-        ".jpg": "image-symbolic",
-        ".jpeg": "image-symbolic",
-        ".gif": "image-symbolic",
-        ".bmp": "image-symbolic",
-        ".svg": "image-symbolic",
-
-        ".md": "text-markdown-symbolic",
-
-        ".txt": "text-symbolic",
-
-        ".csv": "text-csv-symbolic",
-
-        ".json": "text-json-symbolic",
-
-        ".html": "text-html-symbolic",
-        ".htm": "text-html-symbolic",
-
-        ".tex": "text-x-tex-symbolic",
-
-        ".xml": "text-xml-symbolic",
-
-        ".js": "text-javascript-symbolic",
-
-        ".yaml": "text-yaml-symbolic",
-        ".yml": "text-yaml-symbolic",
-
-        ".pdf": "application-pdf-symbolic",
-    }
-
-    _, ext = os.path.splitext(filename)
-
-    return extension_to_icon.get(ext.lower(), "unknown-symbolic")
