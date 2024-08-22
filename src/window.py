@@ -61,6 +61,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     omni_label = Gtk.Template.Child()
     server_status_label = Gtk.Template.Child()
     start_sidebar_panel_frame = Gtk.Template.Child()
+    language_label = Gtk.Template.Child()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -223,6 +224,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         if success:
             notebook_page.set_kernel(kernel)
+            self.update_kernel_info(notebook_page)
 
     #
     #   NEW CONSOLE PAGE WITH KERNEL NAME
@@ -232,14 +234,15 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         asyncio.create_task(self.__on_new_console_action(variant.get_string()))
 
     async def __on_new_console_action(self, kernel_name):
-        console = ConsolePage()
+        console_page = ConsolePage()
 
-        self.grid.add(console)
+        self.grid.add(console_page)
 
         success, kernel = await self.jupyter_server.start_kernel_by_name(kernel_name)
 
         if success:
-            console.set_kernel(kernel)
+            console_page.set_kernel(kernel)
+            self.update_kernel_info(console_page)
 
     #
     #   NEW CODE PAGE WITH KERNEL NAME
@@ -249,14 +252,15 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         asyncio.create_task(self.__on_new_code_action(variant.get_string()))
 
     async def __on_new_code_action(self, kernel_name):
-        code = CodePage()
+        code_page = CodePage()
 
-        self.grid.add(code)
+        self.grid.add(code_page)
 
         success, kernel = await self.jupyter_server.start_kernel_by_name(kernel_name)
 
         if success:
-            code.set_kernel(kernel)
+            code_page.set_kernel(kernel)
+            self.update_kernel_info(code_page)
 
     #
     #   START SERVER
@@ -335,10 +339,12 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 if success:
                     print("kernel has restarted")
                     notebook.set_kernel(new_kernel)
+                    self.update_kernel_info(notebook)
                 else:
                     print("kernel has NOT restarted")
             elif isinstance(kernel, JupyterKernel):
                 notebook.set_kernel(kernel)
+                self.update_kernel_info(notebook)
                 print("kernel changed")
 
     def add_cell_to_selected_notebook(self, cell):
@@ -431,26 +437,36 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
             if success:
                 notebook_page.set_kernel(kernel)
+                self.update_kernel_info(notebook_page)
 
     def on_widget_presented(self, widget):
 
-        if isinstance(self.previously_presented_widget, NotebookPage):
+        if (isinstance(self.previously_presented_widget, NotebookPage) or
+                isinstance(self.previously_presented_widget, ConsolePage) or
+                isinstance(self.previously_presented_widget, CodePage)):
             self.previously_presented_widget.disconnect_by_func(self.update_kernel_info)
 
-        if isinstance(widget, NotebookPage):
+        if (isinstance(widget, NotebookPage) or
+                isinstance(widget, ConsolePage) or
+                isinstance(widget, CodePage)):
             widget.connect("kernel-info-changed", self.update_kernel_info)
             self.update_kernel_info(widget)
 
         self.previously_presented_widget = widget
 
-    def update_kernel_info(self, notebook_page):
-        kernel = notebook_page.notebook_model.jupyter_kernel
+    def update_kernel_info(self, widget):
+        kernel = widget.get_kernel()
         if kernel:
             self.kernel_status_menu.set_label(kernel.status)
-            self.omni_label.set_label(kernel.name)
+            self.omni_label.set_label(kernel.display_name)
+            self.language_label.set_visible(True)
+            self.language_label.set_visible(kernel.language)
+            self.omni_bar.set_visible(True)
         else:
             self.kernel_status_menu.set_label("")
             self.omni_label.set_label("No Kernel")
+            self.language_label.set_visible(False)
+            self.omni_bar.set_visible(False)
 
     @Gtk.Template.Callback("on_create_frame")
     def on_create_frame(self, grid):

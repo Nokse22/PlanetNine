@@ -182,7 +182,11 @@ class NotebookPage(Panel.Widget):
 
     def set_kernel(self, jupyter_kernel):
         self.notebook_model.jupyter_kernel = jupyter_kernel
+        self.notebook_model.jupyter_kernel.connect("status-changed", lambda *args: self.emit("kernel-info-changed"))
         self.emit("kernel-info-changed")
+
+    def get_kernel(self):
+        return self.notebook_model.jupyter_kernel
 
     def create_widgets(self, cell):
         cell = CellUI(cell)

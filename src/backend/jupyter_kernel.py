@@ -30,6 +30,10 @@ from pprint import pprint
 class JupyterKernelInfo(GObject.GObject):
     __gtype_name__ = 'JupyterKernelInfo'
 
+    __gsignals__ = {
+        "changed-status": (GObject.SignalFlags.RUN_FIRST, None, ()),
+    }
+
     name = ""
     display_name = ""
     language = ""
@@ -58,6 +62,10 @@ class JupyterKernelInfo(GObject.GObject):
 
 class JupyterKernel(GObject.GObject):
     __gtype_name__ = 'JupyterKernel'
+
+    __gsignals__ = {
+        'status-changed': (GObject.SignalFlags.RUN_FIRST, None, ()),
+    }
 
     name = GObject.Property(type=str, default='')
     kernel_id = GObject.Property(type=str, default='')
@@ -116,16 +124,15 @@ class JupyterKernel(GObject.GObject):
         while True:
             try:
                 msg = await self.kernel_client.get_iopub_msg()
-                print("IOPUB MSG:")
-                pprint(msg)
+                # print("IOPUB MSG:")
+                # pprint(msg)
 
                 msg_type = msg['header']['msg_type']
                 msg_id = msg['parent_header']['msg_id']
 
-                print("MSG ID: ", msg_id)
-
                 if msg_type == 'status':
                     self.status = msg['content']['execution_state']
+                    self.emit("status-changed")
 
                 else:
                     if msg_id in self.msg_callbacks:

@@ -33,6 +33,10 @@ GObject.type_register(GtkSource.VimIMContext)
 class CodePage(Panel.Widget):
     __gtype_name__ = 'CodePage'
 
+    __gsignals__ = {
+        'kernel-info-changed': (GObject.SignalFlags.RUN_FIRST, None, ()),
+    }
+
     source_view = Gtk.Template.Child()
     code_buffer = Gtk.Template.Child()
     event_controller_key = Gtk.Template.Child()
@@ -95,7 +99,13 @@ class CodePage(Panel.Widget):
         lang = lm.get_language(lang_name)
         self.code_buffer.set_language(lang)
 
-        print(jupyter_kernel)
+        self.jupyter_kernel = jupyter_kernel
+        self.jupyter_kernel.connect("status-changed", lambda *args: self.emit("kernel-info-changed"))
+
+        self.emit("kernel-info-changed")
+
+    def get_kernel(self):
+        return self.jupyter_kernel
 
     def __on_unrealized(self, *args):
         self.style_manager.disconnect_by_func(self.update_style_scheme)

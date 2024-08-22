@@ -179,6 +179,11 @@
                   </object>
                 </child>
                 <child type="suffix">
+                  <object class="GtkLabel" id="language_label">
+                    <property name="visible">false</property>
+                  </object>
+                </child>
+                <child type="suffix">
                   <object class="GtkMenuButton">
                   <property name="direction">up</property>
                   <property name="label">Cell 1, Ln 1, Col 2</property>

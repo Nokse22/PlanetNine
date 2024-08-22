@@ -52,6 +52,8 @@ planetnine_sources = [
   'async_helpers.py',
   'converters.py',
 
+  'preferences.py',
+
   'completion_providers.py',
 
   'backend/command_line.py',

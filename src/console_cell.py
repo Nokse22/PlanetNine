@@ -146,7 +146,5 @@ class ConsoleCell(Gtk.Box):
 
         print("unrealize: ", sys.getrefcount(self))
 
-        del self.cell
-
     def __del__(self, *args):
         print(f"DELETING {self}")

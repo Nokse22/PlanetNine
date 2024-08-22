@@ -14,6 +14,7 @@
     <file preprocess="xml-stripblanks">gtk/console_page.ui</file>
     <file preprocess="xml-stripblanks">gtk/console_cell.ui</file>
     <file preprocess="xml-stripblanks">gtk/code_page.ui</file>
+    <file preprocess="xml-stripblanks">gtk/preferences.ui</file>
     <file preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
 
     <file>icons/16x16/actions/arrow-circular-small-top-right-symbolic.svg</file>

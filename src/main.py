@@ -35,10 +35,12 @@ from gi.events import GLibEventLoopPolicy
 from gi.repository import Panel
 
 from .window import PlanetnineWindow
+from .preferences import Preferences
 
 GObject.type_register(Vte.Terminal)
 GObject.type_register(GtkSource.View)
 GObject.type_register(GtkSource.Buffer)
+GObject.type_register(GtkSource.StyleSchemePreview)
 GObject.type_register(Panel.Dock)
 GObject.type_register(Panel.Grid)
 GObject.type_register(Panel.Paned)
@@ -77,8 +79,7 @@ class PlanetnineApplication(Adw.Application):
 
     def on_about_action(self, *args):
         """Callback for the app.about action."""
-        about = Adw.AboutWindow(transient_for=self.props.active_window,
-                                application_name='planetnine',
+        about = Adw.AboutWindow(application_name='planetnine',
                                 application_icon='io.github.nokse22.PlanetNine',
                                 developer_name='Nokse',
                                 version='0.1.0',
@@ -86,11 +87,14 @@ class PlanetnineApplication(Adw.Application):
                                 copyright='© 2024 Nokse')
         # Translators: Replace "translator-credits" with your name/username, and optionally an email or URL.
         about.set_translator_credits(_('translator-credits'))
-        about.present()
+        about.present(self.props.active_window)
 
     def on_preferences_action(self, widget, _):
         """Callback for the app.preferences action."""
         print('app.preferences action activated')
+
+        preferences = Preferences()
+        preferences.present(self.props.active_window)
 
     def create_action(self, name, callback, shortcuts=None):
         """Add an application action.

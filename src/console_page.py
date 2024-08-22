@@ -35,6 +35,10 @@ GObject.type_register(Panel.Widget)
 class ConsolePage(Panel.Widget):
     __gtype_name__ = 'ConsolePage'
 
+    __gsignals__ = {
+        'kernel-info-changed': (GObject.SignalFlags.RUN_FIRST, None, ()),
+    }
+
     source_view = Gtk.Template.Child()
     code_buffer = Gtk.Template.Child()
     send_button = Gtk.Template.Child()
@@ -52,16 +56,12 @@ class ConsolePage(Panel.Widget):
 
         self.send_button.connect("clicked", self.on_send_clicked)
 
-        # SET HIGHLIGH LANGUAGE
+        # SET HIGHLIGHT AND LANGUAGE
 
         lm = GtkSource.LanguageManager()
         lang = lm.get_language("python3")
         self.code_buffer.set_language(lang)
         self.code_buffer.set_highlight_syntax(True)
-
-        sm = GtkSource.StyleSchemeManager()
-        scheme = sm.get_scheme("Adwaita-dark")
-        self.code_buffer.set_style_scheme(scheme)
 
         self.style_manager = Adw.StyleManager.get_default()
         self.style_manager.connect("notify::dark", self.update_style_scheme)
@@ -92,10 +92,15 @@ class ConsolePage(Panel.Widget):
         lm = GtkSource.LanguageManager()
         lang_name = get_language_highlight_name(jupyter_kernel.language)
         lang = lm.get_language(lang_name)
-        print(lm.get_language_ids())
         self.code_buffer.set_language(lang)
 
         self.jupyter_kernel = jupyter_kernel
+        self.jupyter_kernel.connect("status-changed", lambda *args: self.emit("kernel-info-changed"))
+
+        self.emit("kernel-info-changed")
+
+    def get_kernel(self):
+        return self.jupyter_kernel
 
     def update_style_scheme(self, *args):
         scheme_name = "Adwaita"
@@ -159,12 +164,6 @@ class ConsolePage(Panel.Widget):
             output = Output(OutputType.ERROR)
             output.parse(content)
             cell.add_output(output)
-
-        elif msg_type == 'status':
-            status = content['execution_state']
-
-            # self._kernel_status = status
-            # self.emit("kernel-info-changed", self._kernel_name, self._kernel_status)
 
     def add_run_cell(self, content):
         cell = ConsoleCell(content)
