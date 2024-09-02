@@ -50,7 +50,7 @@ class NotebookPage(Panel.Widget):
 
     cache_dir = os.environ["XDG_CACHE_HOME"]
 
-    def __init__(self, _notebook_model=None):
+    def __init__(self, _notebook_model):
         super().__init__()
 
         self.connect("unrealize", self.__on_unrealized)
@@ -59,16 +59,15 @@ class NotebookPage(Panel.Widget):
         self.list_drop_target.connect("motion", self.on_drop_target_motion)
         self.list_drop_target.connect("leave", self.on_drop_target_leave)
 
-        if _notebook_model:
-            self.notebook_model = _notebook_model
-        else:
-            self.notebook_model = Notebook()
+        self.notebook_model = _notebook_model
+
+        self.set_title(self.notebook_model.name)
 
         self.words_provider = WordsCompletionProvider()
         self.lsp_provider = LSPCompletionProvider()
 
         self.save_delegate = NotebookSaveDelegate(self)
-        self.save_delegate.set_is_draft(True)
+        # self.save_delegate.set_is_draft(True)
         self.set_save_delegate(self.save_delegate)
 
         self.set_modified(True)
@@ -85,7 +84,11 @@ class NotebookPage(Panel.Widget):
 
         self.queue = []
 
-        self.add_cell(Cell(CellType.CODE))
+        if self.notebook_model.get_n_items() == 0:
+            self.add_cell(Cell(CellType.CODE))
+
+    def set_draft(self):
+        self.save_delegate.set_is_draft(True)
 
     def run_selected_cell(self):
         cell = self.get_selected_cell()

@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="planetnine">
 	<schema id="io.github.nokse22.PlanetNine" path="/io/github/nokse22/PlanetNine/">
+	  <key name="code-vim" type="b">
+      <default>false</default>
+    </key>
+	  <key name="code-line-number" type="b">
+      <default>true</default>
+    </key>
+	  <key name="code-highlight-row" type="b">
+      <default>true</default>
+    </key>
 	</schema>
 </schemalist>

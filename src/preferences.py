@@ -25,10 +25,9 @@ from gi.repository import Panel, GtkSource
 class Preferences(Adw.PreferencesDialog):
     __gtype_name__ = 'Preferences'
 
-    vim_switch = Gtk.Template.Child()
-    # code_buffer = Gtk.Template.Child()
-    # event_controller_key = Gtk.Template.Child()
-    # command_label = Gtk.Template.Child()
+    code_vim_switch = Gtk.Template.Child()
+    code_line_number_switch = Gtk.Template.Child()
+    code_highlight_row_switch = Gtk.Template.Child()
     style_flow_box = Gtk.Template.Child()
 
     def __init__(self):

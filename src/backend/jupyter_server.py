@@ -246,6 +246,7 @@ class JupyterServer(GObject.GObject):
             for index, kernel in enumerate(self.kernels):
                 if kernel.kernel_id == kernel_id:
                     self.kernels.remove(index)
+                    break
             return True
         else:
             return False

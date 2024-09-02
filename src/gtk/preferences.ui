@@ -16,8 +16,19 @@
           <object class="AdwPreferencesGroup">
             <property name="title">Code View</property>
             <child>
-              <object class="AdwSwitchRow" id="vim_switch">
+              <object class="AdwSwitchRow" id="code_vim_switch">
                 <property name="title">Use Vim Key Bindings</property>
+                <property name="subtitle">Restart any code editor page to take effect</property>
+              </object>
+            </child>
+            <child>
+              <object class="AdwSwitchRow" id="code_line_number_switch">
+                <property name="title">Show Line Numbers</property>
+              </object>
+            </child>
+            <child>
+              <object class="AdwSwitchRow" id="code_highlight_row_switch">
+                <property name="title">Highlight Current Row</property>
               </object>
             </child>
           </object>

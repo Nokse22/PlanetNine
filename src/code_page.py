@@ -17,7 +17,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gtk, GObject, Adw
+from gi.repository import Gtk, GObject, Adw, Gio
 from gi.repository import Panel, GtkSource
 from gi.repository import Spelling
 
@@ -48,16 +48,25 @@ class CodePage(Panel.Widget):
 
         self.connect("unrealize", self.__on_unrealized)
 
+        self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
+
         # SETUP VIM
 
-        self.vim_im_context = GtkSource.VimIMContext()
+        # self.settings.connect('notify::code-vim', self.on_code_vim_changed)
+        # self.default_im_context = self.event_controller_key.get_im_context()
 
-        self.event_controller_key.set_im_context(self.vim_im_context)
-        self.event_controller_key.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
-        self.vim_im_context.set_client_widget(self.source_view)
+        if self.settings.get_boolean('code-vim'):
+            vim_im_context = GtkSource.VimIMContext()
 
-        self.vim_im_context.bind_property("command-bar-text", self.command_bar_label, "label")
-        self.vim_im_context.bind_property("command-text", self.command_label, "label")
+            self.event_controller_key.set_im_context(vim_im_context)
+            self.event_controller_key.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
+            vim_im_context.set_client_widget(self.source_view)
+
+            vim_im_context.bind_property("command-bar-text", self.command_bar_label, "label")
+            vim_im_context.bind_property("command-text", self.command_label, "label")
+        else:
+            self.command_bar_label.set_visible(False)
+            self.command_label.set_visible(False)
 
         # SET THE LANGUAGE STYLE SCHEME
 
@@ -84,6 +93,11 @@ class CodePage(Panel.Widget):
         self.source_view.insert_action_group('spelling', adapter)
 
         adapter.set_enabled(True)
+
+        # VIEW SETTINGS
+
+        self.settings.bind('code-line-number', self.source_view, 'show-line-numbers', Gio.SettingsBindFlags.DEFAULT)
+        self.settings.bind('code-highlight-row', self.source_view, 'highlight-current-line', Gio.SettingsBindFlags.DEFAULT)
 
     def update_style_scheme(self, *args):
         scheme_name = "Adwaita"

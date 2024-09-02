@@ -27,6 +27,7 @@
                 <property name="centering-policy">loose</property>
                 <property name="title-widget">
                   <object class="PanelOmniBar" id="omni_bar">
+                    <property name="visible">false</property>
                     <property name="icon-name">play-symbolic</property>
                     <property name="width-request">200</property>
                     <property name="menu-model">run-menu</property>

@@ -51,6 +51,7 @@ planetnine_sources = [
 
   'async_helpers.py',
   'converters.py',
+  'utilities.py',
 
   'preferences.py',
 

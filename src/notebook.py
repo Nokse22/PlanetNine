@@ -21,11 +21,10 @@ from gi.repository import Gio
 from gi.repository import GObject
 
 import nbformat
+import os
 
-from enum import IntEnum
+from .cell import Cell
 
-from .cell import Cell, CellType
-from .output import Output, OutputType
 
 class Notebook(Gio.ListStore):
     __gtype_name__ = 'Notebook'
@@ -33,19 +32,21 @@ class Notebook(Gio.ListStore):
     name = GObject.Property(type=str, default="")
     jupyter_kernel = None
 
-    def __init__(self, **kwargs):
+    def __init__(self, _path=None):
         super().__init__()
 
-        if 'name' in kwargs:
-            self.name = kwargs['name']
-        else:
-            self.name = ""
+        self.path = _path
+        self.name = os.path.basename(self.path) if self.path else "Notebook.ipynb"
 
         self.jupyter_kernel = None
 
     @classmethod
-    def new_from_json(cls, notebook_node):
-        instance = cls()
+    def new_from_file(cls, notebook_path):
+        instance = cls(notebook_path)
+
+        with open(notebook_path, 'r') as file:
+            file_content = file.read()
+            notebook_node = nbformat.reads(file_content, as_version=4)
 
         instance.parse(notebook_node)
 

@@ -44,6 +44,7 @@ from .workspace_view import WorkspaceView
 from .launcher import Launcher
 from .console_page import ConsolePage
 from .code_page import CodePage
+from .utilities import get_next_filepath
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/window.ui')
@@ -62,6 +63,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     server_status_label = Gtk.Template.Child()
     start_sidebar_panel_frame = Gtk.Template.Child()
     language_label = Gtk.Template.Child()
+
+    cache_dir = os.environ["XDG_CACHE_HOME"]
+    files_cache_dir = os.path.join(cache_dir, "files")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -214,9 +218,16 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         asyncio.create_task(self.__on_new_notebook_action(variant.get_string()))
 
     async def __on_new_notebook_action(self, kernel_name):
-        notebook = Notebook(name="Untitled.ipynb")
+
+        notebook_path = get_next_filepath(self.files_cache_dir, "Untitled", ".ipynb")
+
+        notebook = Notebook(notebook_path)
+
+        if not os.path.exists(notebook_path):
+            nbformat.write(notebook.get_notebook_node(), notebook_path)
 
         notebook_page = NotebookPage(notebook)
+        notebook_page.set_draft()
         notebook_page.connect("presented", self.on_widget_presented)
         self.grid.add(notebook_page)
 
@@ -390,6 +401,18 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
     #
 
+    def save_viewed(self):
+        notebook = self.get_selected_notebook()
+        if notebook:
+            notebook.get_save_delegate().save_async(None, self.on_saved_finished)
+
+    def on_saved_finished(self, delegate, result):
+        print("saved")
+
+    #
+    #
+    #
+
     def create_action(self, name, callback):
         action = Gio.SimpleAction.new(name, None)
         action.connect("activate", callback)
@@ -422,22 +445,17 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         file_path = await dialog.open(self)
 
-        with open(file_path, 'r') as file:
-            file_content = file.read()
-            notebook_node = nbformat.reads(file_content, as_version=4)
+        notebook = Notebook.new_from_file(file_path)
 
-            notebook = Notebook.new_from_json(notebook_node)
-            notebook.name = os.path.basename(file_path)
+        notebook_page = NotebookPage(notebook)
+        notebook_page.connect("presented", self.on_widget_presented)
+        self.grid.add(notebook_page)
 
-            notebook_page = NotebookPage(notebook)
-            notebook_page.connect("presented", self.on_widget_presented)
-            self.grid.add(notebook_page)
+        success, kernel = await self.jupyter_server.start_kernel_by_name("")
 
-            success, kernel = await self.jupyter_server.start_kernel_by_name("")
-
-            if success:
-                notebook_page.set_kernel(kernel)
-                self.update_kernel_info(notebook_page)
+        if success:
+            notebook_page.set_kernel(kernel)
+            self.update_kernel_info(notebook_page)
 
     def on_widget_presented(self, widget):
 

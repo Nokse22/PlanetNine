@@ -59,9 +59,13 @@ class PlanetnineApplication(Adw.Application):
                          flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
         self.create_action('quit', lambda *_: self.quit(), ['<primary>q'])
         self.create_action('about', self.on_about_action)
-        self.create_action('preferences', self.on_preferences_action)
-
+        self.create_action('preferences', self.on_preferences_action, ['<primary>,'])
         self.create_action('run', self.on_run_action, ['<ctrl>Escape'])
+
+        self.create_action('save', self.on_save_action, ['<ctrl>s'])
+        self.create_action('save-all', self.on_save_all_action, ['<ctrl><shift>s'])
+
+        self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
     def do_activate(self):
         """Called when the application is activated.
@@ -76,6 +80,12 @@ class PlanetnineApplication(Adw.Application):
 
     def on_run_action(self, *args):
         self.props.active_window.run_selected_cell()
+
+    def on_save_action(self, *args):
+        self.props.active_window.save_viewed()
+
+    def on_save_all_action(self, *args):
+        self.props.active_window.save_viewed()
 
     def on_about_action(self, *args):
         """Callback for the app.about action."""
@@ -94,6 +104,11 @@ class PlanetnineApplication(Adw.Application):
         print('app.preferences action activated')
 
         preferences = Preferences()
+
+        self.settings.bind('code-vim', preferences.code_vim_switch, 'active', Gio.SettingsBindFlags.DEFAULT)
+        self.settings.bind('code-line-number', preferences.code_line_number_switch, 'active', Gio.SettingsBindFlags.DEFAULT)
+        self.settings.bind('code-highlight-row', preferences.code_highlight_row_switch, 'active', Gio.SettingsBindFlags.DEFAULT)
+
         preferences.present(self.props.active_window)
 
     def create_action(self, name, callback, shortcuts=None):

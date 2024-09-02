@@ -17,8 +17,11 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gio, Gtk
-from gi.repository import GObject, Panel
+from gi.repository import Panel, Gtk
+
+import nbformat
+import os
+import asyncio
 
 
 class NotebookSaveDelegate(Panel.SaveDelegate):
@@ -40,16 +43,43 @@ class NotebookSaveDelegate(Panel.SaveDelegate):
     def do_close(self):
         print("close")
 
+        self.page.force_close()
+
     def do_discard(self):
         self.page.force_close()
 
     def do_save_async(self, cancellable, callback, *args):
-        file_dialog = Gtk.FileDialog(
-            accept_label="Save File",
-            modal=True
+        if self.get_is_draft():
+            asyncio.create_task(self.__do_save_async())
+        else:
+            self.save()
+            self.set_is_draft(False)
+
+    async def __do_save_async(self):
+        dialog = Gtk.FileDialog(
+            title=_("Save")
         )
 
-        result = file_dialog.save()
+        try:
+            file = await dialog.save(self.page.get_root())
+
+            notebook_path = file.get_path()
+            self.page.notebook_model.path = notebook_path
+
+            self.save()
+
+        except Exception as e:
+            print(e)
 
     def do_save_finish(self, result, error):
         print("Async save completed.")
+
+    def save(self):
+        notebook = self.page.notebook_model
+
+        notebook_path = self.page.notebook_model.path
+
+        if notebook_path:
+            nbformat.write(notebook.get_notebook_node(), notebook_path)
+            self.page.set_modified(False)
+
