@@ -1,4 +1,4 @@
-# window.py
+# image_viewer.py
 #
 # Copyright 2024 Nokse
 #
@@ -17,11 +17,8 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import gi
-gi.require_version('Gtk', '4.0')
-from gi.repository import Gtk, Pango, GObject
+from gi.repository import Gtk, GObject
 
-import re
 
 class ImageView(Gtk.Picture):
     __gtype_name__ = 'ImageView'

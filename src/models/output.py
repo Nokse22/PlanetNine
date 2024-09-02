@@ -23,7 +23,7 @@ from enum import IntEnum
 from pprint import pprint
 
 import nbformat
-import json
+
 
 class OutputType(IntEnum):
     STREAM = 0
@@ -31,12 +31,14 @@ class OutputType(IntEnum):
     EXECUTE_RESULT = 2
     ERROR = 3
 
+
 class DataType(IntEnum):
     TEXT = 1
     JSON = 2
     MARKDOWN = 3
     HTML = 4
     IMAGE = 5
+
 
 class Output(GObject.GObject):
     __gtype_name__ = 'Output'
@@ -88,6 +90,7 @@ class Output(GObject.GObject):
         self.notify("metadata")
 
     def parse(self, json_dict):
+
         match self.output_type:
             case OutputType.STREAM:
                 self.parse_stream(json_dict)

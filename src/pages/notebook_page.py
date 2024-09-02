@@ -25,6 +25,8 @@ from gi.repository import Panel
 import os
 import sys
 
+from pprint import pprint
+
 from .cell import Cell, CellType
 from .cell_ui import CellUI
 from .output import Output, OutputType
@@ -146,6 +148,8 @@ class NotebookPage(Panel.Widget):
         msg_type = msg['header']['msg_type']
         content = msg['content']
 
+        pprint(msg)
+
         if msg_type == 'stream':
             output = Output(OutputType.STREAM)
             output.parse(content)
@@ -156,9 +160,15 @@ class NotebookPage(Panel.Widget):
         elif msg_type == 'execute_input':
             count = content['execution_count']
             cell.execution_count = int(count)
+
             cell.reset_output()
 
         elif msg_type == 'display_data':
+            output = Output(OutputType.DISPLAY_DATA)
+            output.parse(content)
+            cell.add_output(output)
+
+        elif msg_type == 'execute_result':
             output = Output(OutputType.DISPLAY_DATA)
             output.parse(content)
             cell.add_output(output)

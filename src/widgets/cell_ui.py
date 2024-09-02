@@ -33,6 +33,7 @@ from .markdown_textview import MarkdownTextView
 from .terminal_textview import TerminalTextView
 from .cell import Cell, CellType
 from .output import OutputType, DataType
+from .json_viewer import JsonViewer
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/cell.ui')
@@ -199,6 +200,10 @@ class CellUI(Gtk.Box):
                         self.add_output_html(output.data_content)
                     case DataType.MARKDOWN:
                         self.add_output_markdown(output.data_content)
+                    case DataType.JSON:
+                        viewer = JsonViewer()
+                        viewer.parse_json_string(output.data_content)
+                        self.output_box.append(viewer)
 
             case OutputType.EXECUTE_RESULT:
                 print(output.data_content)

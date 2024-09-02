@@ -200,6 +200,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.create_action('open-notebook', self.open_notebook)
 
+        self.create_action('open-workspace', self.open_notebook)
+
         self.create_action('new-browser-page', self.open_browser_page)
 
         self.command_line = CommandLine()
