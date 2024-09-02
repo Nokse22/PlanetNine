@@ -18,7 +18,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from gi.repository import Gtk, Adw, GObject, Gio
-from pprint import pprint
 from enum import IntEnum
 import json
 
@@ -86,31 +85,28 @@ class TreeWidget(Adw.Bin):
             self.key_label.set_text(f"{key}:")
 
     def set_value(self, node_type, value):
+        if node_type == NodeType.ROOT:
+            return
+
         if node_type == NodeType.ARRAY:
             self.value_label.set_text(f"[ {len(value)} ]")
         elif node_type == NodeType.DICTIONARY:
             self.value_label.set_text(f"{{ {len(value)} }}")
-        elif node_type == NodeType.BOOL:
+        else:
             self.value_label.set_text(f"{value}")
-        elif node_type == NodeType.INT:
-            self.value_label.set_text(f"{value}")
-        elif node_type == NodeType.FLOAT:
-            self.value_label.set_text(f"{value}")
-        elif node_type == NodeType.STRING:
-            self.value_label.set_text(f"\"{value}\"")
+
 
 class JsonViewer(Adw.Bin):
     __gtype_name__ = 'JsonViewer'
 
     def __init__(self):
         super().__init__()
-        self.tree_model = Gio.ListStore.new(TreeNode)
-        self.set_child(self.create_tree_view())
 
-    def create_tree_view(self):
-        self.tree_list_model = Gtk.TreeListModel.new(self.tree_model, False, True, self.create_model_func)
-        self.tree_list_model.set_autoexpand(False)
-        selection_model = Gtk.NoSelection(model=self.tree_list_model)
+    def create_tree_view(self, tree_model):
+        tree_list_model = Gtk.TreeListModel.new(
+            tree_model, False, True, self.create_model_func)
+        tree_list_model.set_autoexpand(False)
+        selection_model = Gtk.NoSelection(model=tree_list_model)
         factory = Gtk.SignalListItemFactory()
         factory.connect("setup", self.on_factory_setup)
         factory.connect("bind", self.on_factory_bind)
@@ -121,18 +117,22 @@ class JsonViewer(Adw.Bin):
         json_string = json_string.replace("'", '"')
         json_string = json_string.replace('True', 'true')
         json_string = json_string.replace('False', 'false')
+        json_string = json_string.replace('None', 'null')
+
         try:
             json_obj = json.loads(json_string)
         except Exception as e:
             print(e)
             return
 
-        self.tree_model.remove_all()
         root_node = self.create_tree_node("Root", json_obj, NodeType.ROOT)
-        self.tree_model.append(root_node)
+
+        tree_model = Gio.ListStore.new(TreeNode)
+        tree_model.append(root_node)
+
+        self.set_child(self.create_tree_view(tree_model))
 
     def create_tree_node(self, key, value, node_type):
-        print("creating node: ", key, value, node_type)
         if node_type in [NodeType.DICTIONARY, NodeType.ROOT]:
             children = [self.create_tree_node(k, v, self.get_node_type(v)) for k, v in value.items()]
             return TreeNode(key, value, node_type, children)
