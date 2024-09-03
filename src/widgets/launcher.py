@@ -19,9 +19,7 @@
 
 from gi.repository import Adw
 from gi.repository import Gtk
-from gi.repository import GObject
 from gi.repository import GLib
-from gi.repository import Panel
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/launcher.ui')
 class Launcher(Adw.Bin):

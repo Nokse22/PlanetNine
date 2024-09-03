@@ -18,7 +18,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from gi.repository import Gtk, Adw, GObject, Gio
+
 from enum import IntEnum
+
 import json
 
 

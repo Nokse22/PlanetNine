@@ -29,7 +29,7 @@ import requests
 from pprint import pprint
 
 from .jupyter_kernel import JupyterKernel, JupyterKernelInfo
-from .notebook import Notebook
+from ..models.notebook import Notebook
 
 
 class Session(GObject.GObject):

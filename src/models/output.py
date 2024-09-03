@@ -20,7 +20,6 @@
 from gi.repository import GObject
 
 from enum import IntEnum
-from pprint import pprint
 
 import nbformat
 

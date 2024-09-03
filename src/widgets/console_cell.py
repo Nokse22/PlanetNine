@@ -19,10 +19,9 @@
 
 from gi.repository import Adw
 from gi.repository import Gtk
-from gi.repository import Gio
-from gi.repository import GObject, WebKit
+from gi.repository import WebKit
 from gi.repository import GtkSource
-from gi.repository import Gdk, GdkPixbuf
+from gi.repository import GdkPixbuf
 
 import hashlib
 import base64
@@ -31,7 +30,8 @@ import sys
 
 from .markdown_textview import MarkdownTextView
 from .terminal_textview import TerminalTextView
-from .output import OutputType, DataType
+
+from ..models.output import OutputType, DataType
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/console_cell.ui')

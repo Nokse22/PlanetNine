@@ -20,7 +20,6 @@
 from gi.repository import Panel, Gtk
 
 import nbformat
-import os
 import asyncio
 
 

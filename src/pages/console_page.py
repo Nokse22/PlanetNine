@@ -22,11 +22,11 @@ from gi.repository import Panel, GtkSource, Spelling
 
 import sys
 
-from .console_cell import ConsoleCell
-from .output import Output, OutputType
-from .completion_providers import LSPCompletionProvider, WordsCompletionProvider
+from ..widgets.console_cell import ConsoleCell
+from ..models.output import Output, OutputType
+from ..completion_providers.completion_providers import LSPCompletionProvider, WordsCompletionProvider
 
-from .converters import get_language_highlight_name
+from ..utils.converters import get_language_highlight_name
 
 GObject.type_register(Panel.Widget)
 

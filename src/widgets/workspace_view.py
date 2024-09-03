@@ -26,7 +26,7 @@ import asyncio
 
 from .tree_row_widget import TreeWidget
 
-from .converters import get_mime_icon
+from ..utils.converters import get_mime_icon
 
 
 class NodeType(IntEnum):

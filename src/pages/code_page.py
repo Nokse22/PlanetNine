@@ -21,7 +21,7 @@ from gi.repository import Gtk, GObject, Adw, Gio
 from gi.repository import Panel, GtkSource
 from gi.repository import Spelling
 
-from .converters import get_language_highlight_name
+from ..utils.converters import get_language_highlight_name
 
 import sys
 

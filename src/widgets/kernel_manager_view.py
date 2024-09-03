@@ -20,13 +20,16 @@
 from gi.repository import Gtk, Gio, GLib, GObject
 from gi.repository import Panel
 
-from .notebook import Notebook
-from .jupyter_server import Session
-from .jupyter_kernel import JupyterKernel, JupyterKernelInfo
-from .tree_row_widget import TreeWidget
-from enum import IntEnum
+from ..backend.jupyter_server import Session
+from ..backend.jupyter_kernel import JupyterKernel, JupyterKernelInfo
 
-from .converters import get_language_icon
+from ..models.notebook import Notebook
+
+from .tree_row_widget import TreeWidget
+
+from ..utils.converters import get_language_icon
+
+from enum import IntEnum
 
 
 class NodeType(IntEnum):

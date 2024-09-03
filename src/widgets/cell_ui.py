@@ -31,9 +31,10 @@ import sys
 
 from .markdown_textview import MarkdownTextView
 from .terminal_textview import TerminalTextView
-from .cell import Cell, CellType
-from .output import OutputType, DataType
 from .json_viewer import JsonViewer
+
+from ..models.cell import Cell, CellType
+from ..models.output import OutputType, DataType
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/cell.ui')

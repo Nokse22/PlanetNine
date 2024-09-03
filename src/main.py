@@ -19,17 +19,8 @@
 
 import sys
 import asyncio
-import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
-gi.require_version("Vte", "3.91")
-gi.require_version('GtkSource', '5')
-gi.require_version('WebKit', '6.0')
-gi.require_version('Panel', '1')
-gi.require_version('Spelling', '1')
-
-from gi.repository import Gtk, Gio, Adw, GObject, GtkSource
+from gi.repository import Gio, Adw, GObject, GtkSource
 from gi.repository import Vte
 from gi.events import GLibEventLoopPolicy
 from gi.repository import Panel

@@ -28,23 +28,26 @@ import os
 import nbformat
 import logging
 import asyncio
-from pprint import pprint
 
-from .async_helpers import dialog_choose_async
+from .utils.async_helpers import dialog_choose_async
 
-from .jupyter_server import JupyterServer
-from .jupyter_kernel import JupyterKernel, JupyterKernelInfo
-from .cell import Cell, CellType
-from .command_line import CommandLine
-from .notebook import Notebook
-from .notebook_page import NotebookPage
-from .browser_page import BrowserPage
-from .kernel_manager_view import KernelManagerView
-from .workspace_view import WorkspaceView
-from .launcher import Launcher
-from .console_page import ConsolePage
-from .code_page import CodePage
-from .utilities import get_next_filepath
+from .backend.jupyter_server import JupyterServer
+from .backend.jupyter_kernel import JupyterKernel, JupyterKernelInfo
+from .backend.command_line import CommandLine
+
+from .models.cell import Cell, CellType
+from .models.notebook import Notebook
+
+from .pages.notebook_page import NotebookPage
+from .pages.browser_page import BrowserPage
+from .pages.console_page import ConsolePage
+from .pages.code_page import CodePage
+
+from .widgets.kernel_manager_view import KernelManagerView
+from .widgets.workspace_view import WorkspaceView
+from .widgets.launcher import Launcher
+
+from .utils.utilities import get_next_filepath
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/window.ui')

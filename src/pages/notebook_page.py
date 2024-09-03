@@ -27,13 +27,12 @@ import sys
 
 from pprint import pprint
 
-from .cell import Cell, CellType
-from .cell_ui import CellUI
-from .output import Output, OutputType
-from .notebook import Notebook
-from .command_line import CommandLine
-from .completion_providers import LSPCompletionProvider, WordsCompletionProvider
-from .notebook_save_delegate import NotebookSaveDelegate
+from ..models.cell import Cell, CellType
+from ..widgets.cell_ui import CellUI
+from ..models.output import Output, OutputType
+from ..backend.command_line import CommandLine
+from ..completion_providers.completion_providers import LSPCompletionProvider
+from ..others.notebook_save_delegate import NotebookSaveDelegate
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/notebook_page.ui')

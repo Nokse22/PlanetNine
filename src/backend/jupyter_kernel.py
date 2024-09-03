@@ -20,7 +20,6 @@
 from gi.repository import GObject
 
 import json
-import os
 import asyncio
 import jupyter_client
 import traceback

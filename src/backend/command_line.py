@@ -17,19 +17,11 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import GLib
 from gi.repository import Gio
 from gi.repository import GObject
 
-import subprocess
-import re
-import threading
-import time
-import json
-import os
 import asyncio
 
-from pprint import pprint
 
 class CommandLine(GObject.GObject):
     __gtype_name__ = 'CommandLine'

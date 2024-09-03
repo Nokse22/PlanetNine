@@ -31,38 +31,15 @@ planetnine_sources = [
   'main.py',
   'window.py',
 
-  'models/cell.py',
-  'models/output.py',
-  'models/notebook.py',
-
-  'pages/notebook_page.py',
-  'pages/browser_page.py',
-  'pages/console_page.py',
-  'pages/code_page.py',
-
-  'widgets/image_view.py',
-  'widgets/kernel_manager_view.py',
-  'widgets/workspace_view.py',
-  'widgets/launcher.py',
-  'widgets/console_cell.py',
-  'widgets/tree_row_widget.py',
-  'widgets/markdown_textview.py',
-  'widgets/terminal_textview.py',
-  'widgets/cell_ui.py',
-  'widgets/json_viewer.py',
-
-  'utils/async_helpers.py',
-  'utils/converters.py',
-  'utils/utilities.py',
-
-  'completion_providers/completion_providers.py',
-
-  'backend/command_line.py',
-  'backend/jupyter_kernel.py',
-  'backend/jupyter_server.py',
-
-  'others/notebook_save_delegate.py',
-  'others/preferences.py',
+  'preferences.py',
 ]
 
 install_data(planetnine_sources, install_dir: moduledir)
+
+install_subdir('models', install_dir: moduledir)
+install_subdir('pages', install_dir: moduledir)
+install_subdir('widgets', install_dir: moduledir)
+install_subdir('others', install_dir: moduledir)
+install_subdir('utils', install_dir: moduledir)
+install_subdir('completion_providers', install_dir: moduledir)
+install_subdir('backend', install_dir: moduledir)
