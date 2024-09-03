@@ -101,6 +101,7 @@ class Cell(GObject.GObject):
         if self.cell_type == CellType.TEXT:
             cell_node = nbformat.v4.new_markdown_cell()
             cell_node.source = self.source
+            cell_node.id = self.id
             return cell_node
 
         cell_node = nbformat.v4.new_code_cell()
@@ -117,6 +118,8 @@ class Cell(GObject.GObject):
     def parse(self, json_cell):
         self.cell_type = CellType.CODE if json_cell['cell_type'] == "code" else CellType.TEXT
         self.source = ''.join(json_cell['source'])
+        self.id = json_cell['id']
+
         if self.cell_type == CellType.CODE:
             self.execution_count = json_cell['execution_count'] or 0
             for json_output in json_cell['outputs']:

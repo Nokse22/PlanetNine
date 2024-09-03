@@ -22,39 +22,81 @@ from src.models.notebook import Notebook
 import os
 import nbformat
 import difflib
+import shutil
+
+#   Reset Diff Folder
+
+diff_path = './diffs'
+
+if os.path.exists(diff_path):
+    shutil.rmtree(diff_path)
+
+os.makedirs(diff_path)
+
+#   Import Export Tests Start
 
 
-def test_import_export(monkeypatch):
+def test_images_url_display(monkeypatch):
+    __test_file('./data/images_url_display.ipynb')
 
-    directory = './data'
 
-    for file_name in os.listdir(directory):
-        full_path = os.path.join(directory, file_name)
+def test_json_display(monkeypatch):
+    __test_file('./data/json_display.ipynb')
 
-        if os.path.isdir(full_path):
-            continue
 
-        notebook = Notebook.new_from_file(full_path)
+def test_markdown_cell(monkeypatch):
+    __test_file('./data/markdown_cell.ipynb')
 
-        output = nbformat.writes(notebook.get_notebook_node())
 
-        with open(full_path, 'r') as file:
-            file_content = file.read()[:-1]
-            try:
-                assert output == file_content
-            except AssertionError:
-                html_diff = difflib.HtmlDiff()
-                diff_html = html_diff.make_file(
-                    file_content.splitlines(),
-                    output.splitlines(),
-                    fromdesc='Original File',
-                    todesc='Exported Output'
-                )
+def test_markdown_display(monkeypatch):
+    __test_file('./data/markdown_display.ipynb')
 
-                diff_file_path = os.path.join('./', 'diffs', f'{file_name.split(".")[0]}-diff.html')
-                with open(diff_file_path, 'w') as diff_file:
-                    diff_file.write(diff_html)
 
-                print(f"Diff has been written to {diff_file_path}")
+def test_png_file_display(monkeypatch):
+    __test_file('./data/png_file_display.ipynb')
 
-                raise AssertionError
+
+def test_png_graph_display(monkeypatch):
+    __test_file('./data/png_graph_display.ipynb')
+
+
+def test_stream_output(monkeypatch):
+    __test_file('./data/stream_output.ipynb')
+
+
+def test_text_output(monkeypatch):
+    __test_file('./data/text_output.ipynb')
+
+#   Import Export Tests End
+
+
+def __test_file(full_path):
+    if os.path.isdir(full_path):
+        return
+
+    notebook = Notebook.new_from_file(full_path)
+
+    output = nbformat.writes(notebook.get_notebook_node())
+
+    with open(full_path, 'r') as file:
+        file_content = file.read()[:-1]
+        try:
+            assert output == file_content
+        except AssertionError:
+            html_diff = difflib.HtmlDiff()
+            diff_html = html_diff.make_file(
+                file_content.splitlines(),
+                output.splitlines(),
+                fromdesc='Original File',
+                todesc='Exported Output'
+            )
+
+            file_name = os.path.basename(full_path).split(".")[0]
+
+            diff_path = f'./diffs/{file_name}-diff.html'
+            with open(diff_path, 'w') as diff_file:
+                diff_file.write(diff_html)
+
+            print(f"Diff has been written to {diff_path}")
+
+            raise AssertionError

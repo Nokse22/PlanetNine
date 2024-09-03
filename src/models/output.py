@@ -73,6 +73,9 @@ class Output(GObject.GObject):
 
         self.data_type = 0
         self.data_content = ""
+        self.plain_content = None
+
+        self.metadata = None
 
     @classmethod
     def new_from_json(cls, json_string):
@@ -81,15 +84,6 @@ class Output(GObject.GObject):
         instance.parse(json_string)
 
         return instance
-
-    @GObject.Property(type=GObject.TYPE_PYOBJECT)
-    def metadata(self):
-        return self._metadata
-
-    @metadata.setter
-    def metadata(self, metadata_dict):
-        self._metadata = metadata_dict
-        self.notify("metadata")
 
     def parse(self, json_dict):
 
@@ -124,6 +118,12 @@ class Output(GObject.GObject):
             self.data_content = json['data']['text/plain']
             self.data_type = DataType.TEXT
 
+        if 'text/plain' in json['data']:
+            self.plain_content = json['data']['text/plain']
+
+        if 'metadata' in json['data']:
+            self.metadata = json['data']['metadata']
+
     def parse_execute_result(self, json):
         self.parse_display_data(json)
         self.execution_count = json['execution_count']
@@ -138,16 +138,29 @@ class Output(GObject.GObject):
             case OutputType.STREAM:
                 output_node = nbformat.v4.new_output('stream')
                 output_node.text = self.text
+
             case OutputType.DISPLAY_DATA:
                 output_node = nbformat.v4.new_output('display_data')
-                output_node.data[self.get_type_name(self.data_type)] = self.data_content
+                type_name = self.get_type_name(self.data_type)
+                output_node.data[type_name] = self.data_content
+                if self.plain_content:
+                    output_node.data['text/plain'] = self.plain_content
+
             case OutputType.EXECUTE_RESULT:
                 output_node = nbformat.v4.new_output('execute_result')
+                type_name = self.get_type_name(self.data_type)
+                output_node.data[type_name] = self.data_content
+                if self.plain_content:
+                    output_node.data['text/plain'] = self.plain_content
+
             case OutputType.ERROR:
                 output_node = nbformat.v4.new_output('error')
                 output_node.ename = self.ename
                 output_node.evalue = self.evalue
                 output_node.traceback = self.traceback
+
+        if self.metadata:
+            output_node.metadata = self.metadata
 
         return output_node
 
@@ -163,14 +176,3 @@ class Output(GObject.GObject):
         }
 
         return mime_types.get(data_type, "text/plain")
-
-    def __repr__(self):
-        match self.output_type:
-            case OutputType.STREAM:
-                return f"<Output of type: STREAM with {self.text}>"
-            case OutputType.DISPLAY_DATA:
-                return f"<Output of type: DISPLAY_DATA with {self.data_content}>"
-            case OutputType.EXECUTE_RESULT:
-                return f"<Output of type: EXECUTE_RESULT with {self.execution_count}>"
-            case OutputType.ERROR:
-                return f"<Output of type: ERROR with {self.traceback}>"

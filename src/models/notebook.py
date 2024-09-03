@@ -62,10 +62,14 @@ class Notebook(Gio.ListStore):
 
             self.append(cell)
 
+        self.metadata = notebook_node.metadata
+
     def get_notebook_node(self):
         notebook_node = nbformat.v4.new_notebook()
         for cell in self.cells:
             cell_node = cell.get_cell_node()
             notebook_node.cells.append(cell_node)
+
+        notebook_node.metadata = self.metadata
 
         return notebook_node
