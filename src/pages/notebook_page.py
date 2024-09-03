@@ -31,7 +31,7 @@ from ..models.cell import Cell, CellType
 from ..widgets.cell_ui import CellUI
 from ..models.output import Output, OutputType
 from ..backend.command_line import CommandLine
-from ..completion_providers.completion_providers import LSPCompletionProvider
+from ..completion_providers.completion_providers import LSPCompletionProvider, WordsCompletionProvider
 from ..others.notebook_save_delegate import NotebookSaveDelegate
 
 

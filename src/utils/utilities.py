@@ -38,3 +38,12 @@ def get_next_filepath(folder_path, base_name, extension):
     new_file_path = os.path.join(folder_path, new_file_name)
 
     return new_file_path
+
+
+def format_json(json_string):
+    json_string = json_string.replace("'", '"')
+    json_string = json_string.replace('True', 'true')
+    json_string = json_string.replace('False', 'false')
+    json_string = json_string.replace('None', 'null')
+
+    return json_string

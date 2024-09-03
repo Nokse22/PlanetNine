@@ -132,6 +132,8 @@ class Cell(GObject.GObject):
                         output.parse(json_output)
                     case 'execute_result':
                         output = Output(OutputType.EXECUTE_RESULT)
+                        output.parse(json_output)
+                        self.execution_count = json_output['execution_count']
                     case 'error':
                         output = Output(OutputType.ERROR)
                 # output.metadata = json_output['metadata']

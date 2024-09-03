@@ -22,6 +22,9 @@ from gi.repository import GObject
 from enum import IntEnum
 
 import nbformat
+import json
+
+from ..utils.utilities import format_json
 
 
 class OutputType(IntEnum):
@@ -88,49 +91,47 @@ class Output(GObject.GObject):
 
         match self.output_type:
             case OutputType.STREAM:
-                self.parse_stream(json_dict)
+                self.name = json['name']
+                self.text = json['text']
+
             case OutputType.DISPLAY_DATA:
                 self.parse_display_data(json_dict)
+
             case OutputType.EXECUTE_RESULT:
-                self.parse_execute_result(json_dict)
+                self.parse_display_data(json_dict)
+                self.execution_count = json_dict['execution_count']
+
             case OutputType.ERROR:
-                self.parse_error(json_dict)
+                self.ename = json_dict['ename']
+                self.evalue = json_dict['evalue']
+                self.traceback = "\n".join(json_dict['traceback'])
 
-    def parse_stream(self, json):
-        self.name = json['name']
-        self.text = json['text']
-
-    def parse_display_data(self, json):
-        if 'application/json' in json['data']:
-            self.data_content = json['data']['application/json']
+    def parse_display_data(self, json_node):
+        if 'application/json' in json_node['data']:
+            self.data_content = json_node['data']['application/json']
             self.data_type = DataType.JSON
-        elif 'text/markdown' in json['data']:
-            self.data_content = json['data']['text/markdown']
+
+        elif 'text/markdown' in json_node['data']:
+            self.data_content = json_node['data']['text/markdown']
             self.data_type = DataType.MARKDOWN
-        elif 'text/html' in json['data']:
-            self.data_content = json['data']['text/html']
+
+        elif 'text/html' in json_node['data']:
+            self.data_content = json_node['data']['text/html']
             self.data_type = DataType.HTML
-        elif 'image/png' in json['data']:
-            self.data_content = json['data']['image/png']
+
+        elif 'image/png' in json_node['data']:
+            self.data_content = json_node['data']['image/png']
             self.data_type = DataType.IMAGE_PNG
-        elif 'text/plain' in json['data']:
-            self.data_content = json['data']['text/plain']
+
+        elif 'text/plain' in json_node['data']:
+            self.data_content = json_node['data']['text/plain']
             self.data_type = DataType.TEXT
 
-        if 'text/plain' in json['data']:
-            self.plain_content = json['data']['text/plain']
+        if 'text/plain' in json_node['data']:
+            self.plain_content = json_node['data']['text/plain']
 
-        if 'metadata' in json['data']:
-            self.metadata = json['data']['metadata']
-
-    def parse_execute_result(self, json):
-        self.parse_display_data(json)
-        self.execution_count = json['execution_count']
-
-    def parse_error(self, json):
-        self.ename = json['ename']
-        self.evalue = json['evalue']
-        self.traceback = "\n".join(json['traceback'])
+        if 'metadata' in json_node:
+            self.metadata = json_node['metadata']
 
     def get_output_node(self):
         match self.output_type:
@@ -149,6 +150,7 @@ class Output(GObject.GObject):
                 output_node = nbformat.v4.new_output('execute_result')
                 type_name = self.get_type_name(self.data_type)
                 output_node.data[type_name] = self.data_content
+                output_node.execution_count = self.execution_count
                 if self.plain_content:
                     output_node.data['text/plain'] = self.plain_content
 

@@ -23,6 +23,8 @@ from enum import IntEnum
 
 import json
 
+from ..utils.utilities import format_json
+
 
 class NodeType(IntEnum):
     ARRAY = 0
@@ -116,13 +118,9 @@ class JsonViewer(Adw.Bin):
         return list_view
 
     def parse_json_string(self, json_string):
-        json_string = json_string.replace("'", '"')
-        json_string = json_string.replace('True', 'true')
-        json_string = json_string.replace('False', 'false')
-        json_string = json_string.replace('None', 'null')
 
         try:
-            json_obj = json.loads(json_string)
+            json_obj = json.loads(format_json(json_string))
         except Exception as e:
             print(e)
             return
