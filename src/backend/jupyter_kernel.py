@@ -23,6 +23,7 @@ import json
 import os
 import asyncio
 import jupyter_client
+import traceback
 
 from pprint import pprint
 
@@ -128,7 +129,7 @@ class JupyterKernel(GObject.GObject):
                 # pprint(msg)
 
                 msg_type = msg['header']['msg_type']
-                msg_id = msg['parent_header']['msg_id']
+                msg_id = msg['parent_header']['msg_id'] if 'msg_id' in msg['parent_header'] else ''
 
                 if msg_type == 'status':
                     self.status = msg['content']['execution_state']
@@ -140,6 +141,7 @@ class JupyterKernel(GObject.GObject):
 
             except Exception as e:
                 print(f"Exception while getting iopub msg: {e}")
+                traceback.print_exc()
 
     async def __get_shell_msg(self):
         while True:

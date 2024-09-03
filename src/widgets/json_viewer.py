@@ -134,10 +134,16 @@ class JsonViewer(Adw.Bin):
 
     def create_tree_node(self, key, value, node_type):
         if node_type in [NodeType.DICTIONARY, NodeType.ROOT]:
-            children = [self.create_tree_node(k, v, self.get_node_type(v)) for k, v in value.items()]
+            children = [
+                self.create_tree_node(k, v, self.get_node_type(v))
+                for k, v in value.items()
+            ]
             return TreeNode(key, value, node_type, children)
         elif node_type == NodeType.ARRAY:
-            children = [self.create_tree_node(str(i), v, self.get_node_type(v)) for i, v in enumerate(value)]
+            children = [
+                self.create_tree_node(str(i), v, self.get_node_type(v))
+                for i, v in enumerate(value)
+            ]
             return TreeNode(key, value, node_type, children)
         else:
             return TreeNode(key, str(value), node_type)
@@ -157,7 +163,9 @@ class JsonViewer(Adw.Bin):
             return NodeType.STRING
 
     def create_model_func(self, item):
-        if item.node_type in [NodeType.ARRAY, NodeType.DICTIONARY, NodeType.ROOT]:
+        if item.node_type in [
+            NodeType.ARRAY, NodeType.DICTIONARY, NodeType.ROOT
+        ]:
             child_model = Gio.ListStore.new(TreeNode)
             for child in item.children:
                 child_model.append(child)

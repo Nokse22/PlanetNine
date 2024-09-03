@@ -59,11 +59,11 @@ class PlanetnineApplication(Adw.Application):
                          flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
         self.create_action('quit', lambda *_: self.quit(), ['<primary>q'])
         self.create_action('about', self.on_about_action)
-        self.create_action('preferences', self.on_preferences_action, ['<primary>,'])
-        self.create_action('run', self.on_run_action, ['<ctrl>Escape'])
+        self.create_action('preferences', self.on_preferences_action, ['<primary>comma'])
+        self.create_action('run', self.on_run_action, ['<primary>Escape'])
 
-        self.create_action('save', self.on_save_action, ['<ctrl>s'])
-        self.create_action('save-all', self.on_save_all_action, ['<ctrl><shift>s'])
+        self.create_action('save', self.on_save_action, ['<primary>s'])
+        self.create_action('save-all', self.on_save_all_action, ['<primary><shift>s'])
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 

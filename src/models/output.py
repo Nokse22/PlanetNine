@@ -37,7 +37,9 @@ class DataType(IntEnum):
     JSON = 2
     MARKDOWN = 3
     HTML = 4
-    IMAGE = 5
+    IMAGE_PNG = 5
+    IMAGE_JPEG = 6
+    IMAGE_SVG = 7
 
 
 class Output(GObject.GObject):
@@ -117,7 +119,7 @@ class Output(GObject.GObject):
             self.data_type = DataType.HTML
         elif 'image/png' in json['data']:
             self.data_content = json['data']['image/png']
-            self.data_type = DataType.IMAGE
+            self.data_type = DataType.IMAGE_PNG
         elif 'text/plain' in json['data']:
             self.data_content = json['data']['text/plain']
             self.data_type = DataType.TEXT
@@ -138,6 +140,7 @@ class Output(GObject.GObject):
                 output_node.text = self.text
             case OutputType.DISPLAY_DATA:
                 output_node = nbformat.v4.new_output('display_data')
+                output_node.data[self.get_type_name(self.data_type)] = self.data_content
             case OutputType.EXECUTE_RESULT:
                 output_node = nbformat.v4.new_output('execute_result')
             case OutputType.ERROR:
@@ -147,6 +150,19 @@ class Output(GObject.GObject):
                 output_node.traceback = self.traceback
 
         return output_node
+
+    def get_type_name(self, data_type):
+        mime_types = {
+            DataType.JSON: "application/json",
+            DataType.MARKDOWN: "text/markdown",
+            DataType.HTML: "text/html",
+            DataType.IMAGE_PNG: "image/png",
+            DataType.IMAGE_JPEG: "image/jpeg",
+            DataType.IMAGE_SVG: "image/svg+xml",
+            DataType.TEXT: "text/plain",
+        }
+
+        return mime_types.get(data_type, "text/plain")
 
     def __repr__(self):
         match self.output_type:

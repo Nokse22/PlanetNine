@@ -70,10 +70,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        Gio.Subprocess.new(
-            ['pylsp', '--tcp', '--host', '127.0.0.1', '--port', '2087'],
-            Gio.SubprocessFlags.NONE
-        )
+        # Gio.Subprocess.new(
+        #     ['pylsp', '--tcp', '--host', '127.0.0.1', '--port', '2087'],
+        #     Gio.SubprocessFlags.NONE
+        # )
 
         self.jupyter_server = JupyterServer()
 
@@ -97,7 +97,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.select_kernel_combo_row.set_model(self.all_kernels)
 
-        self.jupyter_server.start()
+        # self.jupyter_server.start()
 
         self.terminal.set_color_background(Gdk.RGBA(alpha=1))
 
@@ -217,11 +217,13 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def on_new_notebook_action(self, action, variant):
-        asyncio.create_task(self.__on_new_notebook_action(variant.get_string()))
+        asyncio.create_task(
+            self.__on_new_notebook_action(variant.get_string()))
 
     async def __on_new_notebook_action(self, kernel_name):
 
-        notebook_path = get_next_filepath(self.files_cache_dir, "Untitled", ".ipynb")
+        notebook_path = get_next_filepath(
+            self.files_cache_dir, "Untitled", ".ipynb")
 
         notebook = Notebook(notebook_path)
 
@@ -233,7 +235,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         notebook_page.connect("presented", self.on_widget_presented)
         self.grid.add(notebook_page)
 
-        success, kernel = await self.jupyter_server.start_kernel_by_name(kernel_name)
+        success, kernel = await self.jupyter_server.start_kernel_by_name(
+            kernel_name)
 
         if success:
             notebook_page.set_kernel(kernel)
@@ -251,7 +254,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.grid.add(console_page)
 
-        success, kernel = await self.jupyter_server.start_kernel_by_name(kernel_name)
+        success, kernel = await self.jupyter_server.start_kernel_by_name(
+            kernel_name)
 
         if success:
             console_page.set_kernel(kernel)
@@ -269,7 +273,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.grid.add(code_page)
 
-        success, kernel = await self.jupyter_server.start_kernel_by_name(kernel_name)
+        success, kernel = await self.jupyter_server.start_kernel_by_name(
+            kernel_name)
 
         if success:
             code_page.set_kernel(kernel)
@@ -369,7 +374,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         notebook.run_selected_cell()
 
     def on_jupyter_server_started(self, server):
-        self.server_status_label.set_label(_("Server Connected"))
+        self.server_status_label.set_label("Server Connected")
 
     def on_jupyter_server_has_new_line(self, server, line):
         self.terminal.feed([ord(char) for char in line + "\r\n"])
@@ -406,7 +411,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     def save_viewed(self):
         notebook = self.get_selected_notebook()
         if notebook:
-            notebook.get_save_delegate().save_async(None, self.on_saved_finished)
+            notebook.get_save_delegate().save_async(
+                None, self.on_saved_finished)
 
     def on_saved_finished(self, delegate, result):
         print("saved")
@@ -435,13 +441,13 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         asyncio.create_task(self.__open_notebook_file())
 
     async def __open_notebook_file(self):
-        file_filter = Gtk.FileFilter(name=_("All supported formats"))
+        file_filter = Gtk.FileFilter(name="All supported formats")
         file_filter.add_pattern("*.ipynb")
         filter_list = Gio.ListStore.new(Gtk.FileFilter())
         filter_list.append(file_filter)
 
         dialog = Gtk.FileDialog(
-            title=_("Open File"),
+            title="Open File",
             filters=filter_list,
         )
 
@@ -464,7 +470,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         if (isinstance(self.previously_presented_widget, NotebookPage) or
                 isinstance(self.previously_presented_widget, ConsolePage) or
                 isinstance(self.previously_presented_widget, CodePage)):
-            self.previously_presented_widget.disconnect_by_func(self.update_kernel_info)
+            self.previously_presented_widget.disconnect_by_func(
+                self.update_kernel_info)
 
         if (isinstance(widget, NotebookPage) or
                 isinstance(widget, ConsolePage) or
@@ -491,7 +498,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     @Gtk.Template.Callback("on_create_frame")
     def on_create_frame(self, grid):
         new_frame = Panel.Frame()
-        new_frame.set_placeholder(Launcher(self.jupyter_server.avalaible_kernels))
+        new_frame.set_placeholder(
+            Launcher(self.jupyter_server.avalaible_kernels))
         tab_bar = Panel.FrameTabBar()
         new_frame.set_header(tab_bar)
 
@@ -536,5 +544,3 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             list_item.set_selectable(False)
             list_item.set_activatable(False)
             list_item.set_focusable(False)
-
-        # widget.set_label(item.display_name)

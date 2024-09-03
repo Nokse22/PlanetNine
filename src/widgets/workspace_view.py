@@ -45,7 +45,8 @@ class TreeNode(GObject.Object):
         self.display_name = os.path.basename(self.node_path)
 
 
-@Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/workspace_view.ui')
+@Gtk.Template(
+    resource_path='/io/github/nokse22/PlanetNine/gtk/workspace_view.ui')
 class WorkspaceView(Panel.Widget):
     __gtype_name__ = 'WorkspaceView'
 
@@ -59,7 +60,8 @@ class WorkspaceView(Panel.Widget):
         tree_model = Gio.ListStore.new(TreeNode)
         tree_model.append(self.root)
 
-        tree_list_model = Gtk.TreeListModel.new(tree_model, False, True, self.create_model_func)
+        tree_list_model = Gtk.TreeListModel.new(
+            tree_model, False, True, self.create_model_func)
         tree_list_model.set_autoexpand(False)
 
         selection_model = Gtk.NoSelection(model=tree_list_model)
@@ -77,22 +79,13 @@ class WorkspaceView(Panel.Widget):
         list_view.insert_action_group("workspace", self.action_group)
 
         self.create_action_with_target(
-            'copy-path',
-            GLib.VariantType.new("s"),
-            self.on_copy_path_action
-        )
+            'copy-path', GLib.VariantType.new("s"), self.on_copy_path_action)
 
         self.create_action_with_target(
-            'new-file',
-            GLib.VariantType.new("s"),
-            self.on_new_file_action
-        )
+            'new-file', GLib.VariantType.new("s"), self.on_new_file_action)
 
         self.create_action_with_target(
-            'new-folder',
-            GLib.VariantType.new("s"),
-            self.on_new_folder_action
-        )
+            'new-folder', GLib.VariantType.new("s"), self.on_new_folder_action)
 
         self.create_action("add-file", self.on_add_file)
         self.create_action("add-folder", self.on_add_folder)
@@ -163,12 +156,14 @@ class WorkspaceView(Panel.Widget):
 
         menu_item = Gio.MenuItem()
         menu_item.set_label("New File")
-        menu_item.set_action_and_target_value("workspace.new-file", GLib.Variant('s', node_path))
+        menu_item.set_action_and_target_value(
+            "workspace.new-file", GLib.Variant('s', node_path))
         new_submenu.append_item(menu_item)
 
         menu_item = Gio.MenuItem()
         menu_item.set_label("New Folder")
-        menu_item.set_action_and_target_value("workspace.new-folder", GLib.Variant('s', node_path))
+        menu_item.set_action_and_target_value(
+            "workspace.new-folder", GLib.Variant('s', node_path))
         new_submenu.append_item(menu_item)
 
         root_menu.append_section(None, new_submenu)
@@ -179,12 +174,14 @@ class WorkspaceView(Panel.Widget):
 
         menu_item = Gio.MenuItem()
         menu_item.set_label("Copy Path")
-        menu_item.set_action_and_target_value("workspace.copy-path", GLib.Variant('s', node_path))
+        menu_item.set_action_and_target_value(
+            "workspace.copy-path", GLib.Variant('s', node_path))
         folder_menu.append_item(menu_item)
 
         menu_item = Gio.MenuItem()
         menu_item.set_label("New File")
-        menu_item.set_action_and_target_value("workspace.new-file", GLib.Variant('s', node_path))
+        menu_item.set_action_and_target_value(
+            "workspace.new-file", GLib.Variant('s', node_path))
         folder_menu.append_item(menu_item)
 
         return folder_menu
@@ -194,13 +191,16 @@ class WorkspaceView(Panel.Widget):
 
         menu_item = Gio.MenuItem()
         menu_item.set_label("Copy Path")
-        menu_item.set_action_and_target_value("workspace.copy-path", GLib.Variant('s', node_path))
+        menu_item.set_action_and_target_value(
+            "workspace.copy-path", GLib.Variant('s', node_path))
         file_menu.append_item(menu_item)
 
         return file_menu
 
     def create_model_func(self, item):
-        if (item.node_type == NodeType.FOLDER or item.node_type == NodeType.ROOT):
+        if item.node_type in [
+            NodeType.FOLDER, NodeType.ROOT
+        ]:
             child_model = Gio.ListStore.new(TreeNode)
             for child in item.children:
                 child_model.append(child)

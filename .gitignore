@@ -1,0 +1,4 @@
+tests/.pytest_cache
+tests/data/.ipynb_checkpoints
+tests/diffs
+tests/__pycache

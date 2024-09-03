@@ -11,6 +11,7 @@ dependency('pygobject-3.0', version: '>= 3.49.0')
 
 subdir('data')
 subdir('src')
+subdir('tests')
 subdir('po')
 
 gnome.post_install(

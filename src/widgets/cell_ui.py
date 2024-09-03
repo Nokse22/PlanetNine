@@ -194,7 +194,7 @@ class CellUI(Gtk.Box):
                 match output.data_type:
                     case DataType.TEXT:
                         self.add_output_text(output.data_content)
-                    case DataType.IMAGE:
+                    case DataType.IMAGE_PNG:
                         self.add_output_image(output.data_content)
                     case DataType.HTML:
                         self.add_output_html(output.data_content)
