@@ -48,6 +48,9 @@ class TreeNode(GObject.Object):
 class TreeWidget(Adw.Bin):
     def __init__(self):
         super().__init__()
+
+        self.connect("unrealize", self.__on_unrealized)
+
         box = Gtk.Box(
             spacing=6,
             margin_start=3,
@@ -99,12 +102,27 @@ class TreeWidget(Adw.Bin):
         else:
             self.value_label.set_text(f"{value}")
 
+    def __on_unrealized(self, *args):
+        self.disconnect_by_func(self.__on_unrealized)
 
-class JsonViewer(Adw.Bin):
+        self.click_controller.disconnect_by_func(self.on_click_released)
+
+        print(f"Unrealize {self}")
+
+    def __del__(self, *args):
+        print(f"DELETING {self}")
+
+
+class JsonViewer(Gtk.Box):
     __gtype_name__ = 'JsonViewer'
 
     def __init__(self):
         super().__init__()
+
+        self.set_orientation(Gtk.Orientation.VERTICAL)
+        self.set_spacing(12)
+
+        self.connect("unrealize", self.__on_unrealized)
 
     def create_tree_view(self, tree_model):
         tree_list_model = Gtk.TreeListModel.new(
@@ -130,7 +148,7 @@ class JsonViewer(Adw.Bin):
         tree_model = Gio.ListStore.new(TreeNode)
         tree_model.append(root_node)
 
-        self.set_child(self.create_tree_view(tree_model))
+        self.append(self.create_tree_view(tree_model))
 
     def create_tree_node(self, key, value, node_type):
         if node_type in [NodeType.DICTIONARY, NodeType.ROOT]:
@@ -183,3 +201,21 @@ class JsonViewer(Adw.Bin):
         tree_node = tree_list_row.get_item()
         widget.set_key(tree_node.node_type, tree_node.key)
         widget.set_value(tree_node.node_type, tree_node.content)
+
+    def __on_unrealized(self, *args):
+        self.disconnect_by_func(self.__on_unrealized)
+
+        list_view = self.get_first_child()
+
+        while list_view:
+            list_view.get_factory().disconnect_by_func(self.on_factory_setup)
+            list_view.get_factory().disconnect_by_func(self.on_factory_bind)
+
+            self.remove(list_view)
+
+            list_view = self.get_first_child()
+
+        print(f"Unrealize {self}")
+
+    def __del__(self, *args):
+        print(f"DELETING {self}")

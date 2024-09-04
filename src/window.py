@@ -42,6 +42,7 @@ from .pages.notebook_page import NotebookPage
 from .pages.browser_page import BrowserPage
 from .pages.console_page import ConsolePage
 from .pages.code_page import CodePage
+from .pages.json_viewer_page import JsonViewerPage
 
 from .widgets.kernel_manager_view import KernelManagerView
 from .widgets.workspace_view import WorkspaceView
@@ -193,7 +194,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.create_action('run-selected-cell', self.run_selected_cell)
         self.create_action('restart-kernel-and-run', self.restart_kernel_and_run)
-        self.create_action('start-server-visible', self.start_server)
+        self.create_action('start-server', self.start_server)
         self.create_action('change-kernel', self.change_kernel)
         self.create_action('restart-kernel-visible', self.restart_kernel)
 
@@ -203,7 +204,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.create_action('open-notebook', self.open_notebook)
 
-        self.create_action('open-workspace', self.open_notebook)
+        self.create_action('open-workspace', self.open_workspace)
 
         self.create_action('new-browser-page', self.open_browser_page)
 
@@ -214,6 +215,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         widget = Panel.Widget()
         self.grid.add(widget)
         widget.close()
+
+        self.grid.add(JsonViewerPage())
 
     #
     #   NEW NOTEBOOK PAGE WITH KERNEL NAME
@@ -229,9 +232,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self.files_cache_dir, "Untitled", ".ipynb")
 
         notebook = Notebook(notebook_path)
-
-        if not os.path.exists(notebook_path):
-            nbformat.write(notebook.get_notebook_node(), notebook_path)
 
         notebook_page = NotebookPage(notebook)
         notebook_page.set_draft()
@@ -468,6 +468,16 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             notebook_page.set_kernel(kernel)
             self.update_kernel_info(notebook_page)
 
+    def open_workspace(self, *args):
+        asyncio.create_task(self.__open_workspace())
+
+    async def __open_workspace(self):
+        dialog = Gtk.FileDialog(title="Open Workspace")
+
+        workspace_path = await dialog.open_folder(self)
+
+        self.workspace_view.add_folder(workspace_path)
+
     def on_widget_presented(self, widget):
 
         if (isinstance(self.previously_presented_widget, NotebookPage) or
@@ -547,3 +557,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             list_item.set_selectable(False)
             list_item.set_activatable(False)
             list_item.set_focusable(False)
+
+    def close(self):
+
+        self.jupyter_server.stop()
+
+        return False

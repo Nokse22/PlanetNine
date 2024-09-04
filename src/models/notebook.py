@@ -29,16 +29,18 @@ from .cell import Cell
 class Notebook(Gio.ListStore):
     __gtype_name__ = 'Notebook'
 
-    name = GObject.Property(type=str, default="")
+    title = GObject.Property(type=str, default="Untitled.ipynb")
     jupyter_kernel = None
+    metadata = None
 
     def __init__(self, _path=None):
         super().__init__()
 
-        self.path = _path
-        self.name = os.path.basename(self.path) if self.path else "Notebook.ipynb"
+        self.set_path(_path)
 
         self.jupyter_kernel = None
+
+        self.metadata = None
 
     @classmethod
     def new_from_file(cls, notebook_path):
@@ -56,6 +58,10 @@ class Notebook(Gio.ListStore):
     def cells(self):
         return self
 
+    def set_path(self, _path):
+        self.path = _path
+        self.title = os.path.basename(self.path) if self.path else "Notebook.ipynb"
+
     def parse(self, notebook_node):
         for json_cell in notebook_node['cells']:
             cell = Cell.new_from_json(json_cell)
@@ -66,10 +72,12 @@ class Notebook(Gio.ListStore):
 
     def get_notebook_node(self):
         notebook_node = nbformat.v4.new_notebook()
+
         for cell in self.cells:
             cell_node = cell.get_cell_node()
             notebook_node.cells.append(cell_node)
 
-        notebook_node.metadata = self.metadata
+        if self.metadata:
+            notebook_node.metadata = self.metadata
 
         return notebook_node

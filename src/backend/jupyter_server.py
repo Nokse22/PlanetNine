@@ -63,11 +63,13 @@ class JupyterServer(GObject.GObject):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+        self.jupyter_process = None
+
         self.thread = None
         self.address = ""
         self.token = ""
 
-        self.sandboxed = False
+        self.sandboxed = True
 
         self.sessions = Gio.ListStore.new(Session)
         self.kernels = Gio.ListStore.new(JupyterKernel)
@@ -80,12 +82,12 @@ class JupyterServer(GObject.GObject):
         asyncio.create_task(self.__start())
 
     async def __start(self):
-        process = Gio.Subprocess.new(
-            ['jupyter-server', '--debug'] if self.sandboxed  else ['flatpak-spawn', '--host', 'jupyter-server', '--debug'],
+        self.jupyter_process = Gio.Subprocess.new(
+            ['jupyter-server'] if self.sandboxed  else ['flatpak-spawn', '--host', 'jupyter-server'],
             Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_MERGE
         )
 
-        stdout = process.get_stdout_pipe()
+        stdout = self.jupyter_process.get_stdout_pipe()
         stdout_stream = Gio.DataInputStream.new(stdout)
 
         while True:
@@ -107,6 +109,11 @@ class JupyterServer(GObject.GObject):
                     self.emit("started")
 
                     asyncio.create_task(self.get_avalaible_kernels())
+
+    def stop(self):
+        if self.jupyter_process:
+            self.jupyter_process.send_signal(15)
+            print("STOPPING")
 
     async def get_avalaible_kernels(self):
         while True:

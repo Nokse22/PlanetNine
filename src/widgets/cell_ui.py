@@ -324,7 +324,6 @@ class CellUI(Gtk.Box):
         drag.set_hotspot(0, 0)
 
     def on_drag_source_end(self, source, drag, delete_data):
-        print("how do i delete", source, drag, delete_data)
         self.emit("request-delete")
 
     def on_reset_output(self, cell):

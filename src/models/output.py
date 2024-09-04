@@ -1,4 +1,4 @@
-# window.py
+# output.py
 #
 # Copyright 2024 Nokse
 #
@@ -23,8 +23,6 @@ from enum import IntEnum
 
 import nbformat
 import json
-
-from ..utils.utilities import format_json
 
 
 class OutputType(IntEnum):
@@ -91,8 +89,8 @@ class Output(GObject.GObject):
 
         match self.output_type:
             case OutputType.STREAM:
-                self.name = json['name']
-                self.text = json['text']
+                self.name = json_dict['name']
+                self.text = json_dict['text']
 
             case OutputType.DISPLAY_DATA:
                 self.parse_display_data(json_dict)

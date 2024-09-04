@@ -17,7 +17,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import GObject
+from gi.repository import GObject, GLib
 
 import json
 import asyncio
@@ -85,7 +85,7 @@ class JupyterKernel(GObject.GObject):
 
         self.kernel_client = jupyter_client.AsyncKernelClient()
 
-        self.data_dir = "/home/lorenzo/.local/share/" # os.environ["XDG_DATA_HOME"]
+        self.data_dir = GLib.getenv("XDG_DATA_HOME")
 
         self.__connect()
 

@@ -64,10 +64,12 @@ class PlanetnineApplication(Adw.Application):
         We raise the application's main window, creating it if
         necessary.
         """
-        win = self.props.active_window
-        if not win:
-            win = PlanetnineWindow(application=self)
-        win.present()
+        self.win = self.props.active_window
+        if not self.win:
+            self.win = PlanetnineWindow(application=self)
+        self.win.present()
+
+        self.win.connect("close-request", self.on_shutdown)
 
     def on_run_action(self, *args):
         self.props.active_window.run_selected_cell()
@@ -101,6 +103,9 @@ class PlanetnineApplication(Adw.Application):
         self.settings.bind('code-highlight-row', preferences.code_highlight_row_switch, 'active', Gio.SettingsBindFlags.DEFAULT)
 
         preferences.present(self.props.active_window)
+
+    def on_shutdown(self, *args):
+        return self.win.close()
 
     def create_action(self, name, callback, shortcuts=None):
         """Add an application action.

@@ -123,6 +123,10 @@ class WorkspaceView(Panel.Widget):
             print(e)
             return
 
+        for folder in result:
+            self.add_folder(folder.get_path())
+
+    def add_folder(self, folder_path):
         def add_node(node_path, parent):
             print(node_path)
             if os.path.isdir(node_path):
@@ -133,10 +137,10 @@ class WorkspaceView(Panel.Widget):
             elif os.path.isfile(node_path):
                 parent.children.append(TreeNode(node_path, NodeType.FILE))
 
-        for folder in result:
-            add_node(folder.get_path(), self.root)
-            # last_part = os.path.basename(file.get_path())
-            # self.root.children.append(TreeNode(last_part, NodeType.FOLDER))
+        add_node(folder_path, self.root)
+
+        # last_part = os.path.basename(file.get_path())
+        # self.root.children.append(TreeNode(last_part, NodeType.FOLDER))
 
     def on_copy_path_action(self, action, variant):
         clipboard = Gdk.Display().get_default().get_clipboard()

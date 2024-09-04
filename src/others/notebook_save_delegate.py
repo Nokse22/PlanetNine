@@ -63,7 +63,7 @@ class NotebookSaveDelegate(Panel.SaveDelegate):
             file = await dialog.save(self.page.get_root())
 
             notebook_path = file.get_path()
-            self.page.notebook_model.path = notebook_path
+            self.page.notebook_model.set_path(notebook_path)
 
             self.save()
 
@@ -74,6 +74,8 @@ class NotebookSaveDelegate(Panel.SaveDelegate):
         print("Async save completed.")
 
     def save(self):
+        print("saving notebook")
+
         notebook = self.page.notebook_model
 
         notebook_path = self.page.notebook_model.path
@@ -81,4 +83,3 @@ class NotebookSaveDelegate(Panel.SaveDelegate):
         if notebook_path:
             nbformat.write(notebook.get_notebook_node(), notebook_path)
             self.page.set_modified(False)
-

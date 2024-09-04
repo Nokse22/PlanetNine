@@ -62,10 +62,11 @@ class NotebookPage(Panel.Widget):
 
         self.notebook_model = _notebook_model
 
-        self.set_title(self.notebook_model.name)
+        # self.set_title(self.notebook_model.title)
+        self.notebook_model.bind_property("title", self, "title", 2)
 
         self.words_provider = WordsCompletionProvider()
-        self.lsp_provider = LSPCompletionProvider()
+        # self.lsp_provider = LSPCompletionProvider()
 
         self.save_delegate = NotebookSaveDelegate(self)
         # self.save_delegate.set_is_draft(True)
@@ -184,7 +185,8 @@ class NotebookPage(Panel.Widget):
 
             if status == "idle":
                 if self.queue != []:
-                    cell=self.queue.pop(0)
+                    print("popping")
+                    cell = self.queue.pop(0)
                     self.run_cell(cell)
                     found, position = self.notebook_model.find(cell)
                     if found:
@@ -204,7 +206,7 @@ class NotebookPage(Panel.Widget):
         cell = CellUI(cell)
         cell.connect("request-delete", self.on_cell_request_delete)
         cell.add_provider(self.words_provider)
-        cell.add_provider(self.lsp_provider)
+        # cell.add_provider(self.lsp_provider)
         return cell
 
     def on_cell_request_delete(self, cell_ui):
