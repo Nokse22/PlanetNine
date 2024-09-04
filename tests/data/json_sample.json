@@ -1,0 +1,36 @@
+{
+  "string": "Hello, World!",
+  "number_integer": 42,
+  "number_float": 3.14159,
+  "boolean_true": true,
+  "boolean_false": false,
+  "null_value": null,
+  "object": {
+    "nested_string": "Nested Hello",
+    "nested_number": 123,
+    "nested_array": [1, 2, 3, 4],
+    "nested_object": {
+      "deeply_nested_key": "Deep Value"
+    }
+  },
+  "array_of_objects": [
+    {
+      "id": 1,
+      "name": "Alice"
+    },
+    {
+      "id": 2,
+      "name": "Bob"
+    }
+  ],
+  "array_of_strings": ["apple", "banana", "cherry"],
+  "array_of_numbers": [10, 20, 30, 40.5],
+  "mixed_array": ["string", 100, true, null, {"key": "value"}],
+  "date_string": "2024-09-02T12:34:56Z",
+  "multi_line_string": "This is a multi-line\nstring example.",
+  "unicode_string": "😀",
+  "special_characters": "!@#$%^&*()_+-={}|[]\\:\";\'<>?,./",
+  "empty_string": "",
+  "empty_array": [],
+  "empty_object": {}
+}

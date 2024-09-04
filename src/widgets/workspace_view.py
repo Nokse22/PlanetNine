@@ -139,9 +139,6 @@ class WorkspaceView(Panel.Widget):
 
         add_node(folder_path, self.root)
 
-        # last_part = os.path.basename(file.get_path())
-        # self.root.children.append(TreeNode(last_part, NodeType.FOLDER))
-
     def on_copy_path_action(self, action, variant):
         clipboard = Gdk.Display().get_default().get_clipboard()
         clipboard.set(variant.get_string())
@@ -154,8 +151,8 @@ class WorkspaceView(Panel.Widget):
 
     def new_root_menu(self, node_path):
         root_menu = Gio.Menu()
-        root_menu.append("Add File", "workspace.add-file")
-        root_menu.append("Add Folder", "workspace.add-folder")
+        root_menu.append("Add Files", "workspace.add-file")
+        root_menu.append("Add Folders", "workspace.add-folder")
         new_submenu = Gio.Menu()
 
         menu_item = Gio.MenuItem()
@@ -197,6 +194,12 @@ class WorkspaceView(Panel.Widget):
         menu_item.set_label("Copy Path")
         menu_item.set_action_and_target_value(
             "workspace.copy-path", GLib.Variant('s', node_path))
+        file_menu.append_item(menu_item)
+
+        menu_item = Gio.MenuItem()
+        menu_item.set_label("Open")
+        menu_item.set_action_and_target_value(
+            "win.open-file", GLib.Variant('s', node_path))
         file_menu.append_item(menu_item)
 
         return file_menu

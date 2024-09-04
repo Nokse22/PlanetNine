@@ -43,6 +43,7 @@ from .pages.browser_page import BrowserPage
 from .pages.console_page import ConsolePage
 from .pages.code_page import CodePage
 from .pages.json_viewer_page import JsonViewerPage
+from .pages.text_page import TextPage
 
 from .widgets.kernel_manager_view import KernelManagerView
 from .widgets.workspace_view import WorkspaceView
@@ -206,6 +207,12 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.create_action('open-workspace', self.open_workspace)
 
+        self.create_action_with_target(
+            'open-file',
+            GLib.VariantType.new("s"),
+            self.open_file
+        )
+
         self.create_action('new-browser-page', self.open_browser_page)
 
         self.command_line = CommandLine()
@@ -215,8 +222,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         widget = Panel.Widget()
         self.grid.add(widget)
         widget.close()
-
-        self.grid.add(JsonViewerPage())
 
     #
     #   NEW NOTEBOOK PAGE WITH KERNEL NAME
@@ -477,6 +482,27 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         workspace_path = await dialog.open_folder(self)
 
         self.workspace_view.add_folder(workspace_path)
+
+    def open_file(self, action, variant):
+        file_path = variant.get_string()
+
+        gfile = Gio.File.new_for_path(file_path)
+
+        file_info = gfile.query_info("standard::content-type", 0, None)
+        mime_type = file_info.get_content_type()
+
+        print(mime_type)
+
+        match mime_type:
+            case "application/json":
+                self.grid.add(JsonViewerPage(file_path))
+            case "application/x-ipynb+json":
+                notebook = Notebook.new_from_file(file_path)
+                notebook_page = NotebookPage(notebook)
+                notebook_page.connect("presented", self.on_widget_presented)
+                self.grid.add(notebook_page)
+            case _:
+                self.grid.add(TextPage(file_path))
 
     def on_widget_presented(self, widget):
 

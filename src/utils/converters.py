@@ -24,7 +24,7 @@ def get_mime_icon(filename):
     ext_to_icon = {
         ".py": "text-x-python-symbolic",
 
-        ".ipynb": "jupyter-symbolic",
+        ".ipynb": "notepad-symbolic",
 
         ".png": "image-symbolic",
         ".jpg": "image-symbolic",

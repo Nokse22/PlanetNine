@@ -1,4 +1,4 @@
-# json_viewer_page.py
+# text_page.py
 #
 # Copyright 2024 Nokse
 #
@@ -17,21 +17,24 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gtk, Adw, Gio
+from gi.repository import Gtk, GObject, Adw, Gio
 from gi.repository import Panel, GtkSource
 from gi.repository import Spelling
 
-from ..widgets.json_viewer import JsonViewer
+from ..utils.converters import get_language_highlight_name
+
+import sys
+
+GObject.type_register(GtkSource.Map)
+GObject.type_register(GtkSource.VimIMContext)
 
 
-@Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/json_viewer_page.ui')
-class JsonViewerPage(Panel.Widget):
-    __gtype_name__ = 'JsonViewerPage'
+@Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/text_page.ui')
+class TextPage(Panel.Widget):
+    __gtype_name__ = 'TextPage'
 
     source_view = Gtk.Template.Child()
-    code_buffer = Gtk.Template.Child()
-    json_viewer_bin = Gtk.Template.Child()
-    stack = Gtk.Template.Child()
+    buffer = Gtk.Template.Child()
 
     def __init__(self, _path=None):
         super().__init__()
@@ -40,16 +43,14 @@ class JsonViewerPage(Panel.Widget):
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
-        # SET THE LANGUAGE STYLE SCHEME
+        # SET THE LANGUAGE
 
-        lm = GtkSource.LanguageManager()
-        lang = lm.get_language("json")
-        self.code_buffer.set_language(lang)
-        self.code_buffer.set_highlight_syntax(True)
+        # lm = GtkSource.LanguageManager()
+        # lang = lm.get_language("python3")
+        # self.code_buffer.set_language(lang)
+        # self.code_buffer.set_highlight_syntax(True)
 
-        sm = GtkSource.StyleSchemeManager()
-        scheme = sm.get_scheme("Adwaita-dark")
-        self.code_buffer.set_style_scheme(scheme)
+        # SET STYLE SCHEME
 
         self.style_manager = Adw.StyleManager.get_default()
         self.style_manager.connect("notify::dark", self.update_style_scheme)
@@ -58,7 +59,7 @@ class JsonViewerPage(Panel.Widget):
         # ENABLE SPELL CHECK
 
         checker = Spelling.Checker.get_default()
-        adapter = Spelling.TextBufferAdapter.new(self.code_buffer, checker)
+        adapter = Spelling.TextBufferAdapter.new(self.buffer, checker)
         extra_menu = adapter.get_menu_model()
 
         self.source_view.set_extra_menu(extra_menu)
@@ -66,35 +67,13 @@ class JsonViewerPage(Panel.Widget):
 
         adapter.set_enabled(True)
 
-        # SETUP the page
-
-        self.is_changed = True
-
-        self.code_buffer.connect("changed", self.on_json_changed)
-
-        self.stack.connect("notify::visible-child-name", self.on_page_changed)
-
         # LOAD File
 
         if _path:
             with open(_path, 'r') as file:
                 content = file.read()
 
-            self.code_buffer.set_text(content)
-
-    def on_json_changed(self, *args):
-        self.is_changed = True
-
-    def on_page_changed(self, *args):
-        if self.is_changed:
-            start = self.code_buffer.get_start_iter()
-            end = self.code_buffer.get_end_iter()
-            text = self.code_buffer.get_text(start, end, True)
-            viewer = JsonViewer()
-            viewer.parse_json_string(text)
-            self.json_viewer_bin.set_child(viewer)
-
-            self.is_changed = False
+            self.buffer.set_text(content)
 
     def update_style_scheme(self, *args):
         scheme_name = "Adwaita"
@@ -102,18 +81,14 @@ class JsonViewerPage(Panel.Widget):
             scheme_name += "-dark"
         sm = GtkSource.StyleSchemeManager()
         scheme = sm.get_scheme(scheme_name)
-        self.code_buffer.set_style_scheme(scheme)
+        self.buffer.set_style_scheme(scheme)
 
     def __on_unrealized(self, *args):
         self.disconnect_by_func(self.__on_unrealized)
 
         self.style_manager.disconnect_by_func(self.update_style_scheme)
 
-        self.stack.disconnect_by_func(self.on_json_changed)
-
-        self.code_buffer.disconnect_by_func(self.on_json_changed)
-
-        print(f"Unrealize {self}")
+        print(f"Unrealize: {self}")
 
     def __del__(self, *args):
         print(f"DELETING {self}")
