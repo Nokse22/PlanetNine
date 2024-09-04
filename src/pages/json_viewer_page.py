@@ -68,15 +68,25 @@ class JsonViewerPage(Panel.Widget):
 
         # SETUP the page
 
-        self.stack.connect("notify::visible-child-name", self.on_json_changed)
+        self.is_changed = True
+
+        self.code_buffer.connect("changed", self.on_json_changed)
+
+        self.stack.connect("notify::visible-child-name", self.on_page_changed)
 
     def on_json_changed(self, *args):
-        start = self.code_buffer.get_start_iter()
-        end = self.code_buffer.get_end_iter()
-        text = self.code_buffer.get_text(start, end, True)
-        viewer = JsonViewer()
-        viewer.parse_json_string(text)
-        self.json_viewer_bin.set_child(viewer)
+        self.is_changed = True
+
+    def on_page_changed(self, *args):
+        if self.is_changed:
+            start = self.code_buffer.get_start_iter()
+            end = self.code_buffer.get_end_iter()
+            text = self.code_buffer.get_text(start, end, True)
+            viewer = JsonViewer()
+            viewer.parse_json_string(text)
+            self.json_viewer_bin.set_child(viewer)
+
+            self.is_changed = False
 
     def update_style_scheme(self, *args):
         scheme_name = "Adwaita"
@@ -92,6 +102,8 @@ class JsonViewerPage(Panel.Widget):
         self.style_manager.disconnect_by_func(self.update_style_scheme)
 
         self.stack.disconnect_by_func(self.on_json_changed)
+
+        self.code_buffer.disconnect_by_func(self.on_json_changed)
 
         print(f"Unrealize {self}")
 
