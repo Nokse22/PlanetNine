@@ -21,9 +21,11 @@ from gi.repository import Gtk, GObject, Adw, Gio
 from gi.repository import Panel, GtkSource
 from gi.repository import Spelling
 
+from ..others.save_delegate import GenericSaveDelegate
+
 from ..utils.converters import get_language_highlight_name
 
-import sys
+import os
 
 GObject.type_register(GtkSource.Map)
 GObject.type_register(GtkSource.VimIMContext)
@@ -32,6 +34,8 @@ GObject.type_register(GtkSource.VimIMContext)
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/text_page.ui')
 class TextPage(Panel.Widget):
     __gtype_name__ = 'TextPage'
+
+    path = GObject.Property(type=str, default="")
 
     source_view = Gtk.Template.Child()
     buffer = Gtk.Template.Child()
@@ -67,6 +71,14 @@ class TextPage(Panel.Widget):
 
         adapter.set_enabled(True)
 
+        # ADD SAVE DELEGATE
+
+        self.save_delegate = GenericSaveDelegate(self)
+        self.set_save_delegate(self.save_delegate)
+
+        if not _path:
+            self.save_delegate.set_is_draft(True)
+
         # LOAD File
 
         if _path:
@@ -74,6 +86,25 @@ class TextPage(Panel.Widget):
                 content = file.read()
 
             self.buffer.set_text(content)
+
+            self.set_path(_path)
+
+        # CONNECT
+
+        self.buffer.connect("changed", self.on_text_changed)
+
+    def on_text_changed(self, *args):
+        self.set_modified(True)
+
+    def set_path(self, _path):
+        self.path = _path
+        self.set_title(
+            os.path.basename(self.path) if self.path else "Untitled")
+
+    def get_content(self):
+        start = self.buffer.get_start_iter()
+        end = self.buffer.get_end_iter()
+        return self.buffer.get_text(start, end, True)
 
     def update_style_scheme(self, *args):
         scheme_name = "Adwaita"
@@ -87,6 +118,7 @@ class TextPage(Panel.Widget):
         self.disconnect_by_func(self.__on_unrealized)
 
         self.style_manager.disconnect_by_func(self.update_style_scheme)
+        self.buffer.disconnect_by_func(self.on_text_changed)
 
         print(f"Unrealize: {self}")
 

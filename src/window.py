@@ -51,6 +51,8 @@ from .widgets.launcher import Launcher
 
 from .utils.utilities import get_next_filepath
 
+from .utils.converters import is_mime_displayable
+
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/window.ui')
 class PlanetnineWindow(Adw.ApplicationWindow):
@@ -348,7 +350,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def change_kernel(self, action, target):
-        notebook = self.get_selected_notebook()
+        notebook = self.get_visible_page()
         asyncio.create_task(self.__change_kernel(notebook))
 
     async def __change_kernel(self, notebook):
@@ -374,11 +376,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 print("kernel changed")
 
     def add_cell_to_selected_notebook(self, cell):
-        notebook = self.get_selected_notebook()
+        notebook = self.get_visible_page()
         notebook.add_cell(cell)
 
     def run_selected_cell(self, *args):
-        notebook = self.get_selected_notebook()
+        notebook = self.get_visible_page()
         notebook.run_selected_cell()
 
     def on_jupyter_server_started(self, server):
@@ -388,7 +390,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.terminal.feed([ord(char) for char in line + "\r\n"])
 
     def restart_kernel(self, *args):
-        notebook = self.get_selected_notebook()
+        notebook = self.get_visible_page()
         if notebook:
             kernel_id = notebook.notebook_model.jupyter_kernel.kernel_id
             self.restart_kernel_by_id(
@@ -397,7 +399,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             )
 
     def restart_kernel_and_run(self, *args):
-        notebook = self.get_selected_notebook()
+        notebook = self.get_visible_page()
         if notebook:
             kernel_id = notebook.notebook_model.jupyter_kernel.kernel_id
             self.restart_kernel_by_id(
@@ -405,7 +407,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 lambda: notebook.run_all_cells()
             )
 
-    def get_selected_notebook(self):
+    def get_visible_page(self):
         try:
             return self.grid.get_most_recent_frame().get_visible_child()
 
@@ -417,9 +419,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def save_viewed(self):
-        notebook = self.get_selected_notebook()
-        if notebook:
-            notebook.get_save_delegate().save_async(
+        page = self.get_visible_page()
+        if page:
+            page.get_save_delegate().save_async(
                 None, self.on_saved_finished)
 
     def on_saved_finished(self, delegate, result):
@@ -501,8 +503,18 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 notebook_page = NotebookPage(notebook)
                 notebook_page.connect("presented", self.on_widget_presented)
                 self.grid.add(notebook_page)
-            case _:
+            case mime_type if is_mime_displayable(mime_type):
                 self.grid.add(TextPage(file_path))
+            case _:
+                try:
+                    file = Gio.File.new_for_path(file_path)
+                except GLib.GError:
+                    print("Failed to construct a new Gio.File object.")
+                else:
+                    launcher = Gtk.FileLauncher.new(file)
+                    launcher.set_always_ask(True)
+
+                    launcher.launch(self, None, None)
 
     def on_widget_presented(self, widget):
 

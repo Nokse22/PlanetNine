@@ -19,6 +19,13 @@
 
 from gi.repository import Gtk, Adw, Gio
 
+from enum import IntEnum
+
+
+class ClickAction(IntEnum):
+    TOGGLE_CHILDREN = 0
+    ACTIVATE = 1
+
 
 class TreeWidget(Adw.Bin):
     def __init__(self):
@@ -56,6 +63,11 @@ class TreeWidget(Adw.Bin):
 
         self.set_child(box)
 
+        self.click_action = ClickAction.TOGGLE_CHILDREN
+
+        self.action = ""
+        self.target = None
+
     def set_text(self, text):
         self.label.set_text(text)
 
@@ -77,8 +89,12 @@ class TreeWidget(Adw.Bin):
 
             return True
         elif gesture.get_current_button() == 1:
-            list_row = self.expander.get_list_row()
-            list_row.set_expanded(not list_row.get_expanded())
+            if self.click_action == ClickAction.TOGGLE_CHILDREN:
+                list_row = self.expander.get_list_row()
+                list_row.set_expanded(not list_row.get_expanded())
+            elif self.click_action == ClickAction.ACTIVATE:
+                self.activate_action(self.action, self.target)
+                print(self.action, self.target)
 
     def expand(self):
         list_row = self.expander.get_list_row()
@@ -89,4 +105,11 @@ class TreeWidget(Adw.Bin):
         list_row.set_expanded(False)
 
     def set_show_menu(self, value):
-        self.show_menu =value
+        self.show_menu = value
+
+    def set_click_action(self, action):
+        self.click_action = action
+
+    def set_activate_action_and_target(self, action, target):
+        self.action = action
+        self.target = target

@@ -77,3 +77,17 @@ def get_language_highlight_name(lang):
     }
 
     return languages_to_name.get(lang, "python3")
+
+
+def is_mime_displayable(mime_type):
+    text_mimetypes = [
+        'application/json',
+        'application/xml',
+        'application/javascript',
+        'application/x-www-form-urlencoded',
+        'application/sql'
+    ]
+
+    if mime_type.startswith('text/') or mime_type in text_mimetypes:
+        return True
+    return False

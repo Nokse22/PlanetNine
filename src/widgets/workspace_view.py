@@ -24,7 +24,7 @@ from enum import IntEnum
 import os
 import asyncio
 
-from .tree_row_widget import TreeWidget
+from .tree_row_widget import TreeWidget, ClickAction
 
 from ..utils.converters import get_mime_icon
 
@@ -202,6 +202,12 @@ class WorkspaceView(Panel.Widget):
             "win.open-file", GLib.Variant('s', node_path))
         file_menu.append_item(menu_item)
 
+        menu_item = Gio.MenuItem()
+        menu_item.set_label("Open With")
+        menu_item.set_action_and_target_value(
+            "win.open-file-with", GLib.Variant('s', node_path))
+        file_menu.append_item(menu_item)
+
         return file_menu
 
     def create_model_func(self, item):
@@ -238,6 +244,9 @@ class WorkspaceView(Panel.Widget):
             widget.set_icon_name(get_mime_icon(item.node_path))
             widget.set_menu_model(self.new_file_menu(item.node_path))
             widget.set_text(item.display_name)
+            widget.set_click_action(ClickAction.ACTIVATE)
+            widget.set_activate_action_and_target(
+                "win.open-file", GLib.Variant('s', item.node_path))
 
     def create_action_with_target(self, name, target_type, callback):
         action = Gio.SimpleAction.new(name, target_type)
