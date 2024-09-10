@@ -37,7 +37,7 @@ def get_mime_icon(filename):
 
         ".txt": "text-symbolic",
 
-        ".csv": "text-csv-symbolic",
+        ".csv": "table-symbolic",
 
         ".json": "text-json-symbolic",
 
@@ -85,7 +85,8 @@ def is_mime_displayable(mime_type):
         'application/xml',
         'application/javascript',
         'application/x-www-form-urlencoded',
-        'application/sql'
+        'application/sql',
+        'application/x-zerosize'
     ]
 
     if mime_type.startswith('text/') or mime_type in text_mimetypes:

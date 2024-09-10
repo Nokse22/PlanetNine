@@ -24,17 +24,19 @@ import nbformat
 import difflib
 import shutil
 
-#   Reset Diff Folder
 
-diff_path = './diffs'
+#   Setup
 
-if os.path.exists(diff_path):
-    shutil.rmtree(diff_path)
+def setup_module(module):
+    diff_path = './diffs'
 
-os.makedirs(diff_path)
+    if os.path.exists(diff_path):
+        shutil.rmtree(diff_path)
+
+    os.makedirs(diff_path)
+
 
 #   Import Export Tests Start
-
 
 def test_images_url_display(monkeypatch):
     __test_file('./data/images_url_display.ipynb')
@@ -67,8 +69,14 @@ def test_stream_output(monkeypatch):
 def test_text_output(monkeypatch):
     __test_file('./data/text_output.ipynb')
 
-#   Import Export Tests End
 
+#   Tear down
+
+def teardown_module(module):
+    pass
+
+
+# Test
 
 def __test_file(full_path):
     if os.path.isdir(full_path):

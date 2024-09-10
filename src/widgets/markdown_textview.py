@@ -41,21 +41,20 @@ class MarkdownTextView(Gtk.TextView):
 
         self.buffer = self.get_buffer()
 
-        self.buffer.create_tag("h1", weight=Pango.Weight.BOLD, scale=2.5)
-        self.buffer.create_tag("h2", weight=Pango.Weight.BOLD, scale=2.2)
-        self.buffer.create_tag("h3", weight=Pango.Weight.BOLD, scale=1.9)
-        self.buffer.create_tag("h4", weight=Pango.Weight.BOLD, scale=1.6)
-        self.buffer.create_tag("h5", weight=Pango.Weight.BOLD, scale=1.3)
-        self.buffer.create_tag("h6", weight=Pango.Weight.BOLD, scale=1)
+        self.buffer.create_tag("h1", weight=Pango.Weight.BOLD, scale=2.0, foreground="#78aeed")
+        self.buffer.create_tag("h2", weight=Pango.Weight.BOLD, scale=1.8, foreground="#78aeed")
+        self.buffer.create_tag("h3", weight=Pango.Weight.BOLD, scale=1.6, foreground="#78aeed")
+        self.buffer.create_tag("h4", weight=Pango.Weight.BOLD, scale=1.4, foreground="#78aeed")
+        self.buffer.create_tag("h5", weight=Pango.Weight.BOLD, scale=1.2, foreground="#78aeed")
+        self.buffer.create_tag("h6", weight=Pango.Weight.BOLD, scale=1, foreground="#78aeed")
 
         self.buffer.create_tag("bold", weight=Pango.Weight.BOLD)
         self.buffer.create_tag("italic", style=Pango.Style.ITALIC)
         self.buffer.create_tag("code", style=Pango.Style.OBLIQUE, background="#f0f0f0")
         self.buffer.create_tag("bold_italic", weight=Pango.Weight.BOLD, style=Pango.Style.ITALIC)
         self.buffer.create_tag("block_code", family="Monospace", background="#f0f0f0")
-        self.buffer.create_tag("link", foreground="blue", underline=Pango.Underline.SINGLE)
+        self.buffer.create_tag("link", foreground="#3584E4", underline=Pango.Underline.SINGLE)
         self.buffer.create_tag("quote", style=Pango.Style.ITALIC, foreground="#6a737d", left_margin=20)
-
 
         self.full_line_tags = [
             ("# ", "h1"),
@@ -94,17 +93,17 @@ class MarkdownTextView(Gtk.TextView):
 
         # Apply full line tags
         for line_start, line_tag in self.full_line_tags:
-            pattern = re.compile(f'^{re.escape(line_start)}(.*)$', re.MULTILINE)
+            pattern = re.compile(f'^({re.escape(line_start)}.*)$', re.MULTILINE)
             for match in pattern.finditer(text):
                 start_pos = match.start(1)
                 end_pos = match.end(1)
-                iter_start = self.buffer.get_iter_at_offset(start_pos - len(line_start))
+                iter_start = self.buffer.get_iter_at_offset(start_pos)
                 iter_end = self.buffer.get_iter_at_offset(end_pos)
                 self.buffer.apply_tag_by_name(line_tag, iter_start, iter_end)
 
         # Apply in-line tags
         for inline_tag, tag_name in self.in_line_tags:
-            pattern = re.compile(f'{re.escape(inline_tag)}(.*?){re.escape(inline_tag)}')
+            pattern = re.compile(f'({re.escape(inline_tag)}.*?{re.escape(inline_tag)})')
             for match in pattern.finditer(text):
                 start_pos = match.start(1)
                 end_pos = match.end(1)
@@ -112,8 +111,8 @@ class MarkdownTextView(Gtk.TextView):
                 iter_end = self.buffer.get_iter_at_offset(end_pos)
                 self.buffer.apply_tag_by_name(tag_name, iter_start, iter_end)
 
-        # Apply multiline code block tags
-        block_code_pattern = re.compile(r'```(.*?)```', re.DOTALL)
+        # Apply multi-line code block tags
+        block_code_pattern = re.compile(r'(```.*?```)', re.DOTALL)
         for match in block_code_pattern.finditer(text):
             start_pos = match.start(1)
             end_pos = match.end(1)

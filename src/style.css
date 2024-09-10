@@ -76,12 +76,12 @@ list.console row {
   background-color: var(--sidebar-bg-color);
 }
 
-listview {
+listview.sidebar-list {
   background-color:transparent;
   padding: 6px;
 }
 
-listview row{
+listview.sidebar-list row{
   padding: 3px;
   border-radius: 6px;
 }
@@ -93,6 +93,18 @@ flowbox flowboxchild {
 flowbox flowboxchild:selected {
   background-color:var(--accent-color);
   border-radius:14px;
+}
+
+.matrixviewer listview > row > cell {
+  padding: 2px;
+}
+
+.matrixviewer header > button {
+  background-color: @sidebar_bg_color;
+}
+
+.index-cell {
+  font-family: monospace;
 }
 
 /* Style from libpanel */

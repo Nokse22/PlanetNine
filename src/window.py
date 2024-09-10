@@ -25,7 +25,6 @@ from gi.repository import Gdk
 from gi.repository import Panel
 
 import os
-import nbformat
 import logging
 import asyncio
 
@@ -44,6 +43,7 @@ from .pages.console_page import ConsolePage
 from .pages.code_page import CodePage
 from .pages.json_viewer_page import JsonViewerPage
 from .pages.text_page import TextPage
+from .pages.matrix_page import MatrixPage
 
 from .widgets.kernel_manager_view import KernelManagerView
 from .widgets.workspace_view import WorkspaceView
@@ -156,19 +156,19 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.create_action_with_target(
             'new-notebook-id',
             GLib.VariantType.new("s"),
-            self.on_new_notebook_action
+            self.on_new_notebook_id_action
         )
 
         self.create_action_with_target(
             'new-console-id',
             GLib.VariantType.new("s"),
-            self.on_new_console_action
+            self.on_new_console_id_action
         )
 
         self.create_action_with_target(
             'new-code-id',
             GLib.VariantType.new("s"),
-            self.on_new_code_action
+            self.on_new_code_id_action
         )
 
         #
@@ -195,7 +195,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         #   ACTIONS FOR THE VIEWED NOTEBOOK/CODE/CONSOLE
         #
 
-        self.create_action('run-selected-cell', self.run_selected_cell)
+        self.create_action('run-selected-cell', self.run_clicked)
         self.create_action('restart-kernel-and-run', self.restart_kernel_and_run)
         self.create_action('start-server', self.start_server)
         self.create_action('change-kernel', self.change_kernel)
@@ -207,12 +207,18 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.create_action('open-notebook', self.open_notebook)
 
-        self.create_action('open-workspace', self.open_workspace)
+        self.create_action('open-workspace', self.workspace_view.set_workspace_folder)
 
         self.create_action_with_target(
             'open-file',
             GLib.VariantType.new("s"),
             self.open_file
+        )
+
+        self.create_action_with_target(
+            'open-file-with-text',
+            GLib.VariantType.new("s"),
+            self.open_file_with_text
         )
 
         self.create_action('new-browser-page', self.open_browser_page)
@@ -231,14 +237,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     def on_new_notebook_action(self, action, variant):
         asyncio.create_task(
-            self.__on_new_notebook_action(variant.get_string()))
+            self._on_new_notebook_action(variant.get_string()))
 
-    async def __on_new_notebook_action(self, kernel_name):
-
-        notebook_path = get_next_filepath(
-            self.files_cache_dir, "Untitled", ".ipynb")
-
-        notebook = Notebook(notebook_path)
+    async def _on_new_notebook_action(self, kernel_name):
+        notebook = Notebook()
 
         notebook_page = NotebookPage(notebook)
         notebook_page.set_draft()
@@ -253,13 +255,35 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self.update_kernel_info(notebook_page)
 
     #
+    #   NEW NOTEBOOK PAGE WITH EXISTING KERNEL FROM ID
+    #
+
+    def on_new_notebook_id_action(self, action, variant):
+        asyncio.create_task(
+            self._on_new_notebook_id_action(variant.get_string()))
+
+    async def _on_new_notebook_id_action(self, kernel_id):
+        notebook = Notebook()
+
+        notebook_page = NotebookPage(notebook)
+        notebook_page.set_draft()
+        notebook_page.connect("presented", self.on_widget_presented)
+        self.grid.add(notebook_page)
+
+        success, kernel = self.jupyter_server.get_kernel_by_id(kernel_id)
+
+        if success:
+            notebook_page.set_kernel(kernel)
+            self.update_kernel_info(notebook_page)
+
+    #
     #   NEW CONSOLE PAGE WITH KERNEL NAME
     #
 
     def on_new_console_action(self, action, variant):
-        asyncio.create_task(self.__on_new_console_action(variant.get_string()))
+        asyncio.create_task(self._on_new_console_action(variant.get_string()))
 
-    async def __on_new_console_action(self, kernel_name):
+    async def _on_new_console_action(self, kernel_name):
         console_page = ConsolePage()
 
         self.grid.add(console_page)
@@ -272,19 +296,55 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self.update_kernel_info(console_page)
 
     #
+    #   NEW CONSOLE PAGE WITH EXISTING KERNEL FROM ID
+    #
+
+    def on_new_console_id_action(self, action, variant):
+        asyncio.create_task(self._on_new_console_action(variant.get_string()))
+
+    async def _on_new_console_id_action(self, kernel_id):
+        console_page = ConsolePage()
+
+        self.grid.add(console_page)
+
+        success, kernel = self.jupyter_server.get_kernel_by_id(kernel_id)
+
+        if success:
+            console_page.set_kernel(kernel)
+            self.update_kernel_info(console_page)
+
+    #
     #   NEW CODE PAGE WITH KERNEL NAME
     #
 
     def on_new_code_action(self, action, variant):
-        asyncio.create_task(self.__on_new_code_action(variant.get_string()))
+        asyncio.create_task(self._on_new_code_action(variant.get_string()))
 
-    async def __on_new_code_action(self, kernel_name):
+    async def _on_new_code_action(self, kernel_name):
         code_page = CodePage()
 
         self.grid.add(code_page)
 
         success, kernel = await self.jupyter_server.start_kernel_by_name(
             kernel_name)
+
+        if success:
+            code_page.set_kernel(kernel)
+            self.update_kernel_info(code_page)
+
+    #
+    #   NEW CODE PAGE WITH EXISTING KERNEL FROM ID
+    #
+
+    def on_new_code_id_action(self, action, variant):
+        asyncio.create_task(self._on_new_code_id_action(variant.get_string()))
+
+    async def _on_new_code_id_action(self, kernel_id):
+        code_page = CodePage()
+
+        self.grid.add(code_page)
+
+        success, kernel = self.jupyter_server.get_kernel_by_id(kernel_id)
 
         if success:
             code_page.set_kernel(kernel)
@@ -302,9 +362,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def shutdown_kernel_by_id(self, action, variant):
-        asyncio.create_task(self.__shutdown_kernel_by_id(variant.get_string()))
+        asyncio.create_task(self._shutdown_kernel_by_id(variant.get_string()))
 
-    async def __shutdown_kernel_by_id(self, kernel_id):
+    async def _shutdown_kernel_by_id(self, kernel_id):
         choice = await dialog_choose_async(self, self.shutdown_kernel_dialog)
 
         if choice == 'shutdown':
@@ -319,9 +379,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def restart_kernel_by_id(self, action, variant):
-        asyncio.create_task(self.__restart_kernel_by_id(variant.get_string()))
+        asyncio.create_task(self._restart_kernel_by_id(variant.get_string()))
 
-    async def __restart_kernel_by_id(self, kernel_id):
+    async def _restart_kernel_by_id(self, kernel_id):
         choice = await dialog_choose_async(self, self.restart_kernel_dialog)
 
         if choice == 'restart':
@@ -336,9 +396,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def interrupt_kernel_by_id(self, action, variant):
-        asyncio.create_task(self.__restart_kernel_by_id(variant.get_string()))
+        asyncio.create_task(self._restart_kernel_by_id(variant.get_string()))
 
-    def __interrupt_kernel_by_id(self, kernel_id):
+    def _interrupt_kernel_by_id(self, kernel_id):
         success = self.jupyter_server.interrupt_kernel(kernel_id)
         if success:
             print("kernel has been interrupted")
@@ -351,9 +411,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     def change_kernel(self, action, target):
         notebook = self.get_visible_page()
-        asyncio.create_task(self.__change_kernel(notebook))
+        asyncio.create_task(self._change_kernel(notebook))
 
-    async def __change_kernel(self, notebook):
+    async def _change_kernel(self, notebook):
         self.select_kernel_combo_row.set_selected(1) # 2 + len of avalab kernels + pos in kernels
 
         choice = await dialog_choose_async(self, self.select_kernel_dialog)
@@ -377,9 +437,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     def add_cell_to_selected_notebook(self, cell):
         notebook = self.get_visible_page()
-        notebook.add_cell(cell)
+        if isinstance(notebook, Notebook):
+            notebook.add_cell(cell)
 
-    def run_selected_cell(self, *args):
+    def run_clicked(self, *args):
         notebook = self.get_visible_page()
         notebook.run_selected_cell()
 
@@ -390,12 +451,19 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.terminal.feed([ord(char) for char in line + "\r\n"])
 
     def restart_kernel(self, *args):
-        notebook = self.get_visible_page()
-        if notebook:
-            kernel_id = notebook.notebook_model.jupyter_kernel.kernel_id
+        page = self.get_visible_page()
+        if isinstance(page, Notebook):
+            kernel_id = page.notebook_model.jupyter_kernel.kernel_id
             self.restart_kernel_by_id(
                 kernel_id,
-                lambda: notebook.run_all_cells()
+                lambda: page.run_all_cells()
+            )
+
+        elif isinstance(page, Notebook):
+            kernel_id = page.jupyter_kernel.kernel_id
+            self.restart_kernel_by_id(
+                kernel_id,
+                lambda: page.run_all_cells()
             )
 
     def restart_kernel_and_run(self, *args):
@@ -475,16 +543,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             notebook_page.set_kernel(kernel)
             self.update_kernel_info(notebook_page)
 
-    def open_workspace(self, *args):
-        asyncio.create_task(self.__open_workspace())
-
-    async def __open_workspace(self):
-        dialog = Gtk.FileDialog(title="Open Workspace")
-
-        workspace_path = await dialog.open_folder(self)
-
-        self.workspace_view.add_folder(workspace_path)
-
     def open_file(self, action, variant):
         file_path = variant.get_string()
 
@@ -498,6 +556,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         match mime_type:
             case "application/json":
                 self.grid.add(JsonViewerPage(file_path))
+            case "text/csv":
+                self.grid.add(MatrixPage(file_path))
             case "application/x-ipynb+json":
                 notebook = Notebook.new_from_file(file_path)
                 notebook_page = NotebookPage(notebook)
@@ -515,6 +575,17 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                     launcher.set_always_ask(True)
 
                     launcher.launch(self, None, None)
+
+    def open_file_with_text(self, action, variant):
+        file_path = variant.get_string()
+
+        gfile = Gio.File.new_for_path(file_path)
+
+        file_info = gfile.query_info("standard::content-type", 0, None)
+        mime_type = file_info.get_content_type()
+
+        if is_mime_displayable(mime_type):
+            self.grid.add(TextPage(file_path))
 
     def on_widget_presented(self, widget):
 

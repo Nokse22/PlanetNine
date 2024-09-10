@@ -36,7 +36,7 @@ class NodeType(IntEnum):
 
 
 class TreeNode(GObject.Object):
-    def __init__(self, node_path, node_type, children=None):
+    def __init__(self, node_path, node_type, children=None, model=None):
         super().__init__()
         self.node_path = node_path
         self.node_type = node_type
@@ -44,21 +44,51 @@ class TreeNode(GObject.Object):
 
         self.display_name = os.path.basename(self.node_path)
 
+        self.menu_model = model
+
 
 @Gtk.Template(
     resource_path='/io/github/nokse22/PlanetNine/gtk/workspace_view.ui')
 class WorkspaceView(Panel.Widget):
     __gtype_name__ = 'WorkspaceView'
 
-    scrolled_window = Gtk.Template.Child()
+    box = Gtk.Template.Child()
+
+    workspace_menu = Gtk.Template.Child()
+    other_menu = Gtk.Template.Child()
 
     def __init__(self):
         super().__init__()
 
-        self.root = TreeNode("", NodeType.ROOT, [])
+        self.workspace_root = TreeNode("Workspace", NodeType.ROOT, [], self.workspace_menu)
+        self.setup_listview(self.workspace_root)
 
+        self.files_root = TreeNode("Other Files", NodeType.ROOT, [], self.other_menu)
+        self.setup_listview(self.files_root)
+
+        self.action_group = Gio.SimpleActionGroup()
+        self.box.insert_action_group("workspace", self.action_group)
+
+        self.create_action_with_target(
+            'copy-path', GLib.VariantType.new("s"), self.on_copy_path_action)
+
+        self.create_action_with_target(
+            'new-file', GLib.VariantType.new("s"), self.on_new_file_action)
+
+        self.create_action_with_target(
+            'new-folder', GLib.VariantType.new("s"), self.on_new_folder_action)
+
+        self.create_action("set", self.set_workspace_folder)
+
+        self.create_action("add-files", self.on_add_file)
+        self.create_action("add-folders", self.on_add_folder)
+
+        self.create_action("import-files", self.on_import_file)
+        self.create_action("import-folders", self.on_import_folder)
+
+    def setup_listview(self, root):
         tree_model = Gio.ListStore.new(TreeNode)
-        tree_model.append(self.root)
+        tree_model.append(root)
 
         tree_list_model = Gtk.TreeListModel.new(
             tree_model, False, True, self.create_model_func)
@@ -72,63 +102,126 @@ class WorkspaceView(Panel.Widget):
 
         list_view = Gtk.ListView.new(selection_model, factory)
         list_view.add_css_class("workspace")
+        list_view.add_css_class("sidebar-list")
 
-        self.scrolled_window.set_child(list_view)
+        self.box.append(list_view)
 
-        self.action_group = Gio.SimpleActionGroup()
-        list_view.insert_action_group("workspace", self.action_group)
+    #
+    #   SET THE WORKSPACE
+    #
 
-        self.create_action_with_target(
-            'copy-path', GLib.VariantType.new("s"), self.on_copy_path_action)
+    def set_workspace_folder(self, *args):
+        asyncio.create_task(self._on_set_workspace_folder())
 
-        self.create_action_with_target(
-            'new-file', GLib.VariantType.new("s"), self.on_new_file_action)
+    async def _on_set_workspace_folder(self):
+        file_dialog = Gtk.FileDialog(
+            accept_label="Choose Workspace Folder",
+            modal=True
+        )
 
-        self.create_action_with_target(
-            'new-folder', GLib.VariantType.new("s"), self.on_new_folder_action)
+        try:
+            folder = await file_dialog.select_folder(self.get_root())
+        except Exception as e:
+            print(e)
+            return
 
-        self.create_action("add-file", self.on_add_file)
-        self.create_action("add-folder", self.on_add_folder)
+        folder_path = folder.get_path()
+
+        for node in os.listdir(folder_path):
+            if os.path.isdir(folder_path):
+                self.add_folder(self.workspace_root, os.path.join(folder_path, node))
+            elif os.path.isfile(folder_path):
+                self.workspace_root.children.append(TreeNode(folder_path, NodeType.FILE))
+
+    #
+    #   ADD FILES/FOLDERS (only in other files)
+    #
 
     def on_add_file(self, *args):
-        asyncio.create_task(self.__on_add_file())
+        asyncio.create_task(self._on_add_file())
 
-    async def __on_add_file(self):
+    async def _on_add_file(self):
         file_dialog = Gtk.FileDialog(
             accept_label="Open Files",
             modal=True
         )
 
         try:
-            result = await file_dialog.open_multiple()
+            result = await file_dialog.open_multiple(self.get_root())
         except Exception as e:
             print(e)
             return
 
         for file in result:
-            self.root.children.append(TreeNode(file.get_path(), NodeType.FILE))
+            self.files_root.children.append(TreeNode(file.get_path(), NodeType.FILE))
 
     def on_add_folder(self, *args):
-        asyncio.create_task(self.__on_add_folder())
+        asyncio.create_task(self._on_add_folder())
 
-    async def __on_add_folder(self):
+    async def _on_add_folder(self):
         file_dialog = Gtk.FileDialog(
             accept_label="Open Folders",
             modal=True
         )
 
         try:
-            result = await file_dialog.select_multiple_folders()
+            result = await file_dialog.select_multiple_folders(self.get_root())
         except Exception as e:
             print(e)
             return
 
         for folder in result:
-            self.add_folder(folder.get_path())
+            self.add_folder(self.files_root, folder.get_path())
 
-    def add_folder(self, folder_path):
+    #
+    # IMPORT FILES/FOLDERS (in the workspace)
+    #
+
+    def on_import_file(self, *args):
+        asyncio.create_task(self._on_import_file())
+
+    async def _on_import_file(self):
+        file_dialog = Gtk.FileDialog(
+            accept_label="Import Files",
+            modal=True
+        )
+
+        try:
+            result = await file_dialog.open_multiple(self.get_root())
+        except Exception as e:
+            print(e)
+            return
+
+        for file in result:
+            self.workspace_root.children.append(
+                TreeNode(file.get_path(), NodeType.FILE))
+            # TODO Actually import the files in the workspace folder
+
+    def on_import_folder(self, *args):
+        asyncio.create_task(self._on_import_folder())
+
+    async def _on_import_folder(self):
+        file_dialog = Gtk.FileDialog(
+            accept_label="Open Folders",
+            modal=True
+        )
+
+        try:
+            result = await file_dialog.select_multiple_folders(self.get_root())
+        except Exception as e:
+            print(e)
+            return
+
+        for folder in result:
+            self.add_folder(self.workspace_root, folder.get_path())
+            # TODO Actually import the folders asynchronously
+
+    #
+    #
+    #
+
+    def add_folder(self, root, folder_path):
         def add_node(node_path, parent):
-            print(node_path)
             if os.path.isdir(node_path):
                 folder = TreeNode(node_path, NodeType.FOLDER)
                 parent.children.append(folder)
@@ -137,7 +230,7 @@ class WorkspaceView(Panel.Widget):
             elif os.path.isfile(node_path):
                 parent.children.append(TreeNode(node_path, NodeType.FILE))
 
-        add_node(folder_path, self.root)
+        add_node(folder_path, root)
 
     def on_copy_path_action(self, action, variant):
         clipboard = Gdk.Display().get_default().get_clipboard()
@@ -148,27 +241,6 @@ class WorkspaceView(Panel.Widget):
 
     def on_new_folder_action(self, action, variant):
         pass
-
-    def new_root_menu(self, node_path):
-        root_menu = Gio.Menu()
-        root_menu.append("Add Files", "workspace.add-file")
-        root_menu.append("Add Folders", "workspace.add-folder")
-        new_submenu = Gio.Menu()
-
-        menu_item = Gio.MenuItem()
-        menu_item.set_label("New File")
-        menu_item.set_action_and_target_value(
-            "workspace.new-file", GLib.Variant('s', node_path))
-        new_submenu.append_item(menu_item)
-
-        menu_item = Gio.MenuItem()
-        menu_item.set_label("New Folder")
-        menu_item.set_action_and_target_value(
-            "workspace.new-folder", GLib.Variant('s', node_path))
-        new_submenu.append_item(menu_item)
-
-        root_menu.append_section(None, new_submenu)
-        return root_menu
 
     def new_folder_menu(self, node_path):
         folder_menu = Gio.Menu()
@@ -183,6 +255,12 @@ class WorkspaceView(Panel.Widget):
         menu_item.set_label("New File")
         menu_item.set_action_and_target_value(
             "workspace.new-file", GLib.Variant('s', node_path))
+        folder_menu.append_item(menu_item)
+
+        menu_item = Gio.MenuItem()
+        menu_item.set_label("New Folder")
+        menu_item.set_action_and_target_value(
+            "workspace.new-folder", GLib.Variant('s', node_path))
         folder_menu.append_item(menu_item)
 
         return folder_menu
@@ -203,9 +281,9 @@ class WorkspaceView(Panel.Widget):
         file_menu.append_item(menu_item)
 
         menu_item = Gio.MenuItem()
-        menu_item.set_label("Open With")
+        menu_item.set_label("Open As Text")
         menu_item.set_action_and_target_value(
-            "win.open-file-with", GLib.Variant('s', node_path))
+            "win.open-file-with-text", GLib.Variant('s', node_path))
         file_menu.append_item(menu_item)
 
         return file_menu
@@ -232,8 +310,9 @@ class WorkspaceView(Panel.Widget):
 
         if item.node_type == NodeType.ROOT:
             widget.set_icon_name("view-list-symbolic")
-            widget.set_menu_model(self.new_root_menu(item.node_path))
-            widget.set_text("Workspace")
+            if item.menu_model:
+                widget.set_menu_model(item.menu_model)
+            widget.set_text(item.display_name)
 
         elif item.node_type == NodeType.FOLDER:
             widget.set_icon_name("folder-symbolic")

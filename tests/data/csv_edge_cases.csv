@@ -1,0 +1,11 @@
+Name,Age,Country,Occupation,Salary,Years of Experience
+Alice,30,USA,Engineer,"70,000",5
+"Bob ""the Builder""",25,UK,Designer,50000,
+Charlie,35,Canada,Manager,,10
+Diana,,Australia,Scientist,75000,4
+,,Unknown,"Unemployed, Part-Time",,0
+"Edward, Jr.",40,Germany,Developer,95000,15
+,45,France,Doctor,105000,20
+"Grace
+Hopper",85,USA,Admiral,150000,50
+John,30,Italy,Artist,0,"5 years"

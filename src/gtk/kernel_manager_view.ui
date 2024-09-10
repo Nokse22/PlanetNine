@@ -17,6 +17,7 @@
             <property name="orientation">vertical</property>
             <child>
               <object class="GtkListView" id="avalaible_kernels_list_view">
+                <property name="css-classes">sidebar-list</property>
                 <property name="factory">
                   <object class="GtkSignalListItemFactory">
                     <signal name="setup" handler="on_setup"></signal>
@@ -27,6 +28,7 @@
             </child>
             <child>
               <object class="GtkListView" id="running_kernels_list_view">
+                <property name="css-classes">sidebar-list</property>
                 <property name="factory">
                   <object class="GtkSignalListItemFactory">
                     <signal name="setup" handler="on_setup"></signal>

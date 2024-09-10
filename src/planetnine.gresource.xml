@@ -44,6 +44,7 @@
     <file>icons/16x16/mimetypes/paper-symbolic.svg</file>
     <file>icons/16x16/mimetypes/unknown-symbolic.svg</file>
     <file>icons/16x16/mimetypes/octave-symbolic.svg</file>
+    <file>icons/16x16/mimetypes/table-symbolic.svg</file>
 
   </gresource>
 </gresources>

@@ -47,3 +47,14 @@ def format_json(json_string):
     json_string = json_string.replace('None', 'null')
 
     return json_string
+
+
+def number_to_column(n):
+    result = ""
+    n = n + 1
+    while n > 0:
+        n -= 1
+        remainder = n % 26
+        result = chr(65 + remainder) + result
+        n //= 26
+    return result

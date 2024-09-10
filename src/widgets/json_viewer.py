@@ -61,6 +61,7 @@ class TreeWidget(Adw.Bin):
         self.expander = Gtk.TreeExpander.new()
         self.key_label = Gtk.Label(
             xalign=0,
+            yalign=0,
             ellipsize=3,
             selectable=True,
             css_classes=["dim-label"]
@@ -68,6 +69,7 @@ class TreeWidget(Adw.Bin):
 
         self.value_label = Gtk.Label(
             xalign=0,
+            yalign=0,
             ellipsize=3,
             selectable=True
         )

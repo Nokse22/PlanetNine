@@ -102,15 +102,11 @@ class KernelManagerView(Panel.Widget):
 
     @Gtk.Template.Callback("on_bind")
     def on_bind(self, factory, list_item):
-        print("BIND")
         list_row = list_item.get_item()
         widget = list_item.get_child()
         item = list_item.get_item().get_item()
 
         widget.expander.set_list_row(list_row)
-        print(list_row)
-
-        print("ITEM: ", item)
 
         if isinstance(item, TreeNode):
             widget.set_icon_name("view-list-symbolic")

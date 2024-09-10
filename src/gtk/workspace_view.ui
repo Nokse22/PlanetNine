@@ -10,9 +10,56 @@
     <property name="icon-name">folder-symbolic</property>
     <property name="can-maximize">true</property>
     <child>
-      <object class="GtkScrolledWindow" id="scrolled_window">
+      <object class="GtkScrolledWindow">
         <property name="hscrollbar-policy">never</property>
+        <child>
+          <object class="GtkBox" id="box">
+            <property name="orientation">vertical</property>
+          </object>
+        </child>
       </object>
     </child>
   </template>
+  <menu id="workspace_menu">
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">Set Workspace Folder</attribute>
+        <attribute name="action">workspace.set</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">Import Files</attribute>
+        <attribute name="action">workspace.import-files</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">Import Folders</attribute>
+        <attribute name="action">workspace.import-folders</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">New File</attribute>
+        <attribute name="action">workspace.new-file</attribute>
+        <attribute name="target"></attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">New Folder</attribute>
+        <attribute name="action">workspace.new-folder</attribute>
+        <attribute name="target"></attribute>
+      </item>
+    </section>
+  </menu>
+  <menu id="other_menu">
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">Add File</attribute>
+        <attribute name="action">workspace.add-files</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">Add Folder</attribute>
+        <attribute name="action">workspace.add-folders</attribute>
+      </item>
+    </section>
+  </menu>
 </interface>

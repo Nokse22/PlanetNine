@@ -82,12 +82,13 @@ class PlanetnineApplication(Adw.Application):
 
     def on_about_action(self, *args):
         """Callback for the app.about action."""
-        about = Adw.AboutWindow(application_name='planetnine',
-                                application_icon='io.github.nokse22.PlanetNine',
-                                developer_name='Nokse',
-                                version='0.1.0',
-                                developers=['Nokse'],
-                                copyright='© 2024 Nokse')
+        about = Adw.AboutDialog(
+            application_name='Planet Nine',
+            application_icon='io.github.nokse22.PlanetNine',
+            developer_name='Nokse',
+            version='0.1.0',
+            developers=['Nokse'],
+            copyright='© 2024 Nokse')
         # Translators: Replace "translator-credits" with your name/username, and optionally an email or URL.
         about.set_translator_credits(_('translator-credits'))
         about.present(self.props.active_window)

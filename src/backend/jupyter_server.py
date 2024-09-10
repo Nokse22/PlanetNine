@@ -290,3 +290,9 @@ class JupyterServer(GObject.GObject):
         else:
             return False
 
+    def get_kernel_by_id(self, kernel_id):
+        for kernel in self.kernels:
+            if kernel.kernel_id == kernel_id:
+                return True, kernel
+
+        return False, None
