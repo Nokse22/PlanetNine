@@ -89,7 +89,9 @@ class JupyterKernel(GObject.GObject):
 
         self.__connect()
 
-        self.msg_callbacks = {}
+        self.queued_msg_id = ""
+        self.queued_msg_callback = None
+        self.queued_msg_arguments = None
 
         # asyncio.create_task(self.__get_control_msg())
         asyncio.create_task(self.__get_iopub_msg())
@@ -124,19 +126,24 @@ class JupyterKernel(GObject.GObject):
         while True:
             try:
                 msg = await self.kernel_client.get_iopub_msg()
-                # print("IOPUB MSG:")
-                # pprint(msg)
+                print("IOPUB MSG:")
+                pprint(msg)
 
                 msg_type = msg['header']['msg_type']
                 msg_id = msg['parent_header']['msg_id'] if 'msg_id' in msg['parent_header'] else ''
+
+                print(f"\nReceived MSG with ID: {msg_id}\n")
 
                 if msg_type == 'status':
                     self.status = msg['content']['execution_state']
                     self.emit("status-changed")
 
                 else:
-                    if msg_id in self.msg_callbacks:
-                        self.msg_callbacks[msg_id][0](msg, self.msg_callbacks[msg_id][1])
+                    if msg_id in self.queued_msg_id:
+                        print("Matching ID\n")
+                        if self.queued_msg_callback:
+                            self.queued_msg_callback(
+                                msg, *self.queued_msg_arguments)
 
             except Exception as e:
                 print(f"Exception while getting iopub msg: {e}")
@@ -170,4 +177,8 @@ class JupyterKernel(GObject.GObject):
 
         msg_id = self.kernel_client.execute(code)
 
-        self.msg_callbacks[msg_id] = [callback, *args]
+        print(f"Executing with ID: {msg_id}")
+
+        self.queued_msg_id = msg_id
+        self.queued_msg_callback = callback
+        self.queued_msg_arguments = args

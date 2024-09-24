@@ -231,6 +231,19 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.grid.add(widget)
         widget.close()
 
+        # Load examples folder
+
+        self.home_folder = GLib.getenv('XDG_DATA_HOME')
+        self.example_folder = GLib.build_filenamev([self.home_folder, 'examples'])
+
+        if os.path.exists(self.example_folder):
+            for file_name in os.listdir(self.example_folder):
+                file_path = os.path.join(self.example_folder, file_name)
+
+                print(f"File: {file_name}, Path: {file_path}")
+        else:
+            print("The example folder does not exist.")
+
     #
     #   NEW NOTEBOOK PAGE WITH KERNEL NAME
     #
@@ -436,9 +449,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 print("kernel changed")
 
     def add_cell_to_selected_notebook(self, cell):
-        notebook = self.get_visible_page()
-        if isinstance(notebook, Notebook):
-            notebook.add_cell(cell)
+        page = self.get_visible_page()
+        if isinstance(page, NotebookPage):
+            page.add_cell(cell)
+
+        print(page.notebook_model)
 
     def run_clicked(self, *args):
         notebook = self.get_visible_page()

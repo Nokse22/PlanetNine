@@ -135,7 +135,6 @@ class NotebookPage(Panel.Widget):
                 self.run_code_callback,
                 cell
             )
-            print("running code")
         else:
             print(f"can't run code: {self.notebook_model.jupyter_kernel}")
 
@@ -148,7 +147,7 @@ class NotebookPage(Panel.Widget):
         msg_type = msg['header']['msg_type']
         content = msg['content']
 
-        pprint(msg)
+        # pprint(msg)
 
         if msg_type == 'stream':
             output = Output(OutputType.STREAM)

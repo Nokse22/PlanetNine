@@ -96,7 +96,7 @@ class MatrixViewer(Gtk.ColumnView):
             column.set_factory(factory)
             self.append_column(column)
 
-        selection = Gtk.MultiSelection.new(model=model.rows)
+        selection = Gtk.NoSelection.new(model=model.rows)
         self.set_model(model=selection)
 
     def on_factory_setup(self, _factory, list_item, index):
