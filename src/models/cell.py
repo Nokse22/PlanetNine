@@ -37,9 +37,12 @@ class Cell(GObject.GObject):
     __gtype_name__ = 'Cell'
 
     __gsignals__ = {
-        'output-added': (GObject.SignalFlags.RUN_FIRST, None, (GObject.GObject,)),
-        'output-reset': (GObject.SignalFlags.RUN_FIRST, None, ()),
-        'execution-count-changed': (GObject.SignalFlags.RUN_FIRST, None, (int,)),
+        'output-added': (
+            GObject.SignalFlags.RUN_FIRST, None, (GObject.GObject,)),
+        'output-reset': (
+            GObject.SignalFlags.RUN_FIRST, None, ()),
+        'execution-count-changed': (
+            GObject.SignalFlags.RUN_FIRST, None, (int,)),
     }
 
     cell_type = GObject.Property(type=int, default=CellType.CODE)
@@ -116,7 +119,10 @@ class Cell(GObject.GObject):
         return cell_node
 
     def parse(self, json_cell):
-        self.cell_type = CellType.CODE if json_cell['cell_type'] == "code" else CellType.TEXT
+        if json_cell['cell_type'] == "code":
+            self.cell_type = CellType.CODE
+        else:
+            self.cell_type = CellType.TEXT
         self.source = ''.join(json_cell['source'])
         self.id = json_cell['id']
 

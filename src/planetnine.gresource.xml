@@ -9,6 +9,7 @@
     <file preprocess="xml-stripblanks">gtk/notebook_page.ui</file>
     <file preprocess="xml-stripblanks">gtk/browser_page.ui</file>
     <file preprocess="xml-stripblanks">gtk/kernel_manager_view.ui</file>
+    <file preprocess="xml-stripblanks">gtk/variables_view.ui</file>
     <file preprocess="xml-stripblanks">gtk/launcher.ui</file>
     <file preprocess="xml-stripblanks">gtk/workspace_view.ui</file>
     <file preprocess="xml-stripblanks">gtk/console_page.ui</file>
@@ -31,6 +32,7 @@
     <file>icons/16x16/actions/view-list-symbolic.svg</file>
     <file>icons/16x16/actions/earth-symbolic.svg</file>
     <file>icons/16x16/actions/notepad-symbolic.svg</file>
+    <file>icons/16x16/actions/lang-variable-symbolic.svg</file>
 
     <file>icons/16x16/mimetypes/image-symbolic.svg</file>
     <file>icons/16x16/mimetypes/text-json-symbolic.svg</file>

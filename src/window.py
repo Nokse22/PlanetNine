@@ -47,6 +47,7 @@ from .pages.matrix_page import MatrixPage
 
 from .widgets.kernel_manager_view import KernelManagerView
 from .widgets.workspace_view import WorkspaceView
+from .widgets.variables_view import VariableView
 from .widgets.launcher import Launcher
 
 from .utils.utilities import get_next_filepath
@@ -69,6 +70,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     omni_label = Gtk.Template.Child()
     server_status_label = Gtk.Template.Child()
     start_sidebar_panel_frame = Gtk.Template.Child()
+    bottom_panel_frame = Gtk.Template.Child()
     language_label = Gtk.Template.Child()
 
     cache_dir = os.environ["XDG_CACHE_HOME"]
@@ -95,6 +97,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.workspace_view = WorkspaceView()
         self.start_sidebar_panel_frame.add(self.workspace_view)
+
+        self.variable_view = VariableView()
+        self.bottom_panel_frame.add(self.variable_view)
 
         root_model = Gio.ListStore()
         root_model.append(self.jupyter_server.avalaible_kernels)
@@ -615,6 +620,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 isinstance(widget, CodePage)):
             widget.connect("kernel-info-changed", self.update_kernel_info)
             self.update_kernel_info(widget)
+            self.variable_view.set_model(widget.get_variables())
 
         self.previously_presented_widget = widget
 

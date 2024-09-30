@@ -118,14 +118,17 @@ class CellUI(Gtk.Box):
 
         self.create_action('delete', lambda *args: self.emit("request-delete"))
         self.create_action('change_type', self.on_change_type)
-        self.create_action('toggle_output_expand', self.on_toggle_output_expand)
+        self.create_action(
+            'toggle_output_expand', self.on_toggle_output_expand)
 
         self.insert_action_group("cell", self.action_group)
 
         self.bindings.append(self.bind_property("source", self.cell, "source"))
-        self.bindings.append(self.bind_property("cell_type", self.cell, "cell_type"))
+        self.bindings.append(
+            self.bind_property("cell_type", self.cell, "cell_type"))
 
-        self.cell.connect("execution-count-changed", self.on_execution_count_changed)
+        self.cell.connect(
+            "execution-count-changed", self.on_execution_count_changed)
         self.cell.connect("output-added", self.on_add_output)
         self.cell.connect("output-reset", self.on_reset_output)
 

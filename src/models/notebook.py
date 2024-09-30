@@ -26,6 +26,21 @@ import os
 from .cell import Cell
 
 
+class NotebookVariable(GObject.GObject):
+    __gtype_name__ = 'Variable'
+
+    name = GObject.Property(type=str)
+    type = GObject.Property(type=str)
+    value = GObject.Property(type=str)
+
+    def __init__(self, _name, _type, _value):
+        super().__init__()
+
+        self.name = _name
+        self.type = _type
+        self.value = _value
+
+
 class Notebook(Gio.ListStore):
     __gtype_name__ = 'Notebook'
 
@@ -42,6 +57,8 @@ class Notebook(Gio.ListStore):
 
         self.metadata = None
 
+        self._variables = Gio.ListStore()
+
     @classmethod
     def new_from_file(cls, notebook_path):
         instance = cls(notebook_path)
@@ -57,6 +74,10 @@ class Notebook(Gio.ListStore):
     @GObject.Property(type=GObject.GObject)
     def cells(self):
         return self
+
+    @GObject.Property(type=GObject.GObject)
+    def variables(self):
+        return self._variables
 
     def set_path(self, _path):
         self.path = _path
@@ -81,3 +102,9 @@ class Notebook(Gio.ListStore):
             notebook_node.metadata = self.metadata
 
         return notebook_node
+
+    def reset_variables(self):
+        self._variables.remove_all()
+
+    def add_variable(self, variable):
+        self._variables.append(variable)

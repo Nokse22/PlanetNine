@@ -1,0 +1,56 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Created with Cambalache 0.90.4 -->
+<interface>
+  <requires lib="gtk" version="4.12"/>
+  <requires lib="libadwaita" version="1.0"/>
+  <template class="VariableView" parent="PanelWidget">
+    <property name="title">Variable Viewer</property>
+    <property name="tooltip">Variable Viewer</property>
+    <property name="icon-name">lang-variable-symbolic</property>
+    <property name="can-maximize">false</property>
+    <property name="css-classes">variable-view</property>
+    <child>
+      <object class="GtkScrolledWindow">
+        <!-- <property name="hscrollbar-policy">never</property> -->
+        <child>
+          <object class="GtkColumnView" id="column_view">
+            <property name="show-column-separators">true</property>
+            <property name="show-row-separators">true</property>
+            <property name="hexpand">true</property>
+            <property name="vexpand">true</property>
+            <child>
+              <object class="GtkColumnViewColumn" id="column_name">
+                <property name="title" translatable="true">Name</property>
+                <property name="expand">true</property>
+                <property name="resizable">true</property>
+                <property name="factory">
+                  <object class="GtkSignalListItemFactory"></object>
+                </property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkColumnViewColumn" id="column_type">
+                <property name="title" translatable="true">Type</property>
+                <property name="expand">true</property>
+                <property name="resizable">true</property>
+                <property name="factory">
+                  <object class="GtkSignalListItemFactory"></object>
+                </property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkColumnViewColumn" id="column_value">
+                <property name="title" translatable="true">Value</property>
+                <property name="expand">true</property>
+                <property name="resizable">true</property>
+                <property name="factory">
+                  <object class="GtkSignalListItemFactory"></object>
+                </property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

@@ -24,18 +24,21 @@ from gi.repository import Panel
 
 import os
 import sys
+import re
 
 from pprint import pprint
 
 from ..models.cell import Cell, CellType
 from ..widgets.cell_ui import CellUI
 from ..models.output import Output, OutputType
+from ..models.notebook import NotebookVariable
 from ..backend.command_line import CommandLine
 from ..completion_providers.completion_providers import LSPCompletionProvider, WordsCompletionProvider
 from ..others.notebook_save_delegate import NotebookSaveDelegate
 
 
-@Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/notebook_page.ui')
+@Gtk.Template(
+    resource_path='/io/github/nokse22/PlanetNine/gtk/notebook_page.ui')
 class NotebookPage(Panel.Widget):
     __gtype_name__ = 'NotebookPage'
 
@@ -131,7 +134,7 @@ class NotebookPage(Panel.Widget):
             )
         elif self.notebook_model.jupyter_kernel:
             self.notebook_model.jupyter_kernel.execute(
-                cell.source,
+                cell.source + '\n%whos',  # added %whos to get the variables
                 self.run_code_callback,
                 cell
             )
@@ -150,6 +153,22 @@ class NotebookPage(Panel.Widget):
         # pprint(msg)
 
         if msg_type == 'stream':
+            whos_pattern = re.compile(
+                r'Variable\s+Type\s+Data\/Info\n[-]+\n((?:\S+ +\S+ +[^\n]+\n?)+)\Z')
+            whos_match = whos_pattern.search(content['text'])
+            if whos_match:
+                print(whos_match.group(0))
+                variable_pattern = re.compile(r'(\S+ +\S+ +[^\n]+)\n')
+                variables_match = variable_pattern.findall(whos_match.group(1))
+                self.notebook_model.reset_variables()
+                for variable in variables_match:
+                    variable_info_patt = re.compile(
+                        r'(\S+)\s+(\S+)\s+([^\n]+)$')
+                    parts = variable_info_patt.search(variable)
+                    var = NotebookVariable(
+                        parts.group(1), parts.group(2), parts.group(3))
+                    self.notebook_model.add_variable(var)
+                content['text'] = whos_pattern.sub('', content['text'])
             output = Output(OutputType.STREAM)
             output.parse(content)
             cell.add_output(output)
@@ -200,6 +219,9 @@ class NotebookPage(Panel.Widget):
 
     def get_kernel(self):
         return self.notebook_model.jupyter_kernel
+
+    def get_variables(self):
+        return self.notebook_model.variables
 
     def create_widgets(self, cell):
         cell = CellUI(cell)

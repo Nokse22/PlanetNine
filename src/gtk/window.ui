@@ -127,7 +127,7 @@
               <object class="PanelPaned" id="bottom_area">
                 <property name="orientation">horizontal</property>
                 <child>
-                  <object class="PanelFrame">
+                  <object class="PanelFrame" id="bottom_panel_frame">
                     <property name="orientation">horizontal</property>
                     <child>
                       <object class="PanelWidget">
@@ -141,6 +141,7 @@
                               <object class="VteTerminal" id="terminal">
                                 <property name="hexpand">true</property>
                                 <property name="vexpand">true</property>
+                                <property name="yalign">end</property>
                                 <property name="font-scale">0.8</property>
                               </object>
                             </child>

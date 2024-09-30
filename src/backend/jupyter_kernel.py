@@ -133,6 +133,7 @@ class JupyterKernel(GObject.GObject):
                 msg_id = msg['parent_header']['msg_id'] if 'msg_id' in msg['parent_header'] else ''
 
                 print(f"\nReceived MSG with ID: {msg_id}\n")
+                print(f"\nQueued message ID is: {self.queued_msg_id}\n")
 
                 if msg_type == 'status':
                     self.status = msg['content']['execution_state']

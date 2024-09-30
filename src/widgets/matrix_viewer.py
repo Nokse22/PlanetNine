@@ -76,7 +76,6 @@ class MatrixViewer(Gtk.ColumnView):
         self.set_show_column_separators(True)
         self.set_show_row_separators(True)
 
-        self.set_enable_rubberband(True)
         self.set_reorderable(False)
 
         self.add_css_class("matrixviewer")
@@ -108,7 +107,7 @@ class MatrixViewer(Gtk.ColumnView):
             list_item.set_child(inscr)
         else:
             label = Gtk.Label(ellipsize=3)
-            label.set_selectable(False)
+            label.set_selectable(True)
             label.set_xalign(1)
             list_item.set_child(label)
 

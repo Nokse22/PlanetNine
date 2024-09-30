@@ -107,6 +107,14 @@ flowbox flowboxchild:selected {
   font-family: monospace;
 }
 
+.variable-view columnview{
+  background-color: transparent;
+}
+
+.monospace{
+  font-family: monospace;
+}
+
 /* Style from libpanel */
 
 paneltogglebutton.drag-active button:not(:checked) {
