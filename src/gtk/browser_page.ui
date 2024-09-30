@@ -10,6 +10,7 @@
     <property name="icon-name">earth-symbolic</property>
     <child>
       <object class="AdwToolbarView" id="toolbar_view">
+        <property name="top-bar-style">raised-border</property>
         <property name="content">
           <object class="WebKitWebView" id="web_view"/>
         </property>
@@ -24,26 +25,33 @@
             <child>
               <object class="GtkButton" id="back_button">
                 <property name="icon-name">left-symbolic</property>
-                <signal name="clicked" handler="on_back_clicked"/>
+                <property name="css-classes">flat</property>
               </object>
             </child>
             <child>
               <object class="GtkButton" id="forward_button">
                 <property name="icon-name">right-symbolic</property>
-                <!-- <signal name="clicked" handler="on_forward_clicked"/> -->
+                <property name="css-classes">flat</property>
               </object>
             </child>
             <child>
               <object class="GtkButton" id="reload_button">
                 <property name="icon-name">arrow-circular-small-top-right-symbolic</property>
-                <!-- <signal name="clicked" handler="on_reload_clicked"/> -->
+                <property name="css-classes">flat</property>
               </object>
             </child>
             <child>
-              <object class="GtkEntry" id="uri_entry">
+              <object class="GtkEntry" id="search_entry">
                 <property name="placeholder-text">Address</property>
                 <property name="halign">fill</property>
-                <property name="hexpand">true</property>
+                <property name="hexpand">true</property>go-home-symbolic
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuButton" id="library_button">
+                <property name="icon-name">library-symbolic</property>
+                <property name="css-classes">flat</property>
+                <property name="menu-model">library_menu</property>
               </object>
             </child>
           </object>
@@ -51,5 +59,9 @@
       </object>
     </child>
   </template>
+  <menu id="library_menu">
+    <section id="bookmark_menu">
+    </section>
+  </menu>
 </interface>
 

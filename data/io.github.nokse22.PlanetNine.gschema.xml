@@ -10,5 +10,8 @@
 	  <key name="code-highlight-row" type="b">
       <default>true</default>
     </key>
+	  <key name="browser-default-url" type="s">
+      <default>'https://start.duckduckgo.com/'</default>
+    </key>
 	</schema>
 </schemalist>

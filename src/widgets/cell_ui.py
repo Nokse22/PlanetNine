@@ -352,9 +352,11 @@ class CellUI(Gtk.Box):
 
         for action, callback in self.actions_signals:
             action.disconnect_by_func(callback)
+        del self.actions_signals
 
         for binding in self.bindings:
             binding.unbind()
+        del self.bindings
 
         for provider in self.providers:
             provider.unregister(self.code_buffer)

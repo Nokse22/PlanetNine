@@ -17,7 +17,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gtk, GObject
+from gi.repository import Gtk, GObject, Gio, GLib
 from gi.repository import Panel, WebKit
 
 import sys
@@ -33,11 +33,12 @@ class BrowserPage(Panel.Widget):
     }
 
     web_view = Gtk.Template.Child()
-    uri_entry = Gtk.Template.Child()
+    search_entry = Gtk.Template.Child()
     toolbar_view = Gtk.Template.Child()
     back_button = Gtk.Template.Child()
     forward_button = Gtk.Template.Child()
     reload_button = Gtk.Template.Child()
+    bookmark_menu = Gtk.Template.Child()
 
     def __init__(self):
         super().__init__()
@@ -47,7 +48,9 @@ class BrowserPage(Panel.Widget):
 
         self.connect("unrealize", self.__on_unrealized)
 
-        self.uri_entry.connect("activate", self.on_entry_activated)
+        self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
+
+        self.search_entry.connect("activate", self.on_entry_activated)
 
         self.back_button.connect("clicked", self.on_back_clicked)
         self.forward_button.connect("clicked", self.on_forward_clicked)
@@ -56,7 +59,25 @@ class BrowserPage(Panel.Widget):
         self.web_view.connect("notify::uri", self.on_uri_changed)
         self.web_view.connect("notify::title", self.on_title_changed)
 
-        self.web_view.load_uri("https://www.gnome.org/")
+        self.web_view.load_uri(self.settings.get_string('browser-default-url'))
+
+        # icon = Gio.Icon.new_for_string('go-home-symbolic')
+        # self.search_entry.set_icon_from_gicon(Gtk.EntryIconPosition.SECONDARY, icon)
+
+        self.action_group = Gio.SimpleActionGroup()
+        self.toolbar_view.insert_action_group("browser", self.action_group)
+
+        self.create_action_with_target(
+            'open', GLib.VariantType.new("s"), self.on_open_url)
+
+        self.bookmarks = [
+            ('Duck Duck Go', 'https://start.duckduckgo.com/'),
+            ('GNOME', 'https://www.gnome.org/'),
+            ('Python Tutorials', 'https://docs.python.org/3/tutorial/index.html')
+        ]
+
+        for name, url in self.bookmarks:
+            self.add_bookmark(name, url)
 
     @classmethod
     def new_from_html(cls, html_string):
@@ -76,7 +97,7 @@ class BrowserPage(Panel.Widget):
 
     def on_uri_changed(self, web_view, *args):
         uri = web_view.get_uri()
-        self.uri_entry.get_buffer().set_text(uri, len(uri))
+        self.search_entry.get_buffer().set_text(uri, len(uri))
         self.toolbar_view.set_reveal_top_bars(True)
 
     def on_title_changed(self, web_view, *args):
@@ -91,15 +112,36 @@ class BrowserPage(Panel.Widget):
     def on_reload_clicked(self, *args):
         self.web_view.reload()
 
+    def on_open_url(self, action, variant):
+        self.web_view.load_uri(variant.get_string())
+
+    def add_bookmark(self, bookmark_name, bookmark_url):
+        menu_item = Gio.MenuItem()
+        menu_item.set_label(bookmark_name)
+        menu_item.set_action_and_target_value(
+            "browser.open", GLib.Variant('s', bookmark_url))
+        self.bookmark_menu.append_item(menu_item)
+
+    def create_action_with_target(self, name, target_type, callback):
+        action = Gio.SimpleAction.new(name, target_type)
+        action.connect("activate", callback)
+        self.action_group.add_action(action)
+        self.actions_signals.append((action, callback))
+        return action
+
     def __on_unrealized(self, *args):
-        self.web_view.disconnect_by_func(self.on_uri_changed)
         self.back_button.disconnect_by_func(self.on_back_clicked)
         self.forward_button.disconnect_by_func(self.on_forward_clicked)
         self.reload_button.disconnect_by_func(self.on_reload_clicked)
         self.web_view.disconnect_by_func(self.on_title_changed)
+        self.web_view.disconnect_by_func(self.on_uri_changed)
+        self.search_entry.disconnect_by_func(self.on_entry_activated)
 
         for action, callback in self.actions_signals:
             action.disconnect_by_func(callback)
+            print(action, callback)
+
+        del self.actions_signals
 
         for binding in self.bindings:
             binding.unbind()
