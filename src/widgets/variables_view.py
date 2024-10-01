@@ -33,7 +33,7 @@ class VariableView(Panel.Widget):
     def __init__(self):
         super().__init__()
 
-        self.connect("unrealize", self.__on_unrealized)
+        # self.connect("unrealize", self.__on_unrealized)
 
         self.column_name.get_factory().connect("setup", self.on_factory_setup)
         self.column_name.get_factory().connect(

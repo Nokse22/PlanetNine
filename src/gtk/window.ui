@@ -131,8 +131,8 @@
                     <property name="orientation">horizontal</property>
                     <child>
                       <object class="PanelWidget">
-                        <property name="title">Jupyter Server</property>
-                        <property name="tooltip">Jupyter Server</property>
+                        <property name="title">Jupyter Server Console</property>
+                        <property name="tooltip">Jupyter Server Console</property>
                         <property name="can-maximize">true</property>
                         <property name="icon-name">terminal-symbolic</property>
                         <child>
@@ -143,6 +143,7 @@
                                 <property name="vexpand">true</property>
                                 <property name="yalign">end</property>
                                 <property name="font-scale">0.8</property>
+                                <property name="scrollback-lines">1000</property>
                               </object>
                             </child>
                           </object>
@@ -152,11 +153,11 @@
                     <child>
                       <object class="PanelWidget">
                         <property name="title">Something</property>
-                        <property name="icon-name">folder-symbolic</property>
+                        <property name="icon-name">graph-symbolic</property>
                         <property name="can-maximize">true</property>
                         <child>
                           <object class="GtkLabel">
-                            <property name="label">Something else?</property>
+                            <property name="label">Viewed Images</property>
                             <property name="vexpand">true</property>
                             <property name="hexpand">true</property>
                             <style>

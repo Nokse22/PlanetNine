@@ -111,6 +111,10 @@ flowbox flowboxchild:selected {
   background-color: transparent;
 }
 
+.variable-view columnview cell{
+  padding: 3px;
+}
+
 .monospace{
   font-family: monospace;
 }

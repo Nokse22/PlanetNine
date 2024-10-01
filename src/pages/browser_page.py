@@ -139,12 +139,11 @@ class BrowserPage(Panel.Widget):
 
         for action, callback in self.actions_signals:
             action.disconnect_by_func(callback)
-            print(action, callback)
-
         del self.actions_signals
 
         for binding in self.bindings:
             binding.unbind()
+        del self.bindings
 
         self.disconnect_by_func(self.__on_unrealized)
 

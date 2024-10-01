@@ -86,8 +86,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.jupyter_server = JupyterServer()
 
-        self.jupyter_server.connect("started", self.on_jupyter_server_started)
-        self.jupyter_server.connect("new-line", self.on_jupyter_server_has_new_line)
+        self.jupyter_server.connect(
+            "started", self.on_jupyter_server_started)
+        self.jupyter_server.connect(
+            "new-line", self.on_jupyter_server_has_new_line)
 
         self.kernel_manager_view = KernelManagerView(
             self.jupyter_server.avalaible_kernels,
@@ -105,13 +107,19 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         root_model.append(self.jupyter_server.avalaible_kernels)
         root_model.append(self.jupyter_server.kernels)
 
-        self.all_kernels = Gtk.TreeListModel.new(root_model, False, True, self.create_sub_models)
+        self.all_kernels = Gtk.TreeListModel.new(
+            root_model, False, True, self.create_sub_models)
 
         self.select_kernel_combo_row.set_model(self.all_kernels)
 
         # self.jupyter_server.start()
 
-        self.terminal.set_color_background(Gdk.RGBA(alpha=1))
+        background = Gdk.RGBA()
+        foreground = Gdk.RGBA()
+        background.parse('rgba(0, 0, 0, 0)')
+        foreground.parse('rgba(0, 0, 0, 0.8)')
+        self.terminal.set_color_background(background)
+        self.terminal.set_color_foreground(foreground)
 
         #
         #   NEW CELL ON VISIBLE NOTEBOOK
@@ -200,19 +208,25 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         #   ACTIONS FOR THE VIEWED NOTEBOOK/CODE/CONSOLE
         #
 
-        self.create_action('run-selected-cell', self.run_clicked)
-        self.create_action('restart-kernel-and-run', self.restart_kernel_and_run)
-        self.create_action('start-server', self.start_server)
-        self.create_action('change-kernel', self.change_kernel)
-        self.create_action('restart-kernel-visible', self.restart_kernel)
+        self.create_action(
+            'run-selected-cell', self.run_clicked)
+        self.create_action(
+            'restart-kernel-and-run', self.restart_kernel_and_run)
+        self.create_action(
+            'start-server', self.start_server)
+        self.create_action(
+            'change-kernel', self.change_kernel)
+        self.create_action(
+            'restart-kernel-visible', self.restart_kernel)
 
         #
         #   OTHER ACTIONS
         #
 
-        self.create_action('open-notebook', self.open_notebook)
-
-        self.create_action('open-workspace', self.workspace_view.set_workspace_folder)
+        self.create_action(
+            'open-notebook', self.open_notebook)
+        self.create_action(
+            'open-workspace', self.workspace_view.set_workspace_folder)
 
         self.create_action_with_target(
             'open-file',
@@ -432,7 +446,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         asyncio.create_task(self._change_kernel(notebook))
 
     async def _change_kernel(self, notebook):
-        self.select_kernel_combo_row.set_selected(1) # 2 + len of avalab kernels + pos in kernels
+        self.select_kernel_combo_row.set_selected(1)
+        # 2 + len of avalab kernels + pos in kernels
 
         choice = await dialog_choose_async(self, self.select_kernel_dialog)
 
@@ -503,7 +518,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             logging.Logger.debug(f"{e}")
 
     #
-    #
+    #   SAVE VISIBLE PAGE
     #
 
     def save_viewed(self):
@@ -673,8 +688,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     def on_select_kernel_bind(self, factory, list_item):
         item = list_item.get_item().get_item()
         widget = list_item.get_child()
-
-        print("bind")
 
         if isinstance(item, JupyterKernelInfo):
             widget.set_label(item.display_name)

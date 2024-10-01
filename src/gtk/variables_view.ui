@@ -7,14 +7,14 @@
     <property name="title">Variable Viewer</property>
     <property name="tooltip">Variable Viewer</property>
     <property name="icon-name">lang-variable-symbolic</property>
-    <property name="can-maximize">false</property>
+    <property name="can-maximize">true</property>
     <property name="css-classes">variable-view</property>
     <child>
       <object class="GtkScrolledWindow">
         <!-- <property name="hscrollbar-policy">never</property> -->
         <child>
           <object class="GtkColumnView" id="column_view">
-            <property name="show-column-separators">true</property>
+            <!-- <property name="show-column-separators">true</property> -->
             <property name="show-row-separators">true</property>
             <property name="hexpand">true</property>
             <property name="vexpand">true</property>
