@@ -1,0 +1,51 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Created with Cambalache 0.90.4 -->
+<interface>
+  <requires lib="gtk" version="4.12"/>
+  <requires lib="libadwaita" version="1.0"/>
+  <template class="ImagesPanel" parent="PanelWidget">
+    <property name="title">Images</property>
+    <property name="tooltip">Images</property>
+    <property name="icon-name">graph-symbolic</property>
+    <property name="can-maximize">true</property>
+    <property name="css-classes">variable-view</property>
+    <child>
+      <object class="GtkStack">
+        <child>
+          <object class="GtkStackPage">
+            <property name="child">
+              <object class="AdwStatusPage">
+                <property name="css-classes">compact</property>
+                <property name="description">No images generated</property>
+                <property name="icon-name">graph-symbolic</property>
+                <property name="title">No Images</property>
+              </object>
+            </property>
+            <property name="name">no_images_page</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkStackPage">
+            <property name="child">
+              <object class="GtkBox">
+                <child>
+                  <object class="GtkPicture" id="main_picture">
+                    <property name="hexpand">True</property>
+                    <property name="vexpand">True</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSeparator"/>
+                </child>
+                <child>
+                  <object class="GtkListBox" id="listbox"/>
+                </child>
+              </object>
+            </property>
+            <property name="name">images_page</property>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

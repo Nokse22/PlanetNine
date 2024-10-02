@@ -47,12 +47,13 @@ from .pages.matrix_page import MatrixPage
 
 from .widgets.kernel_manager_view import KernelManagerView
 from .widgets.workspace_view import WorkspaceView
-from .widgets.variables_view import VariableView
+from .widgets.variables_view import VariablesPanel
+from .widgets.images_panel import ImagesPanel
 from .widgets.launcher import Launcher
 
-from .utils.utilities import get_next_filepath
-
 from .utils.converters import is_mime_displayable
+
+from gettext import gettext as _
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/window.ui')
@@ -72,6 +73,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     start_sidebar_panel_frame = Gtk.Template.Child()
     bottom_panel_frame = Gtk.Template.Child()
     language_label = Gtk.Template.Child()
+    position_menu_button = Gtk.Template.Child()
 
     cache_dir = os.environ["XDG_CACHE_HOME"]
     files_cache_dir = os.path.join(cache_dir, "files")
@@ -84,12 +86,20 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         #     Gio.SubprocessFlags.NONE
         # )
 
+        self.connect("notify::focus-widget", self.on_focus_changed)
+
         self.jupyter_server = JupyterServer()
 
         self.jupyter_server.connect(
             "started", self.on_jupyter_server_started)
         self.jupyter_server.connect(
             "new-line", self.on_jupyter_server_has_new_line)
+
+        #
+        #   ADDING AND BINDING STATIC PANELS
+        #
+
+        # TODO Save the last position and restore it at startup
 
         self.kernel_manager_view = KernelManagerView(
             self.jupyter_server.avalaible_kernels,
@@ -100,8 +110,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.workspace_view = WorkspaceView()
         self.start_sidebar_panel_frame.add(self.workspace_view)
 
-        self.variable_view = VariableView()
-        self.bottom_panel_frame.add(self.variable_view)
+        self.variables_panel = VariablesPanel()
+        self.bottom_panel_frame.add(self.variables_panel)
+
+        self.images_panel = ImagesPanel()
+        self.bottom_panel_frame.add(self.images_panel)
 
         root_model = Gio.ListStore()
         root_model.append(self.jupyter_server.avalaible_kernels)
@@ -113,13 +126,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.select_kernel_combo_row.set_model(self.all_kernels)
 
         # self.jupyter_server.start()
-
-        background = Gdk.RGBA()
-        foreground = Gdk.RGBA()
-        background.parse('rgba(0, 0, 0, 0)')
-        foreground.parse('rgba(0, 0, 0, 0.8)')
-        self.terminal.set_color_background(background)
-        self.terminal.set_color_foreground(foreground)
 
         #
         #   NEW CELL ON VISIBLE NOTEBOOK
@@ -244,11 +250,19 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.command_line = CommandLine()
 
-        self.previously_presented_widget = None
+        self.previous_page = None
+
+        # Hack to get the launcher to show
 
         widget = Panel.Widget()
         self.grid.add(widget)
         widget.close()
+
+        # Style Manager to update when dark/light
+
+        self.style_manager = Adw.StyleManager.get_default()
+        self.style_manager.connect("notify::dark", self.update_style_scheme)
+        self.update_style_scheme()
 
         # Load examples folder
 
@@ -276,7 +290,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         notebook_page = NotebookPage(notebook)
         notebook_page.set_draft()
-        notebook_page.connect("presented", self.on_widget_presented)
         self.grid.add(notebook_page)
 
         success, kernel = await self.jupyter_server.start_kernel_by_name(
@@ -299,7 +312,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         notebook_page = NotebookPage(notebook)
         notebook_page.set_draft()
-        notebook_page.connect("presented", self.on_widget_presented)
         self.grid.add(notebook_page)
 
         success, kernel = self.jupyter_server.get_kernel_by_id(kernel_id)
@@ -569,7 +581,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         notebook = Notebook.new_from_file(file_path)
 
         notebook_page = NotebookPage(notebook)
-        notebook_page.connect("presented", self.on_widget_presented)
         self.grid.add(notebook_page)
 
         success, kernel = await self.jupyter_server.start_kernel_by_name("")
@@ -596,7 +607,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             case "application/x-ipynb+json":
                 notebook = Notebook.new_from_file(file_path)
                 notebook_page = NotebookPage(notebook)
-                notebook_page.connect("presented", self.on_widget_presented)
                 self.grid.add(notebook_page)
             case mime_type if is_mime_displayable(mime_type):
                 self.grid.add(TextPage(file_path))
@@ -622,22 +632,26 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         if is_mime_displayable(mime_type):
             self.grid.add(TextPage(file_path))
 
-    def on_widget_presented(self, widget):
+    def on_focus_changed(self, *args):
+        page = self.get_visible_page()
 
-        if (isinstance(self.previously_presented_widget, NotebookPage) or
-                isinstance(self.previously_presented_widget, ConsolePage) or
-                isinstance(self.previously_presented_widget, CodePage)):
-            self.previously_presented_widget.disconnect_by_func(
-                self.update_kernel_info)
+        if (isinstance(self.previous_page, NotebookPage) or
+                isinstance(self.previous_page, ConsolePage) or
+                isinstance(self.previous_page, CodePage)):
+            self.previous_page.disconnect_by_func(self.update_kernel_info)
+            self.previous_page.disconnect_by_func(self.on_cursor_moved)
+            self.previous_page = page
 
-        if (isinstance(widget, NotebookPage) or
-                isinstance(widget, ConsolePage) or
-                isinstance(widget, CodePage)):
-            widget.connect("kernel-info-changed", self.update_kernel_info)
-            self.update_kernel_info(widget)
-            self.variable_view.set_model(widget.get_variables())
-
-        self.previously_presented_widget = widget
+        if (isinstance(page, NotebookPage) or
+                isinstance(page, ConsolePage) or
+                isinstance(page, CodePage)):
+            page.connect("kernel-info-changed", self.update_kernel_info)
+            self.update_kernel_info(page)
+            # self.variables_panel.set_model(page.get_variables())
+            # self.images_panel.set_model(page.get_images())
+            page.connect("cursor-moved", self.on_cursor_moved)
+        else:
+            self.position_menu_button.set_visible(False)
 
     def update_kernel_info(self, widget):
         kernel = widget.get_kernel()
@@ -652,6 +666,39 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self.omni_label.set_label("No Kernel")
             self.language_label.set_visible(False)
             self.omni_bar.set_visible(False)
+
+    def on_cursor_moved(self, page, buffer, index):
+        insert_mark = buffer.get_insert()
+        iter_at_cursor = buffer.get_iter_at_mark(insert_mark)
+        line_n = iter_at_cursor.get_line()
+        column_n = iter_at_cursor.get_line_offset()
+
+        # Used to indicate the line and column number
+        position = _("Ln ") + str(line_n) + _(", Col ") + str(column_n)
+
+        if index == 0:
+
+            self.position_menu_button.set_label(position)
+        else:
+            # Used to indicate the focused cell
+            position = _("Cell ") + str(index) + ", " + position
+            self.position_menu_button.set_label(position)
+
+        self.position_menu_button.set_visible(True)
+
+    def update_style_scheme(self, *args):
+        background = Gdk.RGBA()
+        foreground = Gdk.RGBA()
+
+        background.parse('rgba(0, 0, 0, 0)')
+
+        if Adw.StyleManager.get_default().get_dark():
+            foreground.parse('#ffffff')
+        else:
+            foreground.parse('rgba(0, 0, 0, 0.8)')
+
+        self.terminal.set_color_background(background)
+        self.terminal.set_color_foreground(foreground)
 
     @Gtk.Template.Callback("on_create_frame")
     def on_create_frame(self, grid):

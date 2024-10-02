@@ -35,6 +35,11 @@ GObject.type_register(GtkSource.VimIMContext)
 class TextPage(Panel.Widget):
     __gtype_name__ = 'TextPage'
 
+    __gsignals__ = {
+        'cursor-moved':
+            (GObject.SignalFlags.RUN_FIRST, None, (Gtk.TextBuffer, int))
+    }
+
     path = GObject.Property(type=str, default="")
 
     source_view = Gtk.Template.Child()
@@ -92,9 +97,14 @@ class TextPage(Panel.Widget):
         # CONNECT
 
         self.buffer.connect("changed", self.on_text_changed)
+        self.buffer.connect(
+            "notify::cursor-position", self.on_cursor_position_changed)
 
     def on_text_changed(self, *args):
         self.set_modified(True)
+
+    def on_cursor_position_changed(self, *args):
+        self.emit("cursor-moved", self.buffer, 0)
 
     def set_path(self, _path):
         self.path = _path

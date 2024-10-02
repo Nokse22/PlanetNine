@@ -37,6 +37,8 @@ class ConsolePage(Panel.Widget):
 
     __gsignals__ = {
         'kernel-info-changed': (GObject.SignalFlags.RUN_FIRST, None, ()),
+        'cursor-moved':
+            (GObject.SignalFlags.RUN_FIRST, None, (Gtk.TextBuffer, int))
     }
 
     source_view = Gtk.Template.Child()
@@ -55,6 +57,9 @@ class ConsolePage(Panel.Widget):
         self.connect("unrealize", self.__on_unrealized)
 
         self.send_button.connect("clicked", self.on_send_clicked)
+
+        self.code_buffer.connect(
+            "notify::cursor-position", self.on_cursor_position_changed)
 
         # SET HIGHLIGHT AND LANGUAGE
 
@@ -87,6 +92,9 @@ class ConsolePage(Panel.Widget):
 
         completion.add_provider(completion_words)
         # completion.add_provider(LSPCompletionProvider())
+
+    def on_cursor_position_changed(self, *args):
+        self.emit("cursor-moved", self.code_buffer, 0)
 
     def set_kernel(self, jupyter_kernel):
         lm = GtkSource.LanguageManager()

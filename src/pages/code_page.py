@@ -35,6 +35,8 @@ class CodePage(Panel.Widget):
 
     __gsignals__ = {
         'kernel-info-changed': (GObject.SignalFlags.RUN_FIRST, None, ()),
+        'cursor-moved':
+            (GObject.SignalFlags.RUN_FIRST, None, (Gtk.TextBuffer, int))
     }
 
     source_view = Gtk.Template.Child()
@@ -50,6 +52,11 @@ class CodePage(Panel.Widget):
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
+        self.code_buffer.connect(
+            "notify::cursor-position", self.on_cursor_position_changed)
+
+        self.jupyter_kernel = None
+
         # SETUP VIM
 
         # self.settings.connect('notify::code-vim', self.on_code_vim_changed)
@@ -59,11 +66,14 @@ class CodePage(Panel.Widget):
             vim_im_context = GtkSource.VimIMContext()
 
             self.event_controller_key.set_im_context(vim_im_context)
-            self.event_controller_key.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
+            self.event_controller_key.set_propagation_phase(
+                Gtk.PropagationPhase.CAPTURE)
             vim_im_context.set_client_widget(self.source_view)
 
-            vim_im_context.bind_property("command-bar-text", self.command_bar_label, "label")
-            vim_im_context.bind_property("command-text", self.command_label, "label")
+            vim_im_context.bind_property(
+                "command-bar-text", self.command_bar_label, "label")
+            vim_im_context.bind_property(
+                "command-text", self.command_label, "label")
         else:
             self.command_bar_label.set_visible(False)
             self.command_label.set_visible(False)
@@ -96,8 +106,21 @@ class CodePage(Panel.Widget):
 
         # VIEW SETTINGS
 
-        self.settings.bind('code-line-number', self.source_view, 'show-line-numbers', Gio.SettingsBindFlags.DEFAULT)
-        self.settings.bind('code-highlight-row', self.source_view, 'highlight-current-line', Gio.SettingsBindFlags.DEFAULT)
+        self.settings.bind(
+            'code-line-number',
+            self.source_view,
+            'show-line-numbers',
+            Gio.SettingsBindFlags.DEFAULT
+        )
+        self.settings.bind(
+            'code-highlight-row',
+            self.source_view,
+            'highlight-current-line',
+            Gio.SettingsBindFlags.DEFAULT
+        )
+
+    def on_cursor_position_changed(self, *args):
+        self.emit("cursor-moved", self.code_buffer, 0)
 
     def update_style_scheme(self, *args):
         scheme_name = "Adwaita"
@@ -114,7 +137,8 @@ class CodePage(Panel.Widget):
         self.code_buffer.set_language(lang)
 
         self.jupyter_kernel = jupyter_kernel
-        self.jupyter_kernel.connect("status-changed", lambda *args: self.emit("kernel-info-changed"))
+        self.jupyter_kernel.connect(
+            "status-changed", lambda *args: self.emit("kernel-info-changed"))
 
         self.emit("kernel-info-changed")
 

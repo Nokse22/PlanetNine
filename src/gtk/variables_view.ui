@@ -3,12 +3,12 @@
 <interface>
   <requires lib="gtk" version="4.12"/>
   <requires lib="libadwaita" version="1.0"/>
-  <template class="VariableView" parent="PanelWidget">
-    <property name="title">Variable Viewer</property>
-    <property name="tooltip">Variable Viewer</property>
+  <template class="VariablesPanel" parent="PanelWidget">
+    <property name="title">Variables</property>
+    <property name="tooltip">Variables</property>
     <property name="icon-name">lang-variable-symbolic</property>
     <property name="can-maximize">true</property>
-    <property name="css-classes">variable-view</property>
+    <property name="css-classes">variables-panel</property>
     <child>
       <object class="GtkScrolledWindow">
         <!-- <property name="hscrollbar-policy">never</property> -->

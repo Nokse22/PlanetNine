@@ -22,8 +22,8 @@ from gi.repository import Gtk, Panel
 
 @Gtk.Template(
     resource_path='/io/github/nokse22/PlanetNine/gtk/variables_view.ui')
-class VariableView(Panel.Widget):
-    __gtype_name__ = 'VariableView'
+class VariablesPanel(Panel.Widget):
+    __gtype_name__ = 'VariablesPanel'
 
     column_view = Gtk.Template.Child()
     column_name = Gtk.Template.Child()

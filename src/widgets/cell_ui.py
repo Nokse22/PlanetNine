@@ -287,9 +287,11 @@ class CellUI(Gtk.Box):
         _, vscrollbar_policy = self.output_scrolled_window.get_policy()
 
         if vscrollbar_policy == Gtk.PolicyType.AUTOMATIC:
-            self.output_scrolled_window.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.NEVER)
+            self.output_scrolled_window.set_policy(
+                Gtk.PolicyType.NEVER, Gtk.PolicyType.NEVER)
         else:
-            self.output_scrolled_window.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+            self.output_scrolled_window.set_policy(
+                Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
 
     def on_change_type(self, *args):
         if self.cell_type == CellType.TEXT:
@@ -315,7 +317,8 @@ class CellUI(Gtk.Box):
         return Gdk.ContentProvider.new_for_value(value)
 
     def on_drag_source_begin(self, source, drag):
-        builder = Gtk.Builder.new_from_resource('/io/github/nokse22/PlanetNine/gtk/cell_drag.ui')
+        builder = Gtk.Builder.new_from_resource(
+            '/io/github/nokse22/PlanetNine/gtk/cell_drag.ui')
         drag_widget = builder.get_object('drag_widget')
 
         builder.get_object('count').set_label(self.count_label.get_label())

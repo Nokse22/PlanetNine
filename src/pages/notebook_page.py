@@ -44,6 +44,8 @@ class NotebookPage(Panel.Widget):
 
     __gsignals__ = {
         'kernel-info-changed': (GObject.SignalFlags.RUN_FIRST, None, ()),
+        'cursor-moved':
+            (GObject.SignalFlags.RUN_FIRST, None, (Gtk.TextBuffer, int))
     }
 
     cells_list_box = Gtk.Template.Child()
@@ -62,6 +64,10 @@ class NotebookPage(Panel.Widget):
         self.list_drop_target.connect("drop", self.on_drop_target_drop)
         self.list_drop_target.connect("motion", self.on_drop_target_motion)
         self.list_drop_target.connect("leave", self.on_drop_target_leave)
+
+        self.cells_list_box.connect(
+            "selected-rows-changed", self.on_selected_cell_changed)
+        self.previous_buffer = None
 
         self.notebook_model = _notebook_model
 
@@ -91,6 +97,20 @@ class NotebookPage(Panel.Widget):
 
         if self.notebook_model.get_n_items() == 0:
             self.add_cell(Cell(CellType.CODE))
+
+    def on_selected_cell_changed(self, *args):
+        buffer = self.cells_list_box.get_selected_row().get_child().code_buffer
+
+        if self.previous_buffer:
+            self.previous_buffer.disconnect_by_func(
+                self.on_cursor_position_changed)
+
+        index = self.get_selected_cell_index()
+        buffer.connect(
+            "notify::cursor-position", self.on_cursor_position_changed, index)
+
+    def on_cursor_position_changed(self, buffer, pos, index):
+        self.emit("cursor-moved", buffer, index + 1)
 
     def set_draft(self):
         self.save_delegate.set_is_draft(True)
@@ -169,6 +189,8 @@ class NotebookPage(Panel.Widget):
                         parts.group(1), parts.group(2), parts.group(3))
                     self.notebook_model.add_variable(var)
                 content['text'] = whos_pattern.sub('', content['text'])
+                if content['text'] == "":
+                    return
             output = Output(OutputType.STREAM)
             output.parse(content)
             cell.add_output(output)
