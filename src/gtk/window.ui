@@ -351,6 +351,7 @@
       <item>
         <attribute name="label" translatable="yes">New Browser Page</attribute>
         <attribute name="action">win.new-browser-page</attribute>
+        <attribute name="target"></attribute>
       </item>
     </section>
     <section>

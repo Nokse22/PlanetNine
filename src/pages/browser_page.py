@@ -39,8 +39,9 @@ class BrowserPage(Panel.Widget):
     forward_button = Gtk.Template.Child()
     reload_button = Gtk.Template.Child()
     bookmark_menu = Gtk.Template.Child()
+    cancel_reload_button = Gtk.Template.Child()
 
-    def __init__(self):
+    def __init__(self, _initial_uri=None):
         super().__init__()
 
         self.actions_signals = []
@@ -55,11 +56,19 @@ class BrowserPage(Panel.Widget):
         self.back_button.connect("clicked", self.on_back_clicked)
         self.forward_button.connect("clicked", self.on_forward_clicked)
         self.reload_button.connect("clicked", self.on_reload_clicked)
+        self.cancel_reload_button.connect(
+            "clicked", self.on_cancel_reload_clicked)
 
         self.web_view.connect("notify::uri", self.on_uri_changed)
         self.web_view.connect("notify::title", self.on_title_changed)
 
-        self.web_view.load_uri(self.settings.get_string('browser-default-url'))
+        self.web_view.connect("create", self.on_open_new_browser)
+
+        if _initial_uri:
+            self.web_view.load_uri(_initial_uri)
+        else:
+            self.web_view.load_uri(
+                self.settings.get_string('browser-default-url'))
 
         # icon = Gio.Icon.new_for_string('go-home-symbolic')
         # self.search_entry.set_icon_from_gicon(Gtk.EntryIconPosition.SECONDARY, icon)
@@ -112,6 +121,9 @@ class BrowserPage(Panel.Widget):
     def on_reload_clicked(self, *args):
         self.web_view.reload()
 
+    def on_cancel_reload_clicked(self, *args):
+        self.web_view.stop_loading()
+
     def on_open_url(self, action, variant):
         self.web_view.load_uri(variant.get_string())
 
@@ -121,6 +133,11 @@ class BrowserPage(Panel.Widget):
         menu_item.set_action_and_target_value(
             "browser.open", GLib.Variant('s', bookmark_url))
         self.bookmark_menu.append_item(menu_item)
+
+    def on_open_new_browser(self, web_view, navigation_action):
+        uri = navigation_action.get_request().get_uri()
+        self.activate_action(
+            "win.new-browser-page", GLib.Variant('s', uri))
 
     def create_action_with_target(self, name, target_type, callback):
         action = Gio.SimpleAction.new(name, target_type)
@@ -136,6 +153,8 @@ class BrowserPage(Panel.Widget):
         self.web_view.disconnect_by_func(self.on_title_changed)
         self.web_view.disconnect_by_func(self.on_uri_changed)
         self.search_entry.disconnect_by_func(self.on_entry_activated)
+        self.cancel_reload_button.disconnect_by_func(
+            self.on_cancel_reload_clicked)
 
         for action, callback in self.actions_signals:
             action.disconnect_by_func(callback)

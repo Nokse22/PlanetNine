@@ -24,14 +24,12 @@ from gi.repository import Panel
 
 import os
 import sys
-import re
 
 from pprint import pprint
 
 from ..models.cell import Cell, CellType
 from ..widgets.cell_ui import CellUI
 from ..models.output import Output, OutputType
-from ..models.notebook import NotebookVariable
 from ..backend.command_line import CommandLine
 from ..completion_providers.completion_providers import LSPCompletionProvider, WordsCompletionProvider
 from ..others.notebook_save_delegate import NotebookSaveDelegate
@@ -99,15 +97,17 @@ class NotebookPage(Panel.Widget):
             self.add_cell(Cell(CellType.CODE))
 
     def on_selected_cell_changed(self, *args):
-        buffer = self.cells_list_box.get_selected_row().get_child().code_buffer
+        selected_row = self.cells_list_box.get_selected_row()
+        if selected_row:
+            buffer = selected_row.get_child().code_buffer
 
-        if self.previous_buffer:
-            self.previous_buffer.disconnect_by_func(
-                self.on_cursor_position_changed)
+            if self.previous_buffer:
+                self.previous_buffer.disconnect_by_func(
+                    self.on_cursor_position_changed)
 
-        index = self.get_selected_cell_index()
-        buffer.connect(
-            "notify::cursor-position", self.on_cursor_position_changed, index)
+            index = self.get_selected_cell_index()
+            buffer.connect(
+                "notify::cursor-position", self.on_cursor_position_changed, index)
 
     def on_cursor_position_changed(self, buffer, pos, index):
         self.emit("cursor-moved", buffer, index + 1)
@@ -154,7 +154,7 @@ class NotebookPage(Panel.Widget):
             )
         elif self.notebook_model.jupyter_kernel:
             self.notebook_model.jupyter_kernel.execute(
-                cell.source + '\n%whos',  # added %whos to get the variables
+                cell.source,
                 self.run_code_callback,
                 cell
             )
@@ -167,30 +167,14 @@ class NotebookPage(Panel.Widget):
         cell.add_output(output)
 
     def run_code_callback(self, msg, cell):
+        if msg is None or msg['header'] is None:
+            return
         msg_type = msg['header']['msg_type']
         content = msg['content']
 
         # pprint(msg)
 
         if msg_type == 'stream':
-            whos_pattern = re.compile(
-                r'Variable\s+Type\s+Data\/Info\n[-]+\n((?:\S+ +\S+ +[^\n]+\n?)+)\Z')
-            whos_match = whos_pattern.search(content['text'])
-            if whos_match:
-                print(whos_match.group(0))
-                variable_pattern = re.compile(r'(\S+ +\S+ +[^\n]+)\n')
-                variables_match = variable_pattern.findall(whos_match.group(1))
-                self.notebook_model.reset_variables()
-                for variable in variables_match:
-                    variable_info_patt = re.compile(
-                        r'(\S+)\s+(\S+)\s+([^\n]+)$')
-                    parts = variable_info_patt.search(variable)
-                    var = NotebookVariable(
-                        parts.group(1), parts.group(2), parts.group(3))
-                    self.notebook_model.add_variable(var)
-                content['text'] = whos_pattern.sub('', content['text'])
-                if content['text'] == "":
-                    return
             output = Output(OutputType.STREAM)
             output.parse(content)
             cell.add_output(output)
@@ -242,9 +226,6 @@ class NotebookPage(Panel.Widget):
     def get_kernel(self):
         return self.notebook_model.jupyter_kernel
 
-    def get_variables(self):
-        return self.notebook_model.variables
-
     def create_widgets(self, cell):
         cell = CellUI(cell)
         cell.connect("request-delete", self.on_cell_request_delete)
@@ -260,6 +241,17 @@ class NotebookPage(Panel.Widget):
             cell_ui.disconnect_by_func(self.on_cell_request_delete)
 
             del cell_ui
+
+            if self.notebook_model.get_n_items() == 0:
+                self.add_cell(Cell(CellType.CODE))
+            else:
+                row = self.cells_list_box.get_row_at_index(position)
+                if row:
+                    self.cells_list_box.select_row(row)
+                else:
+                    row = self.cells_list_box.get_row_at_index(position - 1)
+                    if row:
+                        self.cells_list_box.select_row(row)
 
     def add_cell(self, cell):
         if self.notebook_model.get_n_items() > 1:
@@ -294,7 +286,9 @@ class NotebookPage(Panel.Widget):
         return self.notebook_model.get_n_items() - 1
 
     def set_selected_cell_index(self, index):
-        self.cells_list_box.select_row(self.cells_list_box.get_row_at_index(index))
+        row = self.cells_list_box.get_row_at_index(index)
+        if row:
+            self.cells_list_box.select_row(row)
 
     def on_drop_target_drop(self, drop_target, cell, x, y):
         target_row = self.cells_list_box.get_row_at_y(y)
@@ -336,7 +330,8 @@ class NotebookPage(Panel.Widget):
             vadjustment.set_value(new_value)
         elif relative_y > visible_height - margin:
             delta = (relative_y - (visible_height - margin)) / margin * 20
-            new_value = min(current_scroll_position + delta, content_height - visible_height)
+            new_value = min(
+              current_scroll_position + delta, content_height - visible_height)
             vadjustment.set_value(new_value)
 
         return Gdk.DragAction.MOVE

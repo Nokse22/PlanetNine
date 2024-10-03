@@ -17,14 +17,30 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import GObject, GLib
+from gi.repository import GObject, GLib, Gio
 
 import json
 import asyncio
 import jupyter_client
 import traceback
+import re
 
 from pprint import pprint
+
+
+class Variable(GObject.GObject):
+    __gtype_name__ = 'Variable'
+
+    name = GObject.Property(type=str)
+    type = GObject.Property(type=str)
+    value = GObject.Property(type=str)
+
+    def __init__(self, _name, _type, _value):
+        super().__init__()
+
+        self.name = _name
+        self.type = _type
+        self.value = _value
 
 
 class JupyterKernelInfo(GObject.GObject):
@@ -82,6 +98,8 @@ class JupyterKernel(GObject.GObject):
         self.thread = None
         self.address = ""
         self.token = ""
+
+        self._variables = Gio.ListStore()
 
         self.kernel_client = jupyter_client.AsyncKernelClient()
 
@@ -143,6 +161,7 @@ class JupyterKernel(GObject.GObject):
                     if msg_id in self.queued_msg_id:
                         print("Matching ID\n")
                         if self.queued_msg_callback:
+                            msg = self.extract_variables(msg)
                             self.queued_msg_callback(
                                 msg, *self.queued_msg_arguments)
 
@@ -176,6 +195,8 @@ class JupyterKernel(GObject.GObject):
     async def __execute(self, code, callback, *args):
         await self.kernel_client.wait_for_ready()
 
+        code += '\n%whos'  # added %whos to get the variables
+
         msg_id = self.kernel_client.execute(code)
 
         print(f"Executing with ID: {msg_id}")
@@ -183,3 +204,35 @@ class JupyterKernel(GObject.GObject):
         self.queued_msg_id = msg_id
         self.queued_msg_callback = callback
         self.queued_msg_arguments = args
+
+    def extract_variables(self, msg):
+        if msg['header']['msg_type'] != 'stream':
+            return msg
+
+        whos_pattern = re.compile(
+           r'Variable\s+Type\s+Data\/Info\n[-]+\n((?:\S+ +\S+ +[^\n]+\n?)+)\Z')
+        whos_match = whos_pattern.search(msg['content']['text'])
+        if whos_match:
+            variable_pattern = re.compile(r'(\S+ +\S+ +[^\n]+)\n')
+            variables_match = variable_pattern.findall(whos_match.group(1))
+            self.reset_variables()
+            for variable in variables_match:
+                variable_info_patt = re.compile(
+                    r'(\S+)\s+(\S+)\s+([^\n]+)$')
+                parts = variable_info_patt.search(variable)
+                var = Variable(parts.group(1), parts.group(2), parts.group(3))
+                self.add_variable(var)
+            msg['content']['text'] = whos_pattern.sub(
+                '', msg['content']['text'])
+            if msg['content']['text'] == "":
+                return None
+        return msg
+
+    def get_variables(self):
+        return self._variables
+
+    def reset_variables(self):
+        self._variables.remove_all()
+
+    def add_variable(self, variable):
+        self._variables.append(variable)

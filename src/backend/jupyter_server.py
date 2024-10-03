@@ -143,6 +143,7 @@ class JupyterServer(GObject.GObject):
                 print(kernel_name, av_kernel_info.name)
                 if kernel_name == av_kernel_info.name:
                     kernel_language = av_kernel_info.language
+                    print(kernel_language)
                     break
 
             kernel = JupyterKernel(

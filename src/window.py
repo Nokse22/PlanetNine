@@ -145,6 +145,16 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         )
 
         #
+        #   NEW BROWSER PAGE
+        #
+
+        self.create_action_with_target(
+            'new-browser-page',
+            GLib.VariantType.new("s"),
+            self.open_browser_page
+        )
+
+        #
         #   NEW NOTEBOOK/CONSOLE/CODE WITH NEW KERNEL BY NAME
         #
         #   if name is empty it will start the default kernel
@@ -245,8 +255,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             GLib.VariantType.new("s"),
             self.open_file_with_text
         )
-
-        self.create_action('new-browser-page', self.open_browser_page)
 
         self.command_line = CommandLine()
 
@@ -546,6 +554,14 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
     #
 
+    def open_browser_page(self, action, variant):
+        page = BrowserPage(variant.get_string())
+        self.grid.add(page)
+
+    #
+    #
+    #
+
     def create_action(self, name, callback):
         action = Gio.SimpleAction.new(name, None)
         action.connect("activate", callback)
@@ -557,10 +573,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         action.connect("activate", callback)
         self.add_action(action)
         return action
-
-    def open_browser_page(self, *args):
-        page = BrowserPage()
-        self.grid.add(page)
 
     def open_notebook(self, *args):
         asyncio.create_task(self.__open_notebook_file())
@@ -632,40 +644,44 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         if is_mime_displayable(mime_type):
             self.grid.add(TextPage(file_path))
 
+    #
+    #   CONNECT STATIC UI TO VISIBLE PAGE PROPERTIES
+    #
+
     def on_focus_changed(self, *args):
         page = self.get_visible_page()
-
-        if (isinstance(self.previous_page, NotebookPage) or
-                isinstance(self.previous_page, ConsolePage) or
-                isinstance(self.previous_page, CodePage)):
-            self.previous_page.disconnect_by_func(self.update_kernel_info)
-            self.previous_page.disconnect_by_func(self.on_cursor_moved)
-            self.previous_page = page
 
         if (isinstance(page, NotebookPage) or
                 isinstance(page, ConsolePage) or
                 isinstance(page, CodePage)):
+
+            if self.previous_page:
+                self.previous_page.disconnect_by_func(self.update_kernel_info)
+                self.previous_page.disconnect_by_func(self.on_cursor_moved)
+
             page.connect("kernel-info-changed", self.update_kernel_info)
             self.update_kernel_info(page)
-            # self.variables_panel.set_model(page.get_variables())
             # self.images_panel.set_model(page.get_images())
             page.connect("cursor-moved", self.on_cursor_moved)
+            self.previous_page = page
         else:
             self.position_menu_button.set_visible(False)
+            self.language_label.set_visible(False)
+            self.omni_bar.set_visible(False)
 
-    def update_kernel_info(self, widget):
-        kernel = widget.get_kernel()
+    def update_kernel_info(self, page):
+        kernel = page.get_kernel()
         if kernel:
             self.kernel_status_menu.set_label(kernel.status)
             self.omni_label.set_label(kernel.display_name)
             self.language_label.set_visible(True)
-            self.language_label.set_visible(kernel.language)
+            self.language_label.set_label(kernel.language.title())
             self.omni_bar.set_visible(True)
+
+            self.variables_panel.set_model(kernel.get_variables())
         else:
             self.kernel_status_menu.set_label("")
             self.omni_label.set_label("No Kernel")
-            self.language_label.set_visible(False)
-            self.omni_bar.set_visible(False)
 
     def on_cursor_moved(self, page, buffer, index):
         insert_mark = buffer.get_insert()
@@ -685,6 +701,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self.position_menu_button.set_label(position)
 
         self.position_menu_button.set_visible(True)
+
+    #
+    #
+    #
 
     def update_style_scheme(self, *args):
         background = Gdk.RGBA()
@@ -708,7 +728,17 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         tab_bar = Panel.FrameTabBar()
         new_frame.set_header(tab_bar)
 
+        new_frame.connect("page-closed", self.on_page_closed)
+
         return new_frame
+
+    def on_page_closed(self, frame, widget):
+        print(widget)
+        if widget == self.previous_page:
+            widget.disconnect_by_func(self.update_kernel_info)
+            widget.disconnect_by_func(self.on_cursor_moved)
+
+            self.previous_page = None
 
     @Gtk.Template.Callback("on_key_pressed")
     def on_key_pressed(self, controller, keyval, keycode, state):

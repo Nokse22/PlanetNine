@@ -36,8 +36,16 @@
             </child>
             <child>
               <object class="GtkButton" id="reload_button">
-                <property name="icon-name">arrow-circular-small-top-right-symbolic</property>
+                <property name="icon-name">arrow-circular-top-right-symbolic</property>
                 <property name="css-classes">flat</property>
+                <property name="visible" bind-source="web_view" bind-property="is-loading" bind-flags="invert-boolean">true</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="cancel_reload_button">
+                <property name="icon-name">cross-large-symbolic</property>
+                <property name="css-classes">flat</property>
+                <property name="visible" bind-source="web_view" bind-property="is-loading">false</property>
               </object>
             </child>
             <child>
