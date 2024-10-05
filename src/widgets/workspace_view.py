@@ -280,11 +280,21 @@ class WorkspaceView(Panel.Widget):
             "win.open-file", GLib.Variant('s', node_path))
         file_menu.append_item(menu_item)
 
+        open_with_menu = Gio.Menu()
+
         menu_item = Gio.MenuItem()
-        menu_item.set_label("Open As Text")
+        menu_item.set_label("Text")
         menu_item.set_action_and_target_value(
             "win.open-file-with-text", GLib.Variant('s', node_path))
-        file_menu.append_item(menu_item)
+        open_with_menu.append_item(menu_item)
+
+        menu_item = Gio.MenuItem()
+        menu_item.set_label("Browser")
+        menu_item.set_action_and_target_value(
+            "win.new-browser-page", GLib.Variant('s', "file://" + node_path))
+        open_with_menu.append_item(menu_item)
+
+        file_menu.append_submenu("Open With", open_with_menu)
 
         return file_menu
 

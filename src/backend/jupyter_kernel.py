@@ -150,8 +150,8 @@ class JupyterKernel(GObject.GObject):
                 msg_type = msg['header']['msg_type']
                 msg_id = msg['parent_header']['msg_id'] if 'msg_id' in msg['parent_header'] else ''
 
-                print(f"\nReceived MSG with ID: {msg_id}\n")
-                print(f"\nQueued message ID is: {self.queued_msg_id}\n")
+                print(f"\nReceived MSG with ID: {msg_id}")
+                print(f"\nQueued message ID is: {self.queued_msg_id}")
 
                 if msg_type == 'status':
                     self.status = msg['content']['execution_state']
@@ -208,6 +208,10 @@ class JupyterKernel(GObject.GObject):
     def extract_variables(self, msg):
         if msg['header']['msg_type'] != 'stream':
             return msg
+
+        empty_pattern = re.compile(r'Interactive namespace is empty.')
+
+        msg['content']['text'] = empty_pattern.sub('', msg['content']['text'])
 
         whos_pattern = re.compile(
            r'Variable\s+Type\s+Data\/Info\n[-]+\n((?:\S+ +\S+ +[^\n]+\n?)+)\Z')

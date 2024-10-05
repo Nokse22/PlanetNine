@@ -59,6 +59,8 @@ class NotebookPage(Panel.Widget):
 
         self.connect("unrealize", self.__on_unrealized)
 
+        self.bindings = []
+
         self.list_drop_target.connect("drop", self.on_drop_target_drop)
         self.list_drop_target.connect("motion", self.on_drop_target_motion)
         self.list_drop_target.connect("leave", self.on_drop_target_leave)
@@ -70,7 +72,8 @@ class NotebookPage(Panel.Widget):
         self.notebook_model = _notebook_model
 
         # self.set_title(self.notebook_model.title)
-        self.notebook_model.bind_property("title", self, "title", 2)
+        self.bindings.append(
+            self.notebook_model.bind_property("title", self, "title", 2))
 
         self.words_provider = WordsCompletionProvider()
         # self.lsp_provider = LSPCompletionProvider()
@@ -107,7 +110,8 @@ class NotebookPage(Panel.Widget):
 
             index = self.get_selected_cell_index()
             buffer.connect(
-                "notify::cursor-position", self.on_cursor_position_changed, index)
+                "notify::cursor-position",
+                self.on_cursor_position_changed, index)
 
     def on_cursor_position_changed(self, buffer, pos, index):
         self.emit("cursor-moved", buffer, index + 1)
@@ -219,8 +223,17 @@ class NotebookPage(Panel.Widget):
                     self.select_next_cell()
 
     def set_kernel(self, jupyter_kernel):
+        kernel = self.get_kernel()
+
+        if kernel:
+            kernel.disconnect_by_func(self.on_kernel_info_changed)
+
         self.notebook_model.jupyter_kernel = jupyter_kernel
-        self.notebook_model.jupyter_kernel.connect("status-changed", lambda *args: self.emit("kernel-info-changed"))
+        self.notebook_model.jupyter_kernel.connect(
+            "status-changed", self.on_kernel_info_changed)
+        self.emit("kernel-info-changed")
+
+    def on_kernel_info_changed(self, *args):
         self.emit("kernel-info-changed")
 
     def get_kernel(self):
@@ -346,6 +359,29 @@ class NotebookPage(Panel.Widget):
         self.list_drop_target.disconnect_by_func(self.on_drop_target_drop)
         self.list_drop_target.disconnect_by_func(self.on_drop_target_motion)
         self.list_drop_target.disconnect_by_func(self.on_drop_target_leave)
+
+        self.cells_list_box.disconnect_by_func(self.on_selected_cell_changed)
+
+        if self.previous_buffer:
+            self.previous_buffer.disconnect_by_func(
+                self.on_cursor_position_changed)
+
+        for index in range(0, self.notebook_model.get_n_items()):
+            cell = self.cells_list_box.get_row_at_index(index).get_child()
+            cell.disconnect_by_func(self.on_cell_request_delete)
+
+        kernel = self.get_kernel()
+        if kernel:
+            kernel.disconnect_by_func(self.on_kernel_info_changed)
+
+        self.cells_list_box.bind_model(
+            None,
+            None
+        )
+
+        for binding in self.bindings:
+            binding.unbind()
+        del self.bindings
 
         self.disconnect_by_func(self.__on_unrealized)
 

@@ -74,7 +74,7 @@ class CellUI(Gtk.Box):
         self.code_buffer.connect("changed", self.on_source_changed)
         self.drag_source.connect("prepare", self.on_drag_source_prepare)
         self.drag_source.connect("drag-begin", self.on_drag_source_begin)
-        self.drag_source.connect("drag-end", self.on_drag_source_end)
+        self.drag_source.connect("drag-end", self.delete_cell)
         self.click_gesture.connect("released", self.on_click_released)
         self.markdown_text_view.connect("changed", self.on_source_changed)
 
@@ -116,7 +116,7 @@ class CellUI(Gtk.Box):
 
         self.action_group = Gio.SimpleActionGroup()
 
-        self.create_action('delete', lambda *args: self.emit("request-delete"))
+        self.create_action('delete', self.delete_cell)
         self.create_action('change_type', self.on_change_type)
         self.create_action(
             'toggle_output_expand', self.on_toggle_output_expand)
@@ -131,6 +131,13 @@ class CellUI(Gtk.Box):
             "execution-count-changed", self.on_execution_count_changed)
         self.cell.connect("output-added", self.on_add_output)
         self.cell.connect("output-reset", self.on_reset_output)
+
+        # POPOVER
+        self.popover = Gtk.PopoverMenu(
+            menu_model=self.right_click_menu,
+            has_arrow=False,
+            halign=1,
+        )
 
     @GObject.Property(type=str, default="")
     def source(self):
@@ -270,17 +277,13 @@ class CellUI(Gtk.Box):
             return
 
         widget = gesture.get_widget()
-        popover = Gtk.PopoverMenu(
-            menu_model=self.right_click_menu,
-            has_arrow=False,
-            halign=1,
-        )
+
         position = Gdk.Rectangle()
         position.x = click_x
         position.y = click_y
-        popover.set_parent(widget)
-        popover.set_pointing_to(position)
-        popover.popup()
+        self.popover.set_parent(widget)
+        self.popover.set_pointing_to(position)
+        self.popover.popup()
 
         return True
 
@@ -330,7 +333,8 @@ class CellUI(Gtk.Box):
 
         drag.set_hotspot(0, 0)
 
-    def on_drag_source_end(self, source, drag, delete_data):
+    def delete_cell(self, *args):
+        self.popover.popdown()
         self.emit("request-delete")
 
     def on_reset_output(self, cell):
@@ -350,7 +354,7 @@ class CellUI(Gtk.Box):
         self.code_buffer.disconnect_by_func(self.on_source_changed)
         self.drag_source.disconnect_by_func(self.on_drag_source_prepare)
         self.drag_source.disconnect_by_func(self.on_drag_source_begin)
-        self.drag_source.disconnect_by_func(self.on_drag_source_end)
+        self.drag_source.disconnect_by_func(self.delete_cell)
         self.click_gesture.disconnect_by_func(self.on_click_released)
         self.markdown_text_view.disconnect_by_func(self.on_source_changed)
 

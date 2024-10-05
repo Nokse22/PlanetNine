@@ -124,12 +124,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.all_kernels = MultiListModel()
         self.all_kernels.add_section(
             self.jupyter_server.avalaible_kernels,
-            _("Avaliable Kernels")
-        )
+            _("Avaliable Kernels"))
         self.all_kernels.add_section(
             self.jupyter_server.kernels,
-            _("Running Kernels")
-        )
+            _("Running Kernels"))
 
         self.select_kernel_combo_row.set_model(self.all_kernels)
 
@@ -139,16 +137,13 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.create_action(
             'add-text-cell',
-            lambda *_: self.add_cell_to_selected_notebook(Cell(CellType.TEXT))
-        )
+            lambda *_: self.add_cell_to_selected_notebook(Cell(CellType.TEXT)))
         self.create_action(
             'add-code-cell',
-            lambda *_: self.add_cell_to_selected_notebook(Cell(CellType.CODE))
-        )
+            lambda *_: self.add_cell_to_selected_notebook(Cell(CellType.CODE)))
         self.create_action(
             'add-raw-cell',
-            lambda *_: self.add_cell_to_selected_notebook(Cell(CellType.TEXT))
-        )
+            lambda *_: self.add_cell_to_selected_notebook(Cell(CellType.TEXT)))
 
         #
         #   NEW BROWSER PAGE
@@ -157,8 +152,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.create_action_with_target(
             'new-browser-page',
             GLib.VariantType.new("s"),
-            self.open_browser_page
-        )
+            self.open_browser_page)
 
         #
         #   NEW NOTEBOOK/CONSOLE/CODE WITH NEW KERNEL BY NAME
@@ -169,20 +163,17 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.create_action_with_target(
             'new-notebook-name',
             GLib.VariantType.new("s"),
-            self.on_new_notebook_action
-        )
+            self.on_new_notebook_action)
 
         self.create_action_with_target(
             'new-console-name',
             GLib.VariantType.new("s"),
-            self.on_new_console_action
-        )
+            self.on_new_console_action)
 
         self.create_action_with_target(
             'new-code-name',
             GLib.VariantType.new("s"),
-            self.on_new_code_action
-        )
+            self.on_new_code_action)
 
         #
         #   NEW NOTEBOOK/CONSOLE/CODE WITH EXISTING KERNEL BY ID
@@ -191,20 +182,17 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.create_action_with_target(
             'new-notebook-id',
             GLib.VariantType.new("s"),
-            self.on_new_notebook_id_action
-        )
+            self.on_new_notebook_id_action)
 
         self.create_action_with_target(
             'new-console-id',
             GLib.VariantType.new("s"),
-            self.on_new_console_id_action
-        )
+            self.on_new_console_id_action)
 
         self.create_action_with_target(
             'new-code-id',
             GLib.VariantType.new("s"),
-            self.on_new_code_id_action
-        )
+            self.on_new_code_id_action)
 
         #
         #   OPERATION ON RUNNING KERNEL
@@ -213,33 +201,37 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.create_action_with_target(
             'shutdown-kernel-id',
             GLib.VariantType.new("s"),
-            self.shutdown_kernel_by_id
-        )
+            self.shutdown_kernel_by_id)
+
         self.create_action_with_target(
             'interrupt-kernel-id',
             GLib.VariantType.new("s"),
-            self.interrupt_kernel_by_id
-        )
+            self.interrupt_kernel_by_id)
+
         self.create_action_with_target(
             'restart-kernel-id',
             GLib.VariantType.new("s"),
-            self.restart_kernel_by_id
-        )
+            self.restart_kernel_by_id)
 
         #
         #   ACTIONS FOR THE VIEWED NOTEBOOK/CODE/CONSOLE
         #
 
         self.run_action = self.create_action(
-            'run-selected-cell', self.run_clicked)
+            'run-selected', self.run_clicked)
+        self.restart_kernel_action = self.create_action(
+            'restart-kernel-visible', self.restart_kernel_visible)
         self.restart_kernel_and_run_action = self.create_action(
             'restart-kernel-and-run', self.restart_kernel_and_run)
+
+        self.run_action.set_enabled(False)
+        self.restart_kernel_and_run_action.set_enabled(False)
+        self.restart_kernel_action.set_enabled(False)
+
         self.create_action(
             'start-server', self.start_server)
         self.create_action(
             'change-kernel', self.change_kernel)
-        self.restart_kernel_action = self.create_action(
-            'restart-kernel-visible', self.restart_kernel_visible)
 
         #
         #   OTHER ACTIONS
@@ -253,14 +245,12 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.create_action_with_target(
             'open-file',
             GLib.VariantType.new("s"),
-            self.open_file
-        )
+            self.open_file)
 
         self.create_action_with_target(
             'open-file-with-text',
             GLib.VariantType.new("s"),
-            self.open_file_with_text
-        )
+            self.open_file_with_text)
 
         self.command_line = CommandLine()
 
@@ -417,7 +407,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.jupyter_server.start()
 
     #
-    #   SHUTDOWN KERNEL
+    #   SHUTDOWN KERNEL BY ID
     #
 
     def shutdown_kernel_by_id(self, action, variant):
@@ -434,7 +424,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 print("kernel has NOT shut down")
 
     #
-    #   RESTART_KERNEL
+    #   RESTART KERNEL BY ID
     #
 
     def restart_kernel_by_id(self, action, variant):
@@ -451,7 +441,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 print("kernel has NOT restarted")
 
     #
-    #   INTERRUPT KERNEL
+    #   INTERRUPT KERNEL  BY ID
     #
 
     def interrupt_kernel_by_id(self, action, variant):
@@ -626,6 +616,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
             self.omni_bar.set_visible(True)
             self.language_label.set_visible(True)
+            self.kernel_status_menu.set_visible(True)
 
             if isinstance(page, NotebookPage):
                 self.add_cell_button.set_visible(True)
@@ -635,6 +626,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self.position_menu_button.set_visible(False)
             self.language_label.set_visible(False)
             self.omni_bar.set_visible(False)
+            self.kernel_status_menu.set_visible(False)
 
     def update_kernel_info(self, page):
         kernel = page.get_kernel()
@@ -678,7 +670,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.position_menu_button.set_visible(True)
 
     #
-    #   CHANGE/SELECT KERNEL TO VISIBLE PAGE
+    #   CHANGE/SELECT KERNEL OF THE VISIBLE PAGE
     #
 
     def change_kernel(self, action, target):
@@ -789,8 +781,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         print(page.notebook_model)
 
     def run_clicked(self, *args):
-        notebook = self.get_visible_page()
-        notebook.run_selected_cell()
+        page = self.get_visible_page()
+        if isinstance(page, NotebookPage):
+            page.run_selected_cell()
+        elif isinstance(page, CodePage):
+            page.run_all()
 
     def on_jupyter_server_started(self, server):
         self.server_status_label.set_label("Server Connected")

@@ -27,15 +27,38 @@
               <object class="AdwHeaderBar" id="header_bar">
                 <property name="centering-policy">loose</property>
                 <property name="title-widget">
-                  <object class="PanelOmniBar" id="omni_bar">
-                    <property name="visible">false</property>
-                    <property name="icon-name">play-symbolic</property>
-                    <property name="width-request">200</property>
-                    <property name="menu-model">run-menu</property>
-                    <property name="action-name">win.run-selected-cell</property>
-                    <child type="prefix">
-                      <object class="GtkLabel" id="omni_label">
-                        <property name="label" translatable="yes">No Kernel</property>
+                  <object class="GtkBox">
+                    <property name="spacing">6</property>
+                    <child>
+                      <object class="PanelOmniBar" id="omni_bar">
+                        <property name="visible">false</property>
+                        <property name="icon-name">play-symbolic</property>
+                        <property name="width-request">200</property>
+                        <property name="menu-model">run-menu</property>
+                        <property name="action-name">win.run-selected</property>
+                        <child type="prefix">
+                          <object class="GtkLabel" id="omni_label">
+                            <property name="label" translatable="yes">No Kernel</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="icon-name">play-symbolic</property>
+                        <property name="action-name">win.run-selected</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="icon-name">view-refresh-symbolic</property>
+                        <property name="action-name">win.restart-kernel-visible</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="icon-name">media-playback-pause-symbolic</property>
+                        <property name="action-name">win.run-selected</property>
                       </object>
                     </child>
                   </object>
@@ -207,7 +230,7 @@
                 <child type="prefix">
                  <object class="GtkMenuButton" id="kernel_status_menu">
                   <property name="direction">up</property>
-                  <property name="label"> | </property>
+                   <property name="visible">false</property>
                   <property name="popover">
                     <object class="GtkPopover">
                       <property name="child">

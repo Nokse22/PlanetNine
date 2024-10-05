@@ -136,10 +136,16 @@ class CodePage(Panel.Widget):
         lang = lm.get_language(lang_name)
         self.code_buffer.set_language(lang)
 
+        if self.jupyter_kernel:
+            self.jupyter_kernel.disconnect_by_func(self.on_kernel_info_changed)
+
         self.jupyter_kernel = jupyter_kernel
         self.jupyter_kernel.connect(
-            "status-changed", lambda *args: self.emit("kernel-info-changed"))
+            "status-changed", self.on_kernel_info_changed)
 
+        self.emit("kernel-info-changed")
+
+    def on_kernel_info_changed(self, *args):
         self.emit("kernel-info-changed")
 
     def get_kernel(self):
@@ -147,6 +153,10 @@ class CodePage(Panel.Widget):
 
     def __on_unrealized(self, *args):
         self.style_manager.disconnect_by_func(self.update_style_scheme)
+        self.code_buffer.disconnect_by_func(self.on_cursor_position_changed)
+
+        if self.jupyter_kernel:
+            self.jupyter_kernel.disconnect_by_func(self.on_kernel_info_changed)
 
         self.disconnect_by_func(self.__on_unrealized)
 

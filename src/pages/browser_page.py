@@ -70,9 +70,6 @@ class BrowserPage(Panel.Widget):
             self.web_view.load_uri(
                 self.settings.get_string('browser-default-url'))
 
-        # icon = Gio.Icon.new_for_string('go-home-symbolic')
-        # self.search_entry.set_icon_from_gicon(Gtk.EntryIconPosition.SECONDARY, icon)
-
         self.action_group = Gio.SimpleActionGroup()
         self.toolbar_view.insert_action_group("browser", self.action_group)
 
@@ -152,6 +149,7 @@ class BrowserPage(Panel.Widget):
         self.reload_button.disconnect_by_func(self.on_reload_clicked)
         self.web_view.disconnect_by_func(self.on_title_changed)
         self.web_view.disconnect_by_func(self.on_uri_changed)
+        self.web_view.disconnect_by_func(self.on_open_new_browser)
         self.search_entry.disconnect_by_func(self.on_entry_activated)
         self.cancel_reload_button.disconnect_by_func(
             self.on_cancel_reload_clicked)
