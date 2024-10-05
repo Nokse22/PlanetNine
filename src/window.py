@@ -36,6 +36,7 @@ from .backend.command_line import CommandLine
 
 from .models.cell import Cell, CellType
 from .models.notebook import Notebook
+from .models.multi_list_model import MultiListModel
 
 from .pages.notebook_page import NotebookPage
 from .pages.browser_page import BrowserPage
@@ -67,6 +68,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     select_kernel_dialog = Gtk.Template.Child()
     shutdown_kernel_dialog = Gtk.Template.Child()
     restart_kernel_dialog = Gtk.Template.Child()
+    quit_dialog = Gtk.Template.Child()
     select_kernel_combo_row = Gtk.Template.Child()
     omni_label = Gtk.Template.Child()
     server_status_label = Gtk.Template.Child()
@@ -74,6 +76,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     bottom_panel_frame = Gtk.Template.Child()
     language_label = Gtk.Template.Child()
     position_menu_button = Gtk.Template.Child()
+    add_cell_button = Gtk.Template.Child()
 
     cache_dir = os.environ["XDG_CACHE_HOME"]
     files_cache_dir = os.path.join(cache_dir, "files")
@@ -116,16 +119,19 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.images_panel = ImagesPanel()
         self.bottom_panel_frame.add(self.images_panel)
 
-        root_model = Gio.ListStore()
-        root_model.append(self.jupyter_server.avalaible_kernels)
-        root_model.append(self.jupyter_server.kernels)
-
-        self.all_kernels = Gtk.TreeListModel.new(
-            root_model, False, True, self.create_sub_models)
+        # TODO Fix MultiListModel because it crashes when displaying
+        #           the combo_row
+        self.all_kernels = MultiListModel()
+        self.all_kernels.add_section(
+            self.jupyter_server.avalaible_kernels,
+            _("Avaliable Kernels")
+        )
+        self.all_kernels.add_section(
+            self.jupyter_server.kernels,
+            _("Running Kernels")
+        )
 
         self.select_kernel_combo_row.set_model(self.all_kernels)
-
-        # self.jupyter_server.start()
 
         #
         #   NEW CELL ON VISIBLE NOTEBOOK
@@ -224,15 +230,15 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         #   ACTIONS FOR THE VIEWED NOTEBOOK/CODE/CONSOLE
         #
 
-        self.create_action(
+        self.run_action = self.create_action(
             'run-selected-cell', self.run_clicked)
-        self.create_action(
+        self.restart_kernel_and_run_action = self.create_action(
             'restart-kernel-and-run', self.restart_kernel_and_run)
         self.create_action(
             'start-server', self.start_server)
         self.create_action(
             'change-kernel', self.change_kernel)
-        self.create_action(
+        self.restart_kernel_action = self.create_action(
             'restart-kernel-visible', self.restart_kernel)
 
         #
@@ -471,10 +477,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         choice = await dialog_choose_async(self, self.select_kernel_dialog)
 
-        kernel = self.select_kernel_combo_row.get_selected_item().get_item()
-        print(kernel, choice)
-
         if choice == 'select':
+
+            kernel = self.select_kernel_combo_row.get_selected_item()
+
             if isinstance(kernel, JupyterKernelInfo):
                 success, new_kernel = await self.jupyter_server.start_kernel_by_name(kernel.name)
                 if success:
@@ -661,9 +667,16 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
             page.connect("kernel-info-changed", self.update_kernel_info)
             self.update_kernel_info(page)
-            # self.images_panel.set_model(page.get_images())
             page.connect("cursor-moved", self.on_cursor_moved)
             self.previous_page = page
+
+            self.omni_bar.set_visible(True)
+            self.language_label.set_visible(True)
+
+            if isinstance(page, NotebookPage):
+                self.add_cell_button.set_visible(True)
+            else:
+                self.add_cell_button.set_visible(False)
         else:
             self.position_menu_button.set_visible(False)
             self.language_label.set_visible(False)
@@ -674,14 +687,22 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         if kernel:
             self.kernel_status_menu.set_label(kernel.status)
             self.omni_label.set_label(kernel.display_name)
-            self.language_label.set_visible(True)
-            self.language_label.set_label(kernel.language.title())
-            self.omni_bar.set_visible(True)
+            self.language_label.set_label(kernel.language.title() or "None")
 
             self.variables_panel.set_model(kernel.get_variables())
+
+            self.run_action.set_enabled(True)
+            self.restart_kernel_and_run_action.set_enabled(True)
+            self.restart_kernel_action.set_enabled(True)
         else:
             self.kernel_status_menu.set_label("")
             self.omni_label.set_label("No Kernel")
+
+            self.variables_panel.set_model(None)
+
+            self.run_action.set_enabled(False)
+            self.restart_kernel_and_run_action.set_enabled(False)
+            self.restart_kernel_action.set_enabled(False)
 
     def on_cursor_moved(self, page, buffer, index):
         insert_mark = buffer.get_insert()
@@ -703,7 +724,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.position_menu_button.set_visible(True)
 
     #
-    #
+    #   VARIOUS
     #
 
     def update_style_scheme(self, *args):
@@ -744,18 +765,44 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     def on_key_pressed(self, controller, keyval, keycode, state):
         print(keyval, keycode, state)
 
+    #
+    #   SELECT KERNEL ALERT DIALOG LIST VIEW
+    #
+
     def create_sub_models(self, item):
         if isinstance(item, Gio.ListStore):
             return item
         return None
+
+    @Gtk.Template.Callback("on_select_kernel_header_setup")
+    def on_select_kernel_header_setup(self, factory, list_item):
+        list_item.set_child(
+            Gtk.Label(
+                xalign=0,
+                margin_start=6,
+                margin_end=6
+            )
+        )
+
+    @Gtk.Template.Callback("on_select_kernel_header_bind")
+    def on_select_kernel_header_bind(self, factory, list_item):
+        item = list_item.get_item()
+        label = list_item.get_child()
+
+        print("HEADER ", item)
+
+        # FIXME It would be better to have a way to get the name stored
+        #           in the MultiListModel
+        if isinstance(item, JupyterKernelInfo):
+            label.set_label(_("Avalaible Kernels"))
+        elif isinstance(item, JupyterKernel):
+            label.set_label(_("Running Kernels"))
 
     @Gtk.Template.Callback("on_select_kernel_setup")
     def on_select_kernel_setup(self, factory, list_item):
         list_item.set_child(
             Gtk.Label(
                 xalign=0,
-                margin_top=6,
-                margin_bottom=6,
                 margin_start=6,
                 margin_end=6
             )
@@ -763,23 +810,26 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     @Gtk.Template.Callback("on_select_kernel_bind")
     def on_select_kernel_bind(self, factory, list_item):
-        item = list_item.get_item().get_item()
-        widget = list_item.get_child()
+        item = list_item.get_item()
+        label = list_item.get_child()
 
-        if isinstance(item, JupyterKernelInfo):
-            widget.set_label(item.display_name)
+        label.set_label(item.display_name)
 
-        elif isinstance(item, JupyterKernel):
-            widget.set_label(item.display_name)
-
-        else:
-            widget.set_label("Running Kernels")
-            list_item.set_selectable(False)
-            list_item.set_activatable(False)
-            list_item.set_focusable(False)
+    #
+    #   CLOSE
+    #
 
     def close(self):
+        if self.jupyter_server.get_is_running():
+            asyncio.create_task(self._quit())
+            return True
+        else:
+            return False
 
-        self.jupyter_server.stop()
+    async def _quit(self):
+        choice = await dialog_choose_async(self, self.quit_dialog)
 
-        return False
+        if choice == 'quit':
+            self.jupyter_server.stop()
+
+            self.activate_action("app.quit")

@@ -10,7 +10,7 @@
     <property name="can-maximize">true</property>
     <property name="css-classes">variable-view</property>
     <child>
-      <object class="GtkStack">
+      <object class="GtkStack" id="view_stack">
         <child>
           <object class="GtkStackPage">
             <property name="child">
@@ -29,16 +29,39 @@
             <property name="child">
               <object class="GtkBox">
                 <child>
-                  <object class="GtkPicture" id="main_picture">
-                    <property name="hexpand">True</property>
-                    <property name="vexpand">True</property>
+                  <object class="GtkScrolledWindow">
+                    <child>
+                      <object class="GtkPicture" id="main_picture">
+                        <property name="hexpand">True</property>
+                        <property name="vexpand">True</property>
+                        <child>
+                          <object class="GtkGestureClick">
+                            <signal name="released" handler="on_click_released"/>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
                   </object>
                 </child>
                 <child>
                   <object class="GtkSeparator"/>
                 </child>
                 <child>
-                  <object class="GtkListBox" id="listbox"/>
+                  <object class="GtkScrolledWindow">
+                    <property name="hscrollbar-policy">never</property>
+                    <child>
+                      <object class="GtkListView" id="list_view">
+                        <property name="css-classes">navigation-sidebar</property>
+                        <property name="width-request">140</property>
+                        <property name="factory">
+                          <object class="GtkSignalListItemFactory">
+                            <signal name="setup" handler="factory_setup"/>
+                            <signal name="bind" handler="factory_bind"/>
+                          </object>
+                        </property>
+                      </object>
+                    </child>
+                  </object>
                 </child>
               </object>
             </property>

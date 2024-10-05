@@ -238,7 +238,8 @@ class CellUI(Gtk.Box):
         image_data = base64.b64decode(image_content)
         sha256_hash = hashlib.sha256(image_data).hexdigest()
 
-        image_path = os.path.join(self.cache_dir, f"{sha256_hash}.png")
+        image_path = os.path.join(
+            self.cache_dir, "g_images", f"{sha256_hash}.png")
         with open(image_path, 'wb') as f:
             f.write(image_data)
 

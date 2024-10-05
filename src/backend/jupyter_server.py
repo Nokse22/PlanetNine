@@ -17,7 +17,6 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import GLib
 from gi.repository import Gio
 from gi.repository import GObject
 
@@ -69,6 +68,8 @@ class JupyterServer(GObject.GObject):
         self.address = ""
         self.token = ""
 
+        self.is_running = False
+
         self.sandboxed = True
 
         self.sessions = Gio.ListStore.new(Session)
@@ -107,6 +108,7 @@ class JupyterServer(GObject.GObject):
                     self.address = match.group(1)
                     self.token = match.group(3)
                     self.emit("started")
+                    self.is_running = True
 
                     asyncio.create_task(self.get_avalaible_kernels())
 
@@ -115,6 +117,11 @@ class JupyterServer(GObject.GObject):
             self.jupyter_process.send_signal(15)
             print("STOPPING")
 
+            self.is_running = False
+
+    def get_is_running(self):
+        return self.is_running
+
     async def get_avalaible_kernels(self):
         while True:
             success, kernel_specs = await self.get_kernel_specs()
@@ -122,6 +129,8 @@ class JupyterServer(GObject.GObject):
                 break
 
     async def start_kernel_by_name(self, kernel_name):
+        if self.address == "":
+            return False, None
         try:
             response = await asyncio.to_thread(
                 requests.post,
@@ -159,6 +168,8 @@ class JupyterServer(GObject.GObject):
             return False, None
 
     async def get_kernel_specs(self):
+        if self.address == "":
+            return False, None
         try:
             response = await asyncio.to_thread(
                 requests.get,
@@ -181,6 +192,8 @@ class JupyterServer(GObject.GObject):
             return False, None
 
     async def get_sessions(self):
+        if self.address == "":
+            return False, None
         try:
             response = await asyncio.to_thread(
                 requests.get,
@@ -198,6 +211,8 @@ class JupyterServer(GObject.GObject):
             return False, None
 
     async def new_session(self, kernel_name, session_name, notebook_path):
+        if self.address == "":
+            return False, None
         try:
             response = await asyncio.to_thread(
                 requests.post,
@@ -223,6 +238,8 @@ class JupyterServer(GObject.GObject):
             return False, None
 
     async def get_kernel_info(self, kernel_id):
+        if self.address == "":
+            return False, None
         try:
             response = await asyncio.to_thread(
                 requests.get,
@@ -240,6 +257,8 @@ class JupyterServer(GObject.GObject):
             return False, None
 
     async def shutdown_kernel(self, kernel_id):
+        if self.address == "":
+            return False
         try:
             response = await asyncio.to_thread(
                 requests.delete,
@@ -260,6 +279,8 @@ class JupyterServer(GObject.GObject):
             return False
 
     async def restart_kernel(self, kernel_id):
+        if self.address == "":
+            return False
         try:
             response = await asyncio.to_thread(
                 requests.post,
@@ -276,6 +297,8 @@ class JupyterServer(GObject.GObject):
             return False
 
     async def interrupt_kernel(self, kernel_id):
+        if self.address == "":
+            return False
         try:
             response = await asyncio.to_thread(
                 requests.post,
