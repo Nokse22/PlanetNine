@@ -239,7 +239,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.create_action(
             'change-kernel', self.change_kernel)
         self.restart_kernel_action = self.create_action(
-            'restart-kernel-visible', self.restart_kernel)
+            'restart-kernel-visible', self.restart_kernel_visible)
 
         #
         #   OTHER ACTIONS
@@ -281,7 +281,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         # Load examples folder
 
         self.home_folder = GLib.getenv('XDG_DATA_HOME')
-        self.example_folder = GLib.build_filenamev([self.home_folder, 'examples'])
+        self.example_folder = GLib.build_filenamev(
+            [self.home_folder, 'examples'])
 
         if os.path.exists(self.example_folder):
             for file_name in os.listdir(self.example_folder):
@@ -454,7 +455,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def interrupt_kernel_by_id(self, action, variant):
-        asyncio.create_task(self._restart_kernel_by_id(variant.get_string()))
+        asyncio.create_task(self._interrupt_kernel_by_id(variant.get_string()))
 
     def _interrupt_kernel_by_id(self, kernel_id):
         success = self.jupyter_server.interrupt_kernel(kernel_id)
@@ -464,84 +465,33 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             print("kernel has NOT been interrupted")
 
     #
+    #   RESTART VISIBLE KERNEL
     #
+
+    def restart_kernel_visible(self, *args):
+        kernel_id = self.get_visible_page().get_kernel().kernel_id
+        self.activate_action(
+            "win.restart-kernel-id", GLib.Variant('s', kernel_id))
+
     #
-
-    def change_kernel(self, action, target):
-        notebook = self.get_visible_page()
-        asyncio.create_task(self._change_kernel(notebook))
-
-    async def _change_kernel(self, notebook):
-        self.select_kernel_combo_row.set_selected(1)
-        # 2 + len of avalab kernels + pos in kernels
-
-        choice = await dialog_choose_async(self, self.select_kernel_dialog)
-
-        if choice == 'select':
-
-            kernel = self.select_kernel_combo_row.get_selected_item()
-
-            if isinstance(kernel, JupyterKernelInfo):
-                success, new_kernel = await self.jupyter_server.start_kernel_by_name(kernel.name)
-                if success:
-                    print("kernel has restarted")
-                    notebook.set_kernel(new_kernel)
-                    self.update_kernel_info(notebook)
-                else:
-                    print("kernel has NOT restarted")
-            elif isinstance(kernel, JupyterKernel):
-                notebook.set_kernel(kernel)
-                self.update_kernel_info(notebook)
-                print("kernel changed")
-
-    def add_cell_to_selected_notebook(self, cell):
-        page = self.get_visible_page()
-        if isinstance(page, NotebookPage):
-            page.add_cell(cell)
-
-        print(page.notebook_model)
-
-    def run_clicked(self, *args):
-        notebook = self.get_visible_page()
-        notebook.run_selected_cell()
-
-    def on_jupyter_server_started(self, server):
-        self.server_status_label.set_label("Server Connected")
-
-    def on_jupyter_server_has_new_line(self, server, line):
-        self.terminal.feed([ord(char) for char in line + "\r\n"])
-
-    def restart_kernel(self, *args):
-        page = self.get_visible_page()
-        if isinstance(page, Notebook):
-            kernel_id = page.notebook_model.jupyter_kernel.kernel_id
-            self.restart_kernel_by_id(
-                kernel_id,
-                lambda: page.run_all_cells()
-            )
-
-        elif isinstance(page, Notebook):
-            kernel_id = page.jupyter_kernel.kernel_id
-            self.restart_kernel_by_id(
-                kernel_id,
-                lambda: page.run_all_cells()
-            )
+    #   RESTART VISIBLE KERNEL AND RUN ALL CELLS
+    #
 
     def restart_kernel_and_run(self, *args):
-        notebook = self.get_visible_page()
-        if notebook:
-            kernel_id = notebook.notebook_model.jupyter_kernel.kernel_id
-            self.restart_kernel_by_id(
-                kernel_id,
-                lambda: notebook.run_all_cells()
-            )
+        asyncio.create_task(self._restart_kernel_and_run())
 
-    def get_visible_page(self):
-        try:
-            return self.grid.get_most_recent_frame().get_visible_child()
+    async def _restart_kernel_and_run(self):
+        choice = await dialog_choose_async(self, self.restart_kernel_dialog)
 
-        except Exception as e:
-            logging.Logger.debug(f"{e}")
+        if choice == 'restart':
+            notebook_page = self.get_visible_page()
+            if isinstance(notebook_page, NotebookPage):
+                kernel_id = notebook_page.get_kernel().kernel_id
+            success = await self.jupyter_server.restart_kernel(kernel_id)
+            if success:
+                notebook_page.run_all_cells()
+            else:
+                print("kernel has NOT restarted")
 
     #
     #   SAVE VISIBLE PAGE
@@ -557,7 +507,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         print("saved")
 
     #
-    #
+    #   OPEN BROWSER PAGE WITH URL
     #
 
     def open_browser_page(self, action, variant):
@@ -565,7 +515,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.grid.add(page)
 
     #
-    #
+    #   CREATE ACTIONS WITH OR WITHOUT TARGETS
     #
 
     def create_action(self, name, callback):
@@ -579,6 +529,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         action.connect("activate", callback)
         self.add_action(action)
         return action
+
+    #
+    #   OPEN FILES OR NOTEBOOKS
+    #
 
     def open_notebook(self, *args):
         asyncio.create_task(self.__open_notebook_file())
@@ -724,49 +678,38 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.position_menu_button.set_visible(True)
 
     #
-    #   VARIOUS
+    #   CHANGE/SELECT KERNEL TO VISIBLE PAGE
     #
 
-    def update_style_scheme(self, *args):
-        background = Gdk.RGBA()
-        foreground = Gdk.RGBA()
+    def change_kernel(self, action, target):
+        notebook = self.get_visible_page()
+        asyncio.create_task(self._change_kernel(notebook))
 
-        background.parse('rgba(0, 0, 0, 0)')
+    async def _change_kernel(self, notebook):
+        self.select_kernel_combo_row.set_selected(1)
+        # 2 + len of avalab kernels + pos in kernels
 
-        if Adw.StyleManager.get_default().get_dark():
-            foreground.parse('#ffffff')
-        else:
-            foreground.parse('rgba(0, 0, 0, 0.8)')
+        choice = await dialog_choose_async(self, self.select_kernel_dialog)
 
-        self.terminal.set_color_background(background)
-        self.terminal.set_color_foreground(foreground)
+        if choice == 'select':
 
-    @Gtk.Template.Callback("on_create_frame")
-    def on_create_frame(self, grid):
-        new_frame = Panel.Frame()
-        new_frame.set_placeholder(
-            Launcher(self.jupyter_server.avalaible_kernels))
-        tab_bar = Panel.FrameTabBar()
-        new_frame.set_header(tab_bar)
+            kernel = self.select_kernel_combo_row.get_selected_item()
 
-        new_frame.connect("page-closed", self.on_page_closed)
-
-        return new_frame
-
-    def on_page_closed(self, frame, widget):
-        print(widget)
-        if widget == self.previous_page:
-            widget.disconnect_by_func(self.update_kernel_info)
-            widget.disconnect_by_func(self.on_cursor_moved)
-
-            self.previous_page = None
-
-    @Gtk.Template.Callback("on_key_pressed")
-    def on_key_pressed(self, controller, keyval, keycode, state):
-        print(keyval, keycode, state)
+            if isinstance(kernel, JupyterKernelInfo):
+                success, new_kernel = await self.jupyter_server.start_kernel_by_name(kernel.name)
+                if success:
+                    print("kernel has restarted")
+                    notebook.set_kernel(new_kernel)
+                    self.update_kernel_info(notebook)
+                else:
+                    print("kernel has NOT restarted")
+            elif isinstance(kernel, JupyterKernel):
+                notebook.set_kernel(kernel)
+                self.update_kernel_info(notebook)
+                print("kernel changed")
 
     #
-    #   SELECT KERNEL ALERT DIALOG LIST VIEW
+    #   CHARGE/SELECT KERNEL ALERT DIALOG LIST VIEW
     #
 
     def create_sub_models(self, item):
@@ -833,3 +776,68 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self.jupyter_server.stop()
 
             self.activate_action("app.quit")
+
+    #
+    #   VARIOUS
+    #
+
+    def add_cell_to_selected_notebook(self, cell):
+        page = self.get_visible_page()
+        if isinstance(page, NotebookPage):
+            page.add_cell(cell)
+
+        print(page.notebook_model)
+
+    def run_clicked(self, *args):
+        notebook = self.get_visible_page()
+        notebook.run_selected_cell()
+
+    def on_jupyter_server_started(self, server):
+        self.server_status_label.set_label("Server Connected")
+
+    def on_jupyter_server_has_new_line(self, server, line):
+        self.terminal.feed([ord(char) for char in line + "\r\n"])
+
+    def get_visible_page(self):
+        try:
+            return self.grid.get_most_recent_frame().get_visible_child()
+
+        except Exception as e:
+            logging.Logger.debug(f"{e}")
+
+    def update_style_scheme(self, *args):
+        background = Gdk.RGBA()
+        foreground = Gdk.RGBA()
+
+        background.parse('rgba(0, 0, 0, 0)')
+
+        if Adw.StyleManager.get_default().get_dark():
+            foreground.parse('#ffffff')
+        else:
+            foreground.parse('rgba(0, 0, 0, 0.8)')
+
+        self.terminal.set_color_background(background)
+        self.terminal.set_color_foreground(foreground)
+
+    @Gtk.Template.Callback("on_create_frame")
+    def on_create_frame(self, grid):
+        new_frame = Panel.Frame()
+        new_frame.set_placeholder(
+            Launcher(self.jupyter_server.avalaible_kernels))
+        tab_bar = Panel.FrameTabBar()
+        new_frame.set_header(tab_bar)
+
+        new_frame.connect("page-closed", self.on_page_closed)
+
+        return new_frame
+
+    def on_page_closed(self, frame, widget):
+        if widget == self.previous_page:
+            widget.disconnect_by_func(self.update_kernel_info)
+            widget.disconnect_by_func(self.on_cursor_moved)
+
+            self.previous_page = None
+
+    @Gtk.Template.Callback("on_key_pressed")
+    def on_key_pressed(self, controller, keyval, keycode, state):
+        print(keyval, keycode, state)

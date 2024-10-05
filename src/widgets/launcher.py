@@ -21,12 +21,15 @@ from gi.repository import Adw
 from gi.repository import Gtk
 from gi.repository import GLib
 
+
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/launcher.ui')
 class Launcher(Adw.Bin):
     __gtype_name__ = 'Launcher'
 
     notebook_listbox = Gtk.Template.Child()
     console_listbox = Gtk.Template.Child()
+    notebook_group = Gtk.Template.Child()
+    console_group = Gtk.Template.Child()
 
     def __init__(self, avalaible_kernels):
         super().__init__()
@@ -48,6 +51,7 @@ class Launcher(Adw.Bin):
             action_name="win.new-notebook-name",
             action_target=GLib.Variant("s", item.name)
         )
+        self.notebook_group.set_visible(True)
         return button_row
 
     def create_console_widgets(self, item):
@@ -57,4 +61,5 @@ class Launcher(Adw.Bin):
             action_name="win.new-console-name",
             action_target=GLib.Variant("s", item.name)
         )
+        self.console_group.set_visible(True)
         return button_row
