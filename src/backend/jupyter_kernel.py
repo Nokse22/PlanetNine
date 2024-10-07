@@ -46,10 +46,6 @@ class Variable(GObject.GObject):
 class JupyterKernelInfo(GObject.GObject):
     __gtype_name__ = 'JupyterKernelInfo'
 
-    __gsignals__ = {
-        "changed-status": (GObject.SignalFlags.RUN_FIRST, None, ()),
-    }
-
     name = ""
     display_name = ""
     language = ""
@@ -240,3 +236,10 @@ class JupyterKernel(GObject.GObject):
 
     def add_variable(self, variable):
         self._variables.append(variable)
+
+    def reset(self):
+        self.queued_msg_id = ""
+        self.queued_msg_callback = None
+        self.queued_msg_arguments = None
+
+        self.reset_variables()

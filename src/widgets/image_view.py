@@ -17,7 +17,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gtk, GObject
+from gi.repository import Gtk, GObject, Gdk
 
 
 class ImageView(Gtk.Picture):
@@ -50,9 +50,7 @@ class ImageView(Gtk.Picture):
         return Gdk.ContentProvider.new_for_value(value)
 
     def on_drag_source_begin(self, source, drag):
-        drag_widget = Gtk.Image(
-
-        )
+        drag_widget = Gtk.Image()
 
         icon = Gtk.DragIcon.get_for_drag(drag)
         icon.set_child(drag_widget)

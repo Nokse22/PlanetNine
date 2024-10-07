@@ -252,7 +252,12 @@ class CellUI(Gtk.Box):
 
         pixbuf = GdkPixbuf.Pixbuf.new_from_file(image_path)
         image = Gtk.Picture.new_for_pixbuf(pixbuf)
-        image.set_size_request(-1, pixbuf.get_height())
+        if pixbuf.get_width() > 800:
+            image.set_size_request(
+                -1, pixbuf.get_height() * (700 / pixbuf.get_width()))
+        else:
+            image.set_size_request(
+                -1, pixbuf.get_height())
 
         self.output_scrolled_window.set_visible(True)
         self.output_box.append(image)

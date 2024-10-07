@@ -1,16 +1,31 @@
 from gi.repository import Panel, Gtk, GObject, Gio, GLib
 import asyncio
 
+from gettext import gettext as _
+
 
 class GenericSaveDelegate(Panel.SaveDelegate):
     __gtype_name__ = 'GenericSaveDelegate'
 
     def __init__(self, page):
         super().__init__()
+        self.bindings = []
+
         self.page = page
-        self.bind_property("title", self.page, "title")
-        self.bind_property("icon-name", self.page, "icon-name")
+
+        self.bindings.append(
+            self.bind_property("title", self.page, "title"))
+        self.bindings.append(
+            self.bind_property("icon-name", self.page, "icon-name"))
+
         self.update_draft_status()
+
+    def unbind_all(self):
+        for binding in self.bindings:
+            binding.unbind()
+        del self.bindings
+
+        del self.page
 
     def update_draft_status(self):
         self.set_is_draft(bool(self.page.path))

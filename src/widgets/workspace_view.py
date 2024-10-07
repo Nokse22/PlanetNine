@@ -60,10 +60,12 @@ class WorkspaceView(Panel.Widget):
     def __init__(self):
         super().__init__()
 
-        self.workspace_root = TreeNode("Workspace", NodeType.ROOT, [], self.workspace_menu)
+        self.workspace_root = TreeNode(
+            "Workspace", NodeType.ROOT, [], self.workspace_menu)
         self.setup_listview(self.workspace_root)
 
-        self.files_root = TreeNode("Other Files", NodeType.ROOT, [], self.other_menu)
+        self.files_root = TreeNode(
+            "Other Files", NodeType.ROOT, [], self.other_menu)
         self.setup_listview(self.files_root)
 
         self.action_group = Gio.SimpleActionGroup()
@@ -126,6 +128,8 @@ class WorkspaceView(Panel.Widget):
             return
 
         folder_path = folder.get_path()
+
+        self.workspace_root.children = []
 
         for node in os.listdir(folder_path):
             if os.path.isdir(folder_path):

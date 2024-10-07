@@ -21,6 +21,8 @@ from gi.repository import Gtk, GObject, Adw, Gio
 from gi.repository import Panel, GtkSource
 from gi.repository import Spelling
 
+from ..others.save_delegate import GenericSaveDelegate
+
 from ..utils.converters import get_language_highlight_name
 
 import sys
@@ -104,6 +106,14 @@ class CodePage(Panel.Widget):
 
         adapter.set_enabled(True)
 
+        # ADD SAVE DELEGATE
+
+        self.save_delegate = GenericSaveDelegate(self)
+        self.set_save_delegate(self.save_delegate)
+
+        if not _path:
+            self.save_delegate.set_is_draft(True)
+
         # VIEW SETTINGS
 
         self.settings.bind(
@@ -154,6 +164,8 @@ class CodePage(Panel.Widget):
     def __on_unrealized(self, *args):
         self.style_manager.disconnect_by_func(self.update_style_scheme)
         self.code_buffer.disconnect_by_func(self.on_cursor_position_changed)
+
+        self.save_delegate.unbind_all()
 
         if self.jupyter_kernel:
             self.jupyter_kernel.disconnect_by_func(self.on_kernel_info_changed)

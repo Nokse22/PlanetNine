@@ -96,7 +96,8 @@ class TextPage(Panel.Widget):
 
         # CONNECT
 
-        self.buffer.connect("changed", self.on_text_changed)
+        self.buffer.connect(
+            "changed", self.on_text_changed)
         self.buffer.connect(
             "notify::cursor-position", self.on_cursor_position_changed)
 
@@ -129,6 +130,9 @@ class TextPage(Panel.Widget):
 
         self.style_manager.disconnect_by_func(self.update_style_scheme)
         self.buffer.disconnect_by_func(self.on_text_changed)
+        self.buffer.disconnect_by_func(self.on_cursor_position_changed)
+
+        self.save_delegate.unbind_all()
 
         print(f"Unrealize: {self}")
 

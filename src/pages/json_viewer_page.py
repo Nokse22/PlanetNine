@@ -131,13 +131,13 @@ class JsonViewerPage(Panel.Widget):
         self.buffer.set_style_scheme(scheme)
 
     def __on_unrealized(self, *args):
-        self.disconnect_by_func(self.__on_unrealized)
-
         self.style_manager.disconnect_by_func(self.update_style_scheme)
-
-        self.stack.disconnect_by_func(self.on_json_changed)
-
+        self.stack.disconnect_by_func(self.on_page_changed)
         self.buffer.disconnect_by_func(self.on_json_changed)
+
+        self.save_delegate.unbind_all()
+
+        self.disconnect_by_func(self.__on_unrealized)
 
         print(f"Unrealize {self}")
 

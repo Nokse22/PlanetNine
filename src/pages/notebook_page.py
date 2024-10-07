@@ -383,9 +383,12 @@ class NotebookPage(Panel.Widget):
             binding.unbind()
         del self.bindings
 
+        self.save_delegate.unbind_all()
+
         self.disconnect_by_func(self.__on_unrealized)
 
         print("unrealize:", sys.getrefcount(self))
 
     def __del__(self, *args):
         print(f"DELETING {self}")
+

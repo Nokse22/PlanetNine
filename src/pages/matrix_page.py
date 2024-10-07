@@ -17,14 +17,12 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gtk, GObject, Adw, Gio
+from gi.repository import Gtk, GObject, Gio
 from gi.repository import Panel
 
 from ..others.save_delegate import GenericSaveDelegate
 
 from ..widgets.matrix_viewer import MatrixViewer, MatrixRow, Matrix
-
-from ..utils.utilities import number_to_column
 
 import os
 import csv
@@ -139,6 +137,8 @@ class MatrixPage(Panel.Widget):
 
     def __on_unrealized(self, *args):
         self.disconnect_by_func(self.__on_unrealized)
+
+        self.save_delegate.unbind_all()
 
         print(f"Unrealize: {self}")
 

@@ -292,6 +292,7 @@ class JupyterServer(GObject.GObject):
             return False
 
         if response.status_code == 200:
+            self.get_kernel_by_id(kernel_id).reset()
             return True
         else:
             return False

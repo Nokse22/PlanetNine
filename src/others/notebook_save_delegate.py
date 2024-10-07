@@ -28,11 +28,21 @@ class NotebookSaveDelegate(Panel.SaveDelegate):
 
     def __init__(self, page):
         super().__init__()
+        self.bindings = []
 
         self.page = page
 
-        self.bind_property("title", self.page, "title")
-        self.bind_property("icon-name", self.page, "icon-name")
+        self.bindings.append(
+            self.bind_property("title", self.page, "title"))
+        self.bindings.append(
+            self.bind_property("icon-name", self.page, "icon-name"))
+
+    def unbind_all(self):
+        for binding in self.bindings:
+            binding.unbind()
+        del self.bindings
+
+        del self.page
 
     def do_save(self, task):
         print("save")

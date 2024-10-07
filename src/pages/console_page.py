@@ -31,7 +31,8 @@ from ..utils.converters import get_language_highlight_name
 GObject.type_register(Panel.Widget)
 
 
-@Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/console_page.ui')
+@Gtk.Template(
+    resource_path='/io/github/nokse22/PlanetNine/gtk/console_page.ui')
 class ConsolePage(Panel.Widget):
     __gtype_name__ = 'ConsolePage'
 
@@ -102,9 +103,16 @@ class ConsolePage(Panel.Widget):
         lang = lm.get_language(lang_name)
         self.code_buffer.set_language(lang)
 
-        self.jupyter_kernel = jupyter_kernel
-        self.jupyter_kernel.connect("status-changed", lambda *args: self.emit("kernel-info-changed"))
+        if self.jupyter_kernel:
+            self.jupyter_kernel.disconnect_by_func(self.on_kernel_info_changed)
 
+        self.jupyter_kernel = jupyter_kernel
+        self.jupyter_kernel.connect(
+            "status-changed", self.on_kernel_info_changed)
+
+        self.emit("kernel-info-changed")
+
+    def on_kernel_info_changed(self, *args):
         self.emit("kernel-info-changed")
 
     def get_kernel(self):
@@ -188,6 +196,10 @@ class ConsolePage(Panel.Widget):
     def __on_unrealized(self, *args):
         self.style_manager.disconnect_by_func(self.update_style_scheme)
         self.send_button.disconnect_by_func(self.on_send_clicked)
+        self.code_buffer.disconnect_by_func(self.on_cursor_position_changed)
+
+        if self.jupyter_kernel:
+            self.jupyter_kernel.disconnect_by_func(self.on_kernel_info_changed)
 
         for action, callback in self.actions_signals:
             action.disconnect_by_func(callback)
