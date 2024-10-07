@@ -17,9 +17,10 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gtk, Panel, GLib, Gio
+from gi.repository import Gtk, Panel, GLib, Gio, Gdk
 
 import os
+import asyncio
 
 
 @Gtk.Template(
@@ -70,6 +71,9 @@ class ImagesPanel(Panel.Widget):
             if img not in self.current_images:
                 new_images.append(img)
 
+        if new_images == []:
+            return
+
         for image_path in new_images:
             image_file = Gio.File.new_for_path(
                 os.path.join(self.images_path, image_path))
@@ -109,3 +113,93 @@ class ImagesPanel(Panel.Widget):
             else:
                 self.main_picture.set_size_request(-1, -1)
         # elif n_clicks == 1:
+
+    @Gtk.Template.Callback("on_save_clicked")
+    def on_save_clicked(self, *args):
+        asyncio.create_task(self._save_file())
+
+    async def _save_file(self):
+        file_dialog = Gtk.FileDialog(
+            accept_label="Save Image",
+            modal=True
+        )
+
+        try:
+            result = await file_dialog.save(self.get_root())
+        except Exception as e:
+            print(e)
+            return
+
+        source_file = self.selection_model.get_selected_item()
+
+        destination_file = Gio.File.new_for_path(result.get_path())
+
+        try:
+            source_stream = await source_file.read_async(None)
+        except GLib.Error as e:
+            print(f"Error reading source file: {e.message}")
+            return
+
+        try:
+            destination_stream = await destination_file.create_async(
+                Gio.FileCreateFlags.REPLACE_DESTINATION, None)
+        except GLib.Error as e:
+            print(f"Error creating destination file: {e.message}")
+            await source_stream.close_async()
+            return
+
+        try:
+            while True:
+                data = source_stream.read_bytes(8192, None)
+                if data.get_size() == 0:
+                    break
+                destination_stream.write_bytes(data, None)
+        except GLib.Error as e:
+            print(f"Error writing to destination file: {e.message}")
+        finally:
+            await source_stream.close_async()
+            await destination_stream.close_async()
+
+    @Gtk.Template.Callback("on_copy_clicked")
+    def on_copy_clicked(self, *args):
+        asyncio.create_task(self._copy_file())
+
+    async def _copy_file(self):
+        source_file = self.selection_model.get_selected_item()
+
+        try:
+            stream = await source_file.read_async(None)
+            content = await stream.read_bytes_async(
+                source_file.query_info(
+                    "*",
+                    Gio.FileQueryInfoFlags.NONE,
+                    None).get_size(),
+                None)
+            await stream.close_async()
+        except GLib.Error as e:
+            print(f"Error reading file: {e.message}")
+            return
+
+        content_provider = Gdk.ContentProvider.new_for_bytes(
+            "image/png",
+            GLib.Bytes(content.get_data()))
+        clipboard = Gdk.Display().get_default().get_clipboard()
+        clipboard.set_content(content_provider)
+
+    @Gtk.Template.Callback("on_delete_clicked")
+    def on_delete_clicked(self, *args):
+        asyncio.create_task(self._delete_file())
+
+    async def _delete_file(self):
+        source_file = self.selection_model.get_selected_item()
+
+        try:
+            deleted = await source_file.delete_async(0)
+            print(f"File '{source_file.get_path()}' deleted successfully.")
+        except GLib.Error as e:
+            print(f"Error deleting file: {e.message}")
+            return
+
+        if deleted:
+            success, position = self.images.find(source_file)
+            self.images.remove(position)

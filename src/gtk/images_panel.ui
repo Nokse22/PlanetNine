@@ -31,12 +31,54 @@
                 <child>
                   <object class="GtkScrolledWindow">
                     <child>
-                      <object class="GtkPicture" id="main_picture">
-                        <property name="hexpand">True</property>
-                        <property name="vexpand">True</property>
+                      <object class="GtkBox">
                         <child>
-                          <object class="GtkGestureClick">
-                            <signal name="released" handler="on_click_released"/>
+                          <object class="GtkPicture" id="main_picture">
+                            <property name="hexpand">True</property>
+                            <property name="vexpand">True</property>
+                            <child>
+                              <object class="GtkGestureClick">
+                                <signal name="released" handler="on_click_released"/>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkBox">
+                            <property name="orientation">vertical</property>
+                            <property name="valign">end</property>
+                            <property name="spacing">6</property>
+                            <property name="margin-bottom">6</property>
+                            <property name="margin-start">6</property>
+                            <property name="margin-end">6</property>
+                            <child>
+                              <object class="GtkButton" id="save_image_button">
+                                <property name="icon-name">folder-download-symbolic</property>
+                                <signal name="clicked" handler="on_save_clicked"/>
+                                <style>
+                                  <class name="circular"/>
+                                </style>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkButton" id="copy_image_button">
+                                <property name="icon-name">edit-copy-symbolic</property>
+                                <signal name="clicked" handler="on_copy_clicked"/>
+                                <style>
+                                  <class name="circular"/>
+                                </style>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkButton" id="delete_image_button">
+                                <property name="icon-name">user-trash-symbolic</property>
+                                <signal name="clicked" handler="on_delete_clicked"/>
+                                <style>
+                                  <class name="destructive-action"/>
+                                  <class name="circular"/>
+                                </style>
+                              </object>
+                            </child>
                           </object>
                         </child>
                       </object>
