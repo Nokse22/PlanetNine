@@ -52,6 +52,15 @@
                             <property name="margin-start">6</property>
                             <property name="margin-end">6</property>
                             <child>
+                              <object class="GtkButton" id="open_external_window_button">
+                                <property name="icon-name">arrow1-top-right-symbolic</property>
+                                <signal name="clicked" handler="on_open_external_window_clicked"/>
+                                <style>
+                                  <class name="circular"/>
+                                </style>
+                              </object>
+                            </child>
+                            <child>
                               <object class="GtkButton" id="save_image_button">
                                 <property name="icon-name">folder-download-symbolic</property>
                                 <signal name="clicked" handler="on_save_clicked"/>

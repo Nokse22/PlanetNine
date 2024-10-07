@@ -203,3 +203,17 @@ class ImagesPanel(Panel.Widget):
         if deleted:
             success, position = self.images.find(source_file)
             self.images.remove(position)
+
+    @Gtk.Template.Callback("on_open_external_window_clicked")
+    def on_open_external_window_clicked(self, *args):
+        asyncio.create_task(self._open_file())
+
+    async def _open_file(self):
+        source_file = self.selection_model.get_selected_item()
+
+        launcher = Gtk.FileLauncher.new(source_file)
+
+        try:
+            await launcher.launch(self.get_root(), None)
+        except Exception:
+            print("Failed to finish Gtk.FileLauncher procedure.")
