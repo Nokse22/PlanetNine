@@ -47,7 +47,7 @@ class CodePage(Panel.Widget):
     command_label = Gtk.Template.Child()
     command_bar_label = Gtk.Template.Child()
 
-    def __init__(self):
+    def __init__(self, _path=None):
         super().__init__()
 
         self.connect("unrealize", self.__on_unrealized)
@@ -58,6 +58,8 @@ class CodePage(Panel.Widget):
             "notify::cursor-position", self.on_cursor_position_changed)
 
         self.jupyter_kernel = None
+
+        self.path = _path
 
         # SETUP VIM
 
@@ -111,7 +113,7 @@ class CodePage(Panel.Widget):
         self.save_delegate = GenericSaveDelegate(self)
         self.set_save_delegate(self.save_delegate)
 
-        if not _path:
+        if not self.path:
             self.save_delegate.set_is_draft(True)
 
         # VIEW SETTINGS
@@ -128,6 +130,11 @@ class CodePage(Panel.Widget):
             'highlight-current-line',
             Gio.SettingsBindFlags.DEFAULT
         )
+
+        self.code_buffer.connect("changed", self.on_text_changed)
+
+    def on_text_changed(self, *args):
+        self.set_modified(True)
 
     def on_cursor_position_changed(self, *args):
         self.emit("cursor-moved", self.code_buffer, 0)
@@ -160,6 +167,15 @@ class CodePage(Panel.Widget):
 
     def get_kernel(self):
         return self.jupyter_kernel
+
+    def get_path(self):
+        return self.path
+
+    def set_path(self, _path):
+        self.path = _path
+
+    def get_content(self):
+        return
 
     def __on_unrealized(self, *args):
         self.style_manager.disconnect_by_func(self.update_style_scheme)

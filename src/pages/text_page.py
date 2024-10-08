@@ -112,6 +112,9 @@ class TextPage(Panel.Widget):
         self.set_title(
             os.path.basename(self.path) if self.path else "Untitled")
 
+    def get_path(self):
+        return self.path
+
     def get_content(self):
         start = self.buffer.get_start_iter()
         end = self.buffer.get_end_iter()

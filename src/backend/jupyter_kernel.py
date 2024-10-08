@@ -141,16 +141,17 @@ class JupyterKernel(GObject.GObject):
             try:
                 msg = await self.kernel_client.get_iopub_msg()
                 print("IOPUB MSG:")
-                pprint(msg)
+                # pprint(msg)
 
                 msg_type = msg['header']['msg_type']
                 msg_id = msg['parent_header']['msg_id'] if 'msg_id' in msg['parent_header'] else ''
 
-                print(f"\nReceived MSG with ID: {msg_id}")
-                print(f"\nQueued message ID is: {self.queued_msg_id}")
+                print(f"\nReceived {msg_type} MSG with ID: {msg_id}")
+                print(f"Queued message ID is: {self.queued_msg_id}")
 
                 if msg_type == 'status':
                     self.status = msg['content']['execution_state']
+                    print(f"STATUS: {self.status}")
                     self.emit("status-changed")
 
                 else:
@@ -192,6 +193,7 @@ class JupyterKernel(GObject.GObject):
         await self.kernel_client.wait_for_ready()
 
         code += '\n%whos'  # added %whos to get the variables
+        # TODO if it's not ipykernel it should not be used
 
         msg_id = self.kernel_client.execute(code)
 

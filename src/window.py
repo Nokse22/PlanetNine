@@ -436,9 +436,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         if choice == 'restart':
             success = await self.jupyter_server.restart_kernel(kernel_id)
             if success:
-                print("kernel has restarted")
+                return True
             else:
-                print("kernel has NOT restarted")
+                return False
+
+        return False
 
     #
     #   INTERRUPT KERNEL  BY ID
@@ -471,17 +473,12 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         asyncio.create_task(self._restart_kernel_and_run())
 
     async def _restart_kernel_and_run(self):
-        choice = await dialog_choose_async(self, self.restart_kernel_dialog)
+        kernel_id = self.get_visible_page().get_kernel().kernel_id
 
-        if choice == 'restart':
-            notebook_page = self.get_visible_page()
-            if isinstance(notebook_page, NotebookPage):
-                kernel_id = notebook_page.get_kernel().kernel_id
-            success = await self.jupyter_server.restart_kernel(kernel_id)
-            if success:
-                notebook_page.run_all_cells()
-            else:
-                print("kernel has NOT restarted")
+        success = await self._restart_kernel_by_id(kernel_id)
+
+        if success:
+            self.get_visible_page().run_all_cells()
 
     #
     #   SAVE VISIBLE PAGE

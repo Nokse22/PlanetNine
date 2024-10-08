@@ -24,15 +24,14 @@ from gi.repository import Panel
 
 import os
 import sys
-
-from pprint import pprint
+import nbformat
 
 from ..models.cell import Cell, CellType
 from ..widgets.cell_ui import CellUI
 from ..models.output import Output, OutputType
 from ..backend.command_line import CommandLine
 from ..completion_providers.completion_providers import LSPCompletionProvider, WordsCompletionProvider
-from ..others.notebook_save_delegate import NotebookSaveDelegate
+from ..others.save_delegate import GenericSaveDelegate
 
 
 @Gtk.Template(
@@ -78,7 +77,7 @@ class NotebookPage(Panel.Widget):
         self.words_provider = WordsCompletionProvider()
         # self.lsp_provider = LSPCompletionProvider()
 
-        self.save_delegate = NotebookSaveDelegate(self)
+        self.save_delegate = GenericSaveDelegate(self)
         # self.save_delegate.set_is_draft(True)
         self.set_save_delegate(self.save_delegate)
 
@@ -148,6 +147,10 @@ class NotebookPage(Panel.Widget):
         if found:
             # select cell
             pass
+
+        # TODO if the kernel is busy it should be added the the queue
+
+        cell.start_execution()
 
         if cell.source.startswith("!"):
             cell.reset_output()
@@ -351,6 +354,16 @@ class NotebookPage(Panel.Widget):
 
     def on_drop_target_leave(self, drop_target):
         self.cells_list_box.drag_unhighlight_row()
+
+    def get_content(self):
+        return nbformat.writes(
+            self.notebook_model.get_notebook_node())
+
+    def get_path(self):
+        return self.notebook_model.path
+
+    def set_path(self, _path):
+        return self.notebook_model.set_path(_path)
 
     def do_close(self, *args):
         print("close")

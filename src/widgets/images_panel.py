@@ -19,8 +19,11 @@
 
 from gi.repository import Gtk, Panel, GLib, Gio, Gdk
 
+from gettext import gettext as _
+
 import os
 import asyncio
+import datetime
 
 
 @Gtk.Template(
@@ -119,8 +122,11 @@ class ImagesPanel(Panel.Widget):
         asyncio.create_task(self._save_file())
 
     async def _save_file(self):
+        source_file = self.selection_model.get_selected_item()
+
         file_dialog = Gtk.FileDialog(
             accept_label="Save Image",
+            initial_name=_("Image.png"),
             modal=True
         )
 
@@ -129,8 +135,6 @@ class ImagesPanel(Panel.Widget):
         except Exception as e:
             print(e)
             return
-
-        source_file = self.selection_model.get_selected_item()
 
         destination_file = Gio.File.new_for_path(result.get_path())
 
@@ -215,5 +219,5 @@ class ImagesPanel(Panel.Widget):
 
         try:
             await launcher.launch(self.get_root(), None)
-        except Exception:
-            print("Failed to finish Gtk.FileLauncher procedure.")
+        except Exception as e:
+            print(e)

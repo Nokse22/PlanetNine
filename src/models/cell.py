@@ -48,6 +48,7 @@ class Cell(GObject.GObject):
     cell_type = GObject.Property(type=int, default=CellType.CODE)
     source = GObject.Property(type=str, default="")
     id = GObject.Property(type=str, default="")
+    executing = GObject.Property(type=bool, default=False)
 
     def __init__(self, _cell_type=CellType.CODE):
         super().__init__()
@@ -59,6 +60,7 @@ class Cell(GObject.GObject):
         # Only for Code cells
         self._execution_count = None
         self._outputs = Gio.ListStore()
+        self.executing = False
 
     @classmethod
     def new_from_json(cls, json_cell):
@@ -83,8 +85,13 @@ class Cell(GObject.GObject):
 
     @execution_count.setter
     def execution_count(self, value):
+        self.executing = False
         self._execution_count = value
         self.emit("execution-count-changed", value)
+
+    def start_execution(self):
+        self.executing = True
+        self.notify("executing")
 
     def set_source(self, value):
         self.source = value

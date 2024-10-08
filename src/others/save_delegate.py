@@ -28,7 +28,7 @@ class GenericSaveDelegate(Panel.SaveDelegate):
         del self.page
 
     def update_draft_status(self):
-        self.set_is_draft(bool(self.page.path))
+        self.set_is_draft(bool(self.page.get_path()))
 
     def do_close(self):
         self.page.force_close()

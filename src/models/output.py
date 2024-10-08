@@ -121,6 +121,10 @@ class Output(GObject.GObject):
             self.data_content = json_node['data']['image/png']
             self.data_type = DataType.IMAGE_PNG
 
+        elif 'image/jpeg' in json_node['data']:
+            self.data_content = json_node['data']['image/jpeg']
+            self.data_type = DataType.IMAGE_JPEG
+
         elif 'text/plain' in json_node['data']:
             self.data_content = json_node['data']['text/plain']
             self.data_type = DataType.TEXT
@@ -130,6 +134,8 @@ class Output(GObject.GObject):
 
         if 'metadata' in json_node:
             self.metadata = json_node['metadata']
+
+        print(json_node['data'])
 
     def get_output_node(self):
         match self.output_type:

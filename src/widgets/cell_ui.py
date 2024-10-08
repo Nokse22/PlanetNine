@@ -55,6 +55,7 @@ class CellUI(Gtk.Box):
     right_click_menu = Gtk.Template.Child()
     drag_source = Gtk.Template.Child()
     click_gesture = Gtk.Template.Child()
+    count_stack = Gtk.Template.Child()
 
     cell = None
 
@@ -131,6 +132,7 @@ class CellUI(Gtk.Box):
             "execution-count-changed", self.on_execution_count_changed)
         self.cell.connect("output-added", self.on_add_output)
         self.cell.connect("output-reset", self.on_reset_output)
+        self.cell.connect("notify::executing", self.on_executing_changed)
 
         # POPOVER
         self.popover = Gtk.PopoverMenu(
@@ -194,6 +196,12 @@ class CellUI(Gtk.Box):
     def set_execution_count(self, value):
         self.count_label.set_label(str(value or 0))
 
+    def on_executing_changed(self, cell, _):
+        if cell.executing:
+            self.count_stack.set_visible_child_name("spinner")
+        else:
+            self.count_stack.set_visible_child_name("number")
+
     def add_output(self, output):
         self.output_scrolled_window.set_visible(True)
 
@@ -237,8 +245,9 @@ class CellUI(Gtk.Box):
         child.set_text(markdown_string)
 
     def add_output_html(self, html_string):
-        webview = WebKit.WebView()
+        webview = WebKit.WebView(height_request=300)
         webview.load_html(html_string, None)
+        print("HTML", html_string)
         self.output_box.append(webview)
 
     def add_output_image(self, image_content):
@@ -356,6 +365,7 @@ class CellUI(Gtk.Box):
         self.cell.disconnect_by_func(self.on_execution_count_changed)
         self.cell.disconnect_by_func(self.on_add_output)
         self.cell.disconnect_by_func(self.on_reset_output)
+        self.cell.disconnect_by_func(self.on_executing_changed)
         self.code_buffer.disconnect_by_func(self.on_source_changed)
         self.drag_source.disconnect_by_func(self.on_drag_source_prepare)
         self.drag_source.disconnect_by_func(self.on_drag_source_begin)

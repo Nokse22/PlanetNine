@@ -19,15 +19,36 @@
         </child>
         <property name="width-request">45</property>
         <child>
-          <object class="GtkLabel" id="count_label">
-            <property name="valign">start</property>
-            <property name="halign">center</property>
-            <property name="margin-top">12</property>
-            <property name="label">0</property>
-            <style>
-              <class name="title-4"/>
-              <class name="dim-label"/>
-            </style>
+          <object class="GtkStack" id="count_stack">
+            <child>
+              <object class="GtkStackPage">
+                <property name="name">number</property>
+                <property name="child">
+                  <object class="GtkLabel" id="count_label">
+                    <property name="valign">start</property>
+                    <property name="halign">center</property>
+                    <property name="margin-top">12</property>
+                    <property name="label">0</property>
+                    <style>
+                      <class name="title-4"/>
+                      <class name="dim-label"/>
+                    </style>
+                  </object>
+                </property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkStackPage">
+                <property name="name">spinner</property>
+                <property name="child">
+                  <object class="AdwSpinner">
+                    <property name="valign">start</property>
+                    <property name="halign">center</property>
+                    <property name="margin-top">12</property>
+                  </object>
+                </property>
+              </object>
+            </child>
           </object>
         </child>
       </object>

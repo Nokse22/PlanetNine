@@ -107,7 +107,7 @@ class BrowserPage(Panel.Widget):
         self.toolbar_view.set_reveal_top_bars(True)
 
     def on_title_changed(self, web_view, *args):
-        self.set_title(web_view.get_title())
+        self.set_title(web_view.get_title() or "Browser")
 
     def on_back_clicked(self, *args):
         self.web_view.go_back()
