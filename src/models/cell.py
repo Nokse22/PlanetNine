@@ -85,13 +85,8 @@ class Cell(GObject.GObject):
 
     @execution_count.setter
     def execution_count(self, value):
-        self.executing = False
         self._execution_count = value
         self.emit("execution-count-changed", value)
-
-    def start_execution(self):
-        self.executing = True
-        self.notify("executing")
 
     def set_source(self, value):
         self.source = value
@@ -105,6 +100,7 @@ class Cell(GObject.GObject):
 
     def reset_output(self):
         self._outputs.remove_all()
+        self.execution_count = 0
         self.emit("output-reset")
 
     def get_cell_node(self):

@@ -49,8 +49,6 @@ class NotebookPage(Panel.Widget):
     list_drop_target = Gtk.Template.Child()
     scrolled_window = Gtk.Template.Child()
 
-    queue = []
-
     cache_dir = os.environ["XDG_CACHE_HOME"]
 
     def __init__(self, _notebook_model):
@@ -93,8 +91,6 @@ class NotebookPage(Panel.Widget):
 
         self.command_line = CommandLine()
 
-        self.queue = []
-
         if self.notebook_model.get_n_items() == 0:
             self.add_cell(Cell(CellType.CODE))
 
@@ -120,37 +116,22 @@ class NotebookPage(Panel.Widget):
 
     def run_selected_cell(self):
         cell = self.get_selected_cell()
-
-        if cell.cell_type == CellType.CODE:
-            if self.queue == []:
-                self.run_cell(cell)
-            else:
-                self.queue.append(cell)
-        else:
-            self.select_next_cell()
+        self.run_cell(cell)
 
     def run_all_cells(self):
-        first_code_cell = None
-
         for index, cell in enumerate(self.notebook_model):
-            if not first_code_cell:
-                if cell.cell_type == CellType.CODE:
-                    first_code_cell = cell
-                    continue
             if cell.cell_type == CellType.CODE:
-                self.queue.append(cell)
-        self.run_cell(first_code_cell)
+                self.run_cell(cell)
 
     def run_cell(self, cell):
+        if cell.cell_type != CellType.CODE:
+            self.select_next_cell()
+            return
+
         found, position = self.notebook_model.find(cell)
 
-        if found:
-            # select cell
-            pass
-
-        # TODO if the kernel is busy it should be added the the queue
-
-        cell.start_execution()
+        if cell.executing:
+            return
 
         if cell.source.startswith("!"):
             cell.reset_output()
@@ -160,6 +141,8 @@ class NotebookPage(Panel.Widget):
                 cell
             )
         elif self.notebook_model.jupyter_kernel:
+            cell.reset_output()
+            cell.executing = True
             self.notebook_model.jupyter_kernel.execute(
                 cell.source,
                 self.run_code_callback,
@@ -192,8 +175,6 @@ class NotebookPage(Panel.Widget):
             count = content['execution_count']
             cell.execution_count = int(count)
 
-            cell.reset_output()
-
         elif msg_type == 'display_data':
             output = Output(OutputType.DISPLAY_DATA)
             output.parse(content)
@@ -210,34 +191,27 @@ class NotebookPage(Panel.Widget):
             cell.add_output(output)
 
         elif msg_type == 'status':
-            status = content['execution_state']
-
-            self.emit("kernel-info-changed")
-
-            if status == "idle":
-                if self.queue != []:
-                    print("popping")
-                    cell = self.queue.pop(0)
-                    self.run_cell(cell)
-                    found, position = self.notebook_model.find(cell)
-                    if found:
-                        self.set_selected_cell_index(position)
-                else:
-                    self.select_next_cell()
+            if content['execution_state'] == "idle":
+                cell.executing = False
+                print("cell finished executing")
 
     def set_kernel(self, jupyter_kernel):
         kernel = self.get_kernel()
 
         if kernel:
-            kernel.disconnect_by_func(self.on_kernel_info_changed)
+            kernel.disconnect_by_func(self.on_kernel_status_changed)
 
         self.notebook_model.jupyter_kernel = jupyter_kernel
         self.notebook_model.jupyter_kernel.connect(
-            "status-changed", self.on_kernel_info_changed)
+            "status-changed", self.on_kernel_status_changed)
         self.emit("kernel-info-changed")
 
-    def on_kernel_info_changed(self, *args):
+    def on_kernel_status_changed(self, kernel, status):
         self.emit("kernel-info-changed")
+
+        if status == "starting":
+            for cell in self.notebook_model:
+                cell.executing = False
 
     def get_kernel(self):
         return self.notebook_model.jupyter_kernel
@@ -385,7 +359,7 @@ class NotebookPage(Panel.Widget):
 
         kernel = self.get_kernel()
         if kernel:
-            kernel.disconnect_by_func(self.on_kernel_info_changed)
+            kernel.disconnect_by_func(self.on_kernel_status_changed)
 
         self.cells_list_box.bind_model(
             None,
@@ -404,4 +378,3 @@ class NotebookPage(Panel.Widget):
 
     def __del__(self, *args):
         print(f"DELETING {self}")
-

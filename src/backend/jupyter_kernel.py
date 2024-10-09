@@ -76,7 +76,7 @@ class JupyterKernel(GObject.GObject):
     __gtype_name__ = 'JupyterKernel'
 
     __gsignals__ = {
-        'status-changed': (GObject.SignalFlags.RUN_FIRST, None, ()),
+        'status-changed': (GObject.SignalFlags.RUN_FIRST, None, (str,)),
     }
 
     name = GObject.Property(type=str, default='')
@@ -103,9 +103,13 @@ class JupyterKernel(GObject.GObject):
 
         self.__connect()
 
-        self.queued_msg_id = ""
-        self.queued_msg_callback = None
-        self.queued_msg_arguments = None
+        self.executing = False
+
+        self.execution_queue = []
+
+        self.exec_msg_id = ""
+        self.exec_msg_callback = None
+        self.exec_msg_arguments = None
 
         # asyncio.create_task(self.__get_control_msg())
         asyncio.create_task(self.__get_iopub_msg())
@@ -147,20 +151,29 @@ class JupyterKernel(GObject.GObject):
                 msg_id = msg['parent_header']['msg_id'] if 'msg_id' in msg['parent_header'] else ''
 
                 print(f"\nReceived {msg_type} MSG with ID: {msg_id}")
-                print(f"Queued message ID is: {self.queued_msg_id}")
+                print(f"Queued message ID is: {self.exec_msg_id}")
+
+                if msg_id in self.exec_msg_id:
+                    print("Matching ID\n")
+                    if self.exec_msg_callback:
+                        msg = self.extract_variables(msg)
+                        self.exec_msg_callback(
+                            msg, *self.exec_msg_arguments)
 
                 if msg_type == 'status':
                     self.status = msg['content']['execution_state']
                     print(f"STATUS: {self.status}")
-                    self.emit("status-changed")
+                    self.emit("status-changed", self.status)
 
-                else:
-                    if msg_id in self.queued_msg_id:
-                        print("Matching ID\n")
-                        if self.queued_msg_callback:
-                            msg = self.extract_variables(msg)
-                            self.queued_msg_callback(
-                                msg, *self.queued_msg_arguments)
+                    if msg_id in self.exec_msg_id and self.status == "idle":
+                        self.executing = False
+                        if len(self.execution_queue) == 1:
+                            self.execution_queue.pop(0)
+                        else:
+                            self.execution_queue.pop(0)
+                            code, callback, *args = self.execution_queue[0]
+                            asyncio.create_task(
+                                self._execute(code, callback, *args))
 
             except Exception as e:
                 print(f"Exception while getting iopub msg: {e}")
@@ -187,21 +200,29 @@ class JupyterKernel(GObject.GObject):
                 print(f"Exception while getting stdin msg:\n{e}")
 
     def execute(self, code, callback, *args):
-        asyncio.create_task(self.__execute(code, callback, *args))
+        self.execution_queue.append((code, callback, *args))
 
-    async def __execute(self, code, callback, *args):
+        print("EXECUTE: ", self.executing, len(self.execution_queue), code)
+
+        if not self.executing:
+            self.executing = True
+            asyncio.create_task(self._execute(code, callback, *args))
+
+    async def _execute(self, code, callback, *args):
+        print("AWAITING READY")
+        # await self.wait_for_idle()
         await self.kernel_client.wait_for_ready()
 
         code += '\n%whos'  # added %whos to get the variables
-        # TODO if it's not ipykernel it should not be used
+        # FIXME if it's not ipykernel it should not be used
 
         msg_id = self.kernel_client.execute(code)
 
         print(f"Executing with ID: {msg_id}")
 
-        self.queued_msg_id = msg_id
-        self.queued_msg_callback = callback
-        self.queued_msg_arguments = args
+        self.exec_msg_id = msg_id
+        self.exec_msg_callback = callback
+        self.exec_msg_arguments = args
 
     def extract_variables(self, msg):
         if msg['header']['msg_type'] != 'stream':
@@ -240,8 +261,16 @@ class JupyterKernel(GObject.GObject):
         self._variables.append(variable)
 
     def reset(self):
-        self.queued_msg_id = ""
-        self.queued_msg_callback = None
-        self.queued_msg_arguments = None
+        self.exec_msg_id = ""
+        self.exec_msg_callback = None
+        self.exec_msg_arguments = None
+
+        self.executing = False
+        self.execution_queue = []
 
         self.reset_variables()
+
+    async def wait_for_idle(self):
+        while self.status != "idle":
+            pass
+        return

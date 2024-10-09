@@ -196,8 +196,8 @@ class CellUI(Gtk.Box):
     def set_execution_count(self, value):
         self.count_label.set_label(str(value or 0))
 
-    def on_executing_changed(self, cell, _):
-        if cell.executing:
+    def on_executing_changed(self, *args):
+        if self.cell.executing:
             self.count_stack.set_visible_child_name("spinner")
         else:
             self.count_stack.set_visible_child_name("number")

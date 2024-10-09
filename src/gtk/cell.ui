@@ -44,7 +44,7 @@
                   <object class="AdwSpinner">
                     <property name="valign">start</property>
                     <property name="halign">center</property>
-                    <property name="margin-top">12</property>
+                    <property name="margin-top">14</property>
                   </object>
                 </property>
               </object>
