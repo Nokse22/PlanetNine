@@ -39,4 +39,5 @@ class KernelTerminalPanel(TerminalPanel):
     def change_kernel(self, kernel):
         self.vte_terminal.reset(True, True)
         for msg in kernel.get_messages():
-            self.vte_terminal.feed([ord(char) for char in msg + "\r\n"])
+            for line in msg.splitlines():
+                self.vte_terminal.feed([ord(char) for char in line + "\r\n"])

@@ -147,6 +147,9 @@ class JupyterKernel(GObject.GObject):
             try:
                 msg = await self.kernel_client.get_iopub_msg()
 
+                if not msg:
+                    return
+
                 msg = self.extract_variables(msg)
 
                 msg_type = msg['header']['msg_type']
@@ -165,8 +168,13 @@ class JupyterKernel(GObject.GObject):
                     self.messages.append(msg_content['text'])
 
                 elif msg_type == 'execute_input':
+                    code = msg_content['code']
+                    start = f"In [{msg_content['execution_count']}]"
+                    code_modified = "\n".join(
+                        " " * len(start) + ln for ln in code.splitlines())
+
                     self.messages.append(
-                        f"\033[32;1mIn [{msg_content['execution_count']}]\033[0m \n{msg_content['code']}")
+                        f"\033[32;1m{start}\033[0m\n{code_modified}")
 
                 elif msg_type == 'error':
                     self.messages.append("\n".join(msg_content['traceback']))
@@ -182,12 +190,11 @@ class JupyterKernel(GObject.GObject):
                     print(f"STATUS: {self.status}")
                     self.emit("status-changed", self.status)
 
-                    if msg_id in self.exec_msg_id and self.status == "idle":
+                    if self.status == "idle":
                         self.executing = False
-                        if len(self.execution_queue) == 1:
+                        if not len(self.execution_queue) == 0:
                             self.execution_queue.pop(0)
-                        else:
-                            self.execution_queue.pop(0)
+                        if len(self.execution_queue) >= 1:
                             code, callback, *args = self.execution_queue[0]
                             asyncio.create_task(
                                 self._execute(code, callback, *args))
