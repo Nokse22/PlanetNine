@@ -159,11 +159,11 @@ class CellUI(Gtk.Box):
 
         if value == CellType.TEXT:
             self.stack.set_visible_child_name("text")
-            self.count_label.set_visible(False)
+            self.count_stack.set_visible(False)
             self.output_scrolled_window.set_visible(False)
         elif value == CellType.CODE:
             self.stack.set_visible_child_name("code")
-            self.count_label.set_visible(True)
+            self.count_stack.set_visible(True)
 
         self._cell_type = value
 

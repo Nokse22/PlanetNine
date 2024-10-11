@@ -97,6 +97,8 @@ class JupyterKernel(GObject.GObject):
 
         self._variables = Gio.ListStore()
 
+        self.messages = []
+
         self.kernel_client = jupyter_client.AsyncKernelClient()
 
         self.data_dir = GLib.getenv("XDG_DATA_HOME")
@@ -111,7 +113,7 @@ class JupyterKernel(GObject.GObject):
         self.exec_msg_callback = None
         self.exec_msg_arguments = None
 
-        # asyncio.create_task(self.__get_control_msg())
+        asyncio.create_task(self.__get_control_msg())
         asyncio.create_task(self.__get_iopub_msg())
         # asyncio.create_task(self.__get_stdin_msg())
         # asyncio.create_task(self.__get_shell_msg())
@@ -144,19 +146,34 @@ class JupyterKernel(GObject.GObject):
         while True:
             try:
                 msg = await self.kernel_client.get_iopub_msg()
-                print("IOPUB MSG:")
-                # pprint(msg)
+
+                msg = self.extract_variables(msg)
 
                 msg_type = msg['header']['msg_type']
-                msg_id = msg['parent_header']['msg_id'] if 'msg_id' in msg['parent_header'] else ''
+                msg_content = msg['content']
+                if 'msg_id' in msg['parent_header']:
+                    msg_id = msg['parent_header']['msg_id']
+                else:
+                    msg_id = ''
 
                 print(f"\nReceived {msg_type} MSG with ID: {msg_id}")
                 print(f"Queued message ID is: {self.exec_msg_id}")
+                print("IOPUB MSG:")
+                pprint(msg)
+
+                if msg_type == 'stream':
+                    self.messages.append(msg_content['text'])
+
+                elif msg_type == 'execute_input':
+                    self.messages.append(
+                        f"\033[32;1mIn [{msg_content['execution_count']}]\033[0m \n{msg_content['code']}")
+
+                elif msg_type == 'error':
+                    self.messages.append("\n".join(msg_content['traceback']))
 
                 if msg_id in self.exec_msg_id:
                     print("Matching ID\n")
                     if self.exec_msg_callback:
-                        msg = self.extract_variables(msg)
                         self.exec_msg_callback(
                             msg, *self.exec_msg_arguments)
 
@@ -274,3 +291,6 @@ class JupyterKernel(GObject.GObject):
         while self.status != "idle":
             pass
         return
+
+    def get_messages(self):
+        return self.messages

@@ -46,10 +46,13 @@ from .pages.json_viewer_page import JsonViewerPage
 from .pages.text_page import TextPage
 from .pages.matrix_page import MatrixPage
 
-from .widgets.kernel_manager_view import KernelManagerView
-from .widgets.workspace_view import WorkspaceView
-from .widgets.variables_view import VariablesPanel
-from .widgets.images_panel import ImagesPanel
+from .panels.kernel_manager_panel import KernelManagerPanel
+from .panels.workspace_panel import WorkspacePanel
+from .panels.variables_panel import VariablesPanel
+from .panels.images_panel import ImagesPanel
+from .panels.terminal_panel import TerminalPanel
+from .panels.kernel_terminal_panel import KernelTerminalPanel
+
 from .widgets.launcher import Launcher
 
 from .utils.converters import is_mime_displayable
@@ -61,7 +64,8 @@ from gettext import gettext as _
 class PlanetnineWindow(Adw.ApplicationWindow):
     __gtype_name__ = 'PlanetnineWindow'
 
-    terminal = Gtk.Template.Child()
+    server_terminal = Gtk.Template.Child()
+    kernel_terminal = Gtk.Template.Child()
     grid = Gtk.Template.Child()
     omni_bar = Gtk.Template.Child()
     kernel_status_menu = Gtk.Template.Child()
@@ -98,19 +102,21 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.jupyter_server.connect(
             "new-line", self.on_jupyter_server_has_new_line)
 
+        self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
+
         #
         #   ADDING AND BINDING STATIC PANELS
         #
 
         # TODO Save the last position and restore it at startup
 
-        self.kernel_manager_view = KernelManagerView(
+        self.kernel_manager_panel = KernelManagerPanel(
             self.jupyter_server.avalaible_kernels,
             self.jupyter_server.kernels
         )
-        self.start_sidebar_panel_frame.add(self.kernel_manager_view)
+        self.start_sidebar_panel_frame.add(self.kernel_manager_panel)
 
-        self.workspace_view = WorkspaceView()
+        self.workspace_view = WorkspacePanel()
         self.start_sidebar_panel_frame.add(self.workspace_view)
 
         self.variables_panel = VariablesPanel()
@@ -238,14 +244,16 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         #
 
         self.create_action(
-            'open-notebook', self.open_notebook)
+            'open-notebook', self.on_open_notebook_action)
+        self.create_action(
+            'open-code', self.on_open_code_action)
         self.create_action(
             'open-workspace', self.workspace_view.set_workspace_folder)
 
         self.create_action_with_target(
             'open-file',
             GLib.VariantType.new("s"),
-            self.open_file)
+            self.on_open_file_action)
 
         self.create_action_with_target(
             'open-file-with-text',
@@ -262,12 +270,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.grid.add(widget)
         widget.close()
 
-        # Style Manager to update when dark/light
-
-        self.style_manager = Adw.StyleManager.get_default()
-        self.style_manager.connect("notify::dark", self.update_style_scheme)
-        self.update_style_scheme()
-
         # Load examples folder
 
         self.home_folder = GLib.getenv('XDG_DATA_HOME')
@@ -282,6 +284,13 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         else:
             print("The example folder does not exist.")
 
+        #
+        #   START SERVER IMMEDIATELY
+        #
+
+        if self.settings.get_boolean("start-server-immediately"):
+            self.jupyter_server.start()
+
     #
     #   NEW NOTEBOOK PAGE WITH KERNEL NAME
     #
@@ -294,7 +303,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         notebook = Notebook()
 
         notebook_page = NotebookPage(notebook)
-        notebook_page.set_draft()
         self.grid.add(notebook_page)
 
         success, kernel = await self.jupyter_server.start_kernel_by_name(
@@ -316,7 +324,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         notebook = Notebook()
 
         notebook_page = NotebookPage(notebook)
-        notebook_page.set_draft()
         self.grid.add(notebook_page)
 
         success, kernel = self.jupyter_server.get_kernel_by_id(kernel_id)
@@ -521,10 +528,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #   OPEN FILES OR NOTEBOOKS
     #
 
-    def open_notebook(self, *args):
-        asyncio.create_task(self.__open_notebook_file())
+    def on_open_notebook_action(self, *args):
+        asyncio.create_task(self._on_open_notebook_action())
 
-    async def __open_notebook_file(self):
+    async def _on_open_notebook_action(self):
         file_filter = Gtk.FileFilter(name="All supported formats")
         file_filter.add_pattern("*.ipynb")
         filter_list = Gio.ListStore.new(Gtk.FileFilter())
@@ -535,28 +542,42 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             filters=filter_list,
         )
 
-        file_path = await dialog.open(self)
+        file = await dialog.open(self)
 
-        notebook = Notebook.new_from_file(file_path)
+        self.open_notebook(file.get_path())
 
-        notebook_page = NotebookPage(notebook)
-        self.grid.add(notebook_page)
+    def on_open_code_action(self, *args):
+        asyncio.create_task(self._on_open_code_action())
 
-        success, kernel = await self.jupyter_server.start_kernel_by_name("")
+    async def _on_open_code_action(self):
+        file_filter = Gtk.FileFilter(name="All supported formats")
+        file_filter.add_pattern("*.py")
+        filter_list = Gio.ListStore.new(Gtk.FileFilter())
+        filter_list.append(file_filter)
 
-        if success:
-            notebook_page.set_kernel(kernel)
-            self.update_kernel_info(notebook_page)
+        dialog = Gtk.FileDialog(
+            title="Open File",
+            filters=filter_list,
+        )
 
-    def open_file(self, action, variant):
+        file = await dialog.open(self)
+
+        self.open_code(file.get_path())
+
+    #
+    #   OPEN ANY FILE
+    #
+
+    def on_open_file_action(self, action, variant):
         file_path = variant.get_string()
+        self.open_file(file_path)
+
+    def open_file(self, file_path):
 
         gfile = Gio.File.new_for_path(file_path)
 
         file_info = gfile.query_info("standard::content-type", 0, None)
         mime_type = file_info.get_content_type()
-
-        print(mime_type)
 
         match mime_type:
             case "application/json":
@@ -564,9 +585,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             case "text/csv":
                 self.grid.add(MatrixPage(file_path))
             case "application/x-ipynb+json":
-                notebook = Notebook.new_from_file(file_path)
-                notebook_page = NotebookPage(notebook)
-                self.grid.add(notebook_page)
+                self.open_notebook(file_path)
+            case "text/python":
+                self.open_code(file_path)
             case mime_type if is_mime_displayable(mime_type):
                 self.grid.add(TextPage(file_path))
             case _:
@@ -590,6 +611,48 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         if is_mime_displayable(mime_type):
             self.grid.add(TextPage(file_path))
+
+    def open_notebook(self, file_path=None):
+        asyncio.create_task(self._open_notebook(file_path))
+
+    async def _open_notebook(self, file_path):
+        if file_path:
+            notebook = Notebook.new_from_file(file_path)
+            page = NotebookPage(notebook)
+        else:
+            page = NotebookPage()
+
+        # TODO start kernel or ask which kernel to start, now it starts the
+        #           default one
+
+        success, kernel = await self.jupyter_server.start_kernel_by_name("")
+
+        if success:
+            page.set_kernel(kernel)
+            self.update_kernel_info(page)
+
+        self.grid.add(page)
+
+        return page
+
+    def open_code(self, file_path):
+        asyncio.create_task(self._open_code(file_path))
+
+    async def _open_code(self, file_path):
+        page = CodePage(file_path)
+
+        # TODO start kernel or ask which kernel to start, now it starts the
+        #           default one
+
+        success, kernel = await self.jupyter_server.start_kernel_by_name("")
+
+        if success:
+            page.set_kernel(kernel)
+            self.update_kernel_info(page)
+
+        self.grid.add(page)
+
+        return page
 
     #
     #   CONNECT STATIC UI TO VISIBLE PAGE PROPERTIES
@@ -624,6 +687,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self.language_label.set_visible(False)
             self.omni_bar.set_visible(False)
             self.kernel_status_menu.set_visible(False)
+            self.add_cell_button.set_visible(False)
 
     def update_kernel_info(self, page):
         kernel = page.get_kernel()
@@ -633,6 +697,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self.language_label.set_label(kernel.language.title() or "None")
 
             self.variables_panel.set_model(kernel.get_variables())
+            self.kernel_terminal.set_kernel(kernel)
 
             self.run_action.set_enabled(True)
             self.restart_kernel_and_run_action.set_enabled(True)
@@ -642,6 +707,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self.omni_label.set_label("No Kernel")
 
             self.variables_panel.set_model(None)
+            self.kernel_terminal.set_kernel(None)
 
             self.run_action.set_enabled(False)
             self.restart_kernel_and_run_action.set_enabled(False)
@@ -782,13 +848,13 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         if isinstance(page, NotebookPage):
             page.run_selected_cell()
         elif isinstance(page, CodePage):
-            page.run_all()
+            page.run_selected_cell()
 
     def on_jupyter_server_started(self, server):
         self.server_status_label.set_label("Server Connected")
 
     def on_jupyter_server_has_new_line(self, server, line):
-        self.terminal.feed([ord(char) for char in line + "\r\n"])
+        self.server_terminal.feed(line)
 
     def get_visible_page(self):
         try:
@@ -796,20 +862,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         except Exception as e:
             logging.Logger.debug(f"{e}")
-
-    def update_style_scheme(self, *args):
-        background = Gdk.RGBA()
-        foreground = Gdk.RGBA()
-
-        background.parse('rgba(0, 0, 0, 0)')
-
-        if Adw.StyleManager.get_default().get_dark():
-            foreground.parse('#ffffff')
-        else:
-            foreground.parse('rgba(0, 0, 0, 0.8)')
-
-        self.terminal.set_color_background(background)
-        self.terminal.set_color_foreground(foreground)
 
     @Gtk.Template.Callback("on_create_frame")
     def on_create_frame(self, grid):

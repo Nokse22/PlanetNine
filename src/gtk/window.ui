@@ -156,24 +156,19 @@
                   <object class="PanelFrame" id="bottom_panel_frame">
                     <property name="orientation">horizontal</property>
                     <child>
-                      <object class="PanelWidget">
-                        <property name="title">Jupyter Server Console</property>
-                        <property name="tooltip">Jupyter Server Console</property>
+                      <object class="TerminalPanel" id="server_terminal">
+                        <property name="title">Server Console</property>
+                        <property name="tooltip">Server Console</property>
                         <property name="can-maximize">true</property>
                         <property name="icon-name">terminal-symbolic</property>
-                        <child>
-                          <object class="GtkScrolledWindow">
-                            <child>
-                              <object class="VteTerminal" id="terminal">
-                                <property name="hexpand">true</property>
-                                <property name="vexpand">true</property>
-                                <property name="yalign">end</property>
-                                <property name="font-scale">0.8</property>
-                                <property name="scrollback-lines">1000</property>
-                              </object>
-                            </child>
-                          </object>
-                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="KernelTerminalPanel" id="kernel_terminal">
+                        <property name="title">Kernel Console</property>
+                        <property name="tooltip">Kernel Console</property>
+                        <property name="can-maximize">true</property>
+                        <property name="icon-name">terminal-symbolic</property>
                       </object>
                     </child>
                   </object>

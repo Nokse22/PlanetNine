@@ -4,7 +4,7 @@
   <!-- interface-name managerk.ui -->
   <requires lib="gtk" version="4.12"/>
   <requires lib="libadwaita" version="1.0"/>
-  <template class="KernelManagerView" parent="PanelWidget">
+  <template class="KernelManagerPanel" parent="PanelWidget">
     <property name="title">Kernel Manager</property>
     <property name="tooltip">Kernel Manager</property>
     <property name="icon-name">processor-symbolic</property>

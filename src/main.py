@@ -28,6 +28,8 @@ from gi.repository import Panel
 from .window import PlanetnineWindow
 from .preferences import Preferences
 
+from gettext import gettext as _
+
 GObject.type_register(Vte.Terminal)
 GObject.type_register(GtkSource.View)
 GObject.type_register(GtkSource.Buffer)
@@ -58,6 +60,8 @@ class PlanetnineApplication(Adw.Application):
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
+        self.preferences = None
+
     def do_activate(self):
         """Called when the application is activated.
 
@@ -81,7 +85,6 @@ class PlanetnineApplication(Adw.Application):
         self.props.active_window.save_viewed()
 
     def on_about_action(self, *args):
-        """Callback for the app.about action."""
         about = Adw.AboutDialog(
             application_name='Planet Nine',
             application_icon='io.github.nokse22.PlanetNine',
@@ -94,29 +97,34 @@ class PlanetnineApplication(Adw.Application):
         about.present(self.props.active_window)
 
     def on_preferences_action(self, widget, _):
-        """Callback for the app.preferences action."""
         print('app.preferences action activated')
 
-        preferences = Preferences()
+        if self.preferences:
+            self.preferences.present(self.props.active_window)
+            return
 
-        self.settings.bind('code-vim', preferences.code_vim_switch, 'active', Gio.SettingsBindFlags.DEFAULT)
-        self.settings.bind('code-line-number', preferences.code_line_number_switch, 'active', Gio.SettingsBindFlags.DEFAULT)
-        self.settings.bind('code-highlight-row', preferences.code_highlight_row_switch, 'active', Gio.SettingsBindFlags.DEFAULT)
+        self.preferences = Preferences()
 
-        preferences.present(self.props.active_window)
+        self.settings.bind(
+            'code-vim', self.preferences.code_vim_switch,
+            'active', Gio.SettingsBindFlags.DEFAULT)
+        self.settings.bind(
+            'code-line-number', self.preferences.code_line_number_switch,
+            'active', Gio.SettingsBindFlags.DEFAULT)
+        self.settings.bind(
+            'code-highlight-row', self.preferences.code_highlight_row_switch,
+            'active', Gio.SettingsBindFlags.DEFAULT)
+
+        self.settings.bind(
+            'start-server-immediately', self.preferences.start_switch,
+            'active', Gio.SettingsBindFlags.DEFAULT)
+
+        self.preferences.present(self.props.active_window)
 
     def on_shutdown(self, *args):
         return self.win.close()
 
     def create_action(self, name, callback, shortcuts=None):
-        """Add an application action.
-
-        Args:
-            name: the name of the action
-            callback: the function to be called when the action is
-              activated
-            shortcuts: an optional list of accelerators
-        """
         action = Gio.SimpleAction.new(name, None)
         action.connect("activate", callback)
         self.add_action(action)
@@ -125,6 +133,5 @@ class PlanetnineApplication(Adw.Application):
 
 
 def main(version):
-    """The application's entry point."""
     app = PlanetnineApplication()
     return app.run(sys.argv)

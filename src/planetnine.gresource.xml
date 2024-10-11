@@ -54,5 +54,7 @@
     <file>icons/16x16/mimetypes/octave-symbolic.svg</file>
     <file>icons/16x16/mimetypes/table-symbolic.svg</file>
 
+    <file>custom_languages/python3cells.lang</file>
+
   </gresource>
 </gresources>

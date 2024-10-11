@@ -25,7 +25,7 @@ from ..backend.jupyter_kernel import JupyterKernel, JupyterKernelInfo
 
 from ..models.notebook import Notebook
 
-from .tree_row_widget import TreeWidget
+from ..widgets.tree_row_widget import TreeWidget
 
 from ..utils.converters import get_language_icon
 
@@ -47,8 +47,8 @@ class TreeNode(GObject.Object):
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/kernel_manager_view.ui')
-class KernelManagerView(Panel.Widget):
-    __gtype_name__ = 'KernelManagerView'
+class KernelManagerPanel(Panel.Widget):
+    __gtype_name__ = 'KernelManagerPanel'
 
     default_kernel_name = ""
 

@@ -76,10 +76,10 @@ class NotebookPage(Panel.Widget):
         # self.lsp_provider = LSPCompletionProvider()
 
         self.save_delegate = GenericSaveDelegate(self)
-        # self.save_delegate.set_is_draft(True)
         self.set_save_delegate(self.save_delegate)
 
-        self.set_modified(True)
+        if self.get_path():
+            self.save_delegate.set_is_draft(False)
 
         self.cells_list_box.bind_model(
             self.notebook_model,
@@ -110,9 +110,6 @@ class NotebookPage(Panel.Widget):
 
     def on_cursor_position_changed(self, buffer, pos, index):
         self.emit("cursor-moved", buffer, index + 1)
-
-    def set_draft(self):
-        self.save_delegate.set_is_draft(True)
 
     def run_selected_cell(self):
         cell = self.get_selected_cell()
@@ -162,7 +159,7 @@ class NotebookPage(Panel.Widget):
         msg_type = msg['header']['msg_type']
         content = msg['content']
 
-        # pprint(msg)
+        self.set_modified(True)
 
         if msg_type == 'stream':
             output = Output(OutputType.STREAM)
@@ -219,9 +216,13 @@ class NotebookPage(Panel.Widget):
     def create_widgets(self, cell):
         cell = CellUI(cell)
         cell.connect("request-delete", self.on_cell_request_delete)
+        cell.connect("notify::source", self.on_cell_source_changed)
         cell.add_provider(self.words_provider)
         # cell.add_provider(self.lsp_provider)
         return cell
+
+    def on_cell_source_changed(self, *args):
+        self.set_modified(True)
 
     def on_cell_request_delete(self, cell_ui):
         found, position = self.notebook_model.find(cell_ui.cell)
@@ -229,6 +230,7 @@ class NotebookPage(Panel.Widget):
         if found:
             self.notebook_model.remove(position)
             cell_ui.disconnect_by_func(self.on_cell_request_delete)
+            cell_ui.disconnect_by_func(self.on_cell_source_changed)
 
             del cell_ui
 
@@ -334,10 +336,11 @@ class NotebookPage(Panel.Widget):
             self.notebook_model.get_notebook_node())
 
     def get_path(self):
-        return self.notebook_model.path
+        return self.notebook_model.get_path()
 
     def set_path(self, _path):
-        return self.notebook_model.set_path(_path)
+        self.notebook_model.set_path(_path)
+        self.save_delegate.set_is_draft(False)
 
     def do_close(self, *args):
         print("close")
@@ -356,6 +359,7 @@ class NotebookPage(Panel.Widget):
         for index in range(0, self.notebook_model.get_n_items()):
             cell = self.cells_list_box.get_row_at_index(index).get_child()
             cell.disconnect_by_func(self.on_cell_request_delete)
+            cell.disconnect_by_func(self.on_cell_source_changed)
 
         kernel = self.get_kernel()
         if kernel:

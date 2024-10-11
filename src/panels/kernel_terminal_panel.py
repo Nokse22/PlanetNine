@@ -1,4 +1,4 @@
-# image_loader.py
+# kernel_terminal_panel.py
 #
 # Copyright 2024 Nokse22
 #
@@ -17,29 +17,26 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gtk, Panel, GLib, Gio, Gdk, GObject, GdkPixbuf
+from gi.repository import Gtk
 
-from gettext import gettext as _
-
-import os
-import asyncio
-import base64
-import hashlib
+from .terminal_panel import TerminalPanel
 
 
-class ImageLoader(GObject.GObject):
-    __gtype_name__ = "ImageLoader"
-
-    cache_dir = os.environ["XDG_CACHE_HOME"]
+class KernelTerminalPanel(TerminalPanel):
+    __gtype_name__ = 'KernelTerminalPanel'
 
     def __init__(self):
         super().__init__()
 
-    def load_from_base64(self, mime, image_content):
-        image_data = base64.b64decode(image_content['data']['image/png'])
-        sha256_hash = hashlib.sha256(image_data).hexdigest()
+        self.kernel = None
 
-        image_path = os.path.join(
-            self.cache_dir, "g_images", f"{sha256_hash}.png")
-        with open(image_path, 'wb') as f:
-            f.write(image_data)
+    def set_kernel(self, kernel):
+        if not kernel:
+            self.vte_terminal.reset(True, True)
+        elif kernel != self.kernel:
+            self.change_kernel(kernel)
+
+    def change_kernel(self, kernel):
+        self.vte_terminal.reset(True, True)
+        for msg in kernel.get_messages():
+            self.vte_terminal.feed([ord(char) for char in msg + "\r\n"])

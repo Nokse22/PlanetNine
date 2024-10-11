@@ -4,7 +4,7 @@
   <!-- interface-name managerk.ui -->
   <requires lib="gtk" version="4.12"/>
   <requires lib="libadwaita" version="1.0"/>
-  <template class="WorkspaceView" parent="PanelWidget">
+  <template class="WorkspacePanel" parent="PanelWidget">
     <property name="title">Workspace</property>
     <property name="tooltip">Workspace</property>
     <property name="icon-name">folder-symbolic</property>

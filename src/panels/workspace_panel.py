@@ -24,7 +24,7 @@ from enum import IntEnum
 import os
 import asyncio
 
-from .tree_row_widget import TreeWidget, ClickAction
+from ..widgets.tree_row_widget import TreeWidget, ClickAction
 
 from ..utils.converters import get_mime_icon
 
@@ -49,8 +49,8 @@ class TreeNode(GObject.Object):
 
 @Gtk.Template(
     resource_path='/io/github/nokse22/PlanetNine/gtk/workspace_view.ui')
-class WorkspaceView(Panel.Widget):
-    __gtype_name__ = 'WorkspaceView'
+class WorkspacePanel(Panel.Widget):
+    __gtype_name__ = 'WorkspacePanel'
 
     box = Gtk.Template.Child()
 

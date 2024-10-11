@@ -30,6 +30,8 @@ class Preferences(Adw.PreferencesDialog):
     code_highlight_row_switch = Gtk.Template.Child()
     style_flow_box = Gtk.Template.Child()
 
+    start_switch = Gtk.Template.Child()
+
     def __init__(self):
         super().__init__()
 

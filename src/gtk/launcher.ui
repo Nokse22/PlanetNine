@@ -23,6 +23,13 @@
                 </child>
                 <child>
                   <object class="AdwButtonRow">
+                    <property name="title">Open Code</property>
+                    <property name="action-name">win.open-code</property>
+                    <property name="end-icon-name">right-symbolic</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwButtonRow">
                     <property name="title">Open Workspace</property>
                     <property name="action-name">win.open-workspace</property>
                     <property name="end-icon-name">right-symbolic</property>

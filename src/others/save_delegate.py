@@ -37,12 +37,18 @@ class GenericSaveDelegate(Panel.SaveDelegate):
         self.page.force_close()
 
     def do_save_async(self, cancellable, callback, user_data):
+        print("DRAFT: ", self.get_is_draft())
         if self.get_is_draft():
             asyncio.create_task(
-                self._do_save_async())
+                self._do_save_async()
+            )
         else:
             asyncio.create_task(
-                self._save_content(self.page.path, self.page.get_content()))
+                self._save_content(
+                    self.page.get_path(),
+                    self.page.get_content()
+                )
+            )
 
     async def _do_save_async(self):
         dialog = Gtk.FileDialog(
@@ -56,6 +62,8 @@ class GenericSaveDelegate(Panel.SaveDelegate):
             self.page.set_path(page_path)
 
             await self._save_content(page_path, self.page.get_content())
+
+            self.set_is_draft(False)
 
         except Exception as e:
             print(e)
