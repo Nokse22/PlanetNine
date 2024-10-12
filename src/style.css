@@ -86,13 +86,18 @@ listview.sidebar-list row{
   border-radius: 6px;
 }
 
-flowbox flowboxchild {
-  padding:2px;
+gridview {
+  background-color: transparent;
 }
 
-flowbox flowboxchild:selected {
+gridview child {
+  padding: 2px;
+  border-radius: 14px;
+  align-self: center;
+}
+
+gridview child:selected box {
   background-color:var(--accent-color);
-  border-radius:14px;
 }
 
 .matrixviewer listview > row > cell {

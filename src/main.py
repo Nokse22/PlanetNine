@@ -28,6 +28,8 @@ from gi.repository import Panel
 from .window import PlanetnineWindow
 from .preferences import Preferences
 
+from .others.style_manager import StyleManager
+
 from gettext import gettext as _
 
 GObject.type_register(Vte.Terminal)
@@ -59,6 +61,8 @@ class PlanetnineApplication(Adw.Application):
         self.create_action('save-all', self.on_save_all_action, ['<primary><shift>s'])
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
+
+        self.syle_manager = StyleManager()
 
         self.preferences = None
 
@@ -113,6 +117,9 @@ class PlanetnineApplication(Adw.Application):
             'active', Gio.SettingsBindFlags.DEFAULT)
         self.settings.bind(
             'code-highlight-row', self.preferences.code_highlight_row_switch,
+            'active', Gio.SettingsBindFlags.DEFAULT)
+        self.settings.bind(
+            'code-highlight-brackets', self.preferences.code_highligh_brakets_switch,
             'active', Gio.SettingsBindFlags.DEFAULT)
 
         self.settings.bind(

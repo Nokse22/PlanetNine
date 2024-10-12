@@ -34,6 +34,7 @@ class ImagesPanel(Panel.Widget):
     main_picture = Gtk.Template.Child()
     list_view = Gtk.Template.Child()
     view_stack = Gtk.Template.Child()
+    scrolled_window = Gtk.Template.Child()
 
     cache_dir = os.environ["XDG_CACHE_HOME"]
     images_path = os.path.join(cache_dir, "g_images")
@@ -86,6 +87,9 @@ class ImagesPanel(Panel.Widget):
 
         self.selection_model.set_selected(
             self.selection_model.get_n_items() - 1)
+
+        vadj = self.scrolled_window.get_vadjustment()
+        vadj.set_value(vadj.get_upper() - vadj.get_page_size())
 
         return True
 

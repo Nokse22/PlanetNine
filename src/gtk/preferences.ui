@@ -7,6 +7,7 @@
     <child>
       <object class="AdwPreferencesPage">
         <property name="title">App</property>
+        <property name="icon-name">processor-symbolic</property>
         <child>
           <object class="AdwPreferencesGroup">
             <property name="title">Server</property>
@@ -22,14 +23,16 @@
     <child>
       <object class="AdwPreferencesPage">
         <property name="title">Notebook</property>
+        <property name="icon-name">notepad-symbolic</property>
       </object>
     </child>
     <child>
       <object class="AdwPreferencesPage">
         <property name="title">Code</property>
+        <property name="icon-name">code-symbolic</property>
         <child>
           <object class="AdwPreferencesGroup">
-            <property name="title">Code View</property>
+            <property name="title">Text</property>
             <child>
               <object class="AdwSwitchRow" id="code_vim_switch">
                 <property name="title">Use Vim Key Bindings</property>
@@ -39,6 +42,21 @@
             <child>
               <object class="AdwSwitchRow" id="code_line_number_switch">
                 <property name="title">Show Line Numbers</property>
+              </object>
+            </child>
+            <child>
+              <object class="AdwSwitchRow" id="code_wrap_switch">
+                <property name="title">Wrap Lines</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwPreferencesGroup">
+            <property name="title">Highlight</property>
+            <child>
+              <object class="AdwSwitchRow" id="code_highligh_brakets_switch">
+                <property name="title">Highlight Matching Brackets</property>
               </object>
             </child>
             <child>
@@ -53,14 +71,18 @@
     <child>
       <object class="AdwPreferencesPage">
         <property name="title">Theme</property>
+        <property name="icon-name">preferences-desktop-theme-symbolic</property>
         <child>
           <object class="AdwPreferencesGroup">
             <property name="title">Code View</property>
             <child>
-              <object class="GtkFlowBox" id="style_flow_box">
-                <property name="column-spacing">12</property>
-                <property name="row-spacing">12</property>
-                <property name="selection-mode">single</property>
+              <object class="GtkGridView" id="grid_view">
+                <property name="factory">
+                  <object class="GtkSignalListItemFactory">
+                    <signal name="setup" handler="on_grid_view_setup"/>
+                    <signal name="bind" handler="on_grid_view_bind"/>
+                  </object>
+                </property>
               </object>
             </child>
           </object>

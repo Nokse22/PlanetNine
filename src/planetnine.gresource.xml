@@ -3,6 +3,39 @@
   <gresource prefix="/io/github/nokse22/PlanetNine">
     <file>style.css</file>
 
+    <file preprocess="xml-stripblanks">styles/palettes/palettes.xml</file>
+    <file>styles/palettes/gnome.palette</file>
+    <file>styles/palettes/solarized.palette</file>
+    <file>styles/palettes/tango.palette</file>
+    <file>styles/palettes/campbell.palette</file>
+    <file>styles/palettes/dracula.palette</file>
+    <file>styles/palettes/nord.palette</file>
+    <file>styles/palettes/linux.palette</file>
+    <file>styles/palettes/rxvt.palette</file>
+    <file>styles/palettes/Vs Code.palette</file>
+    <file>styles/palettes/xterm.palette</file>
+
+    <file preprocess="xml-stripblanks">styles/schemes/campbell-dark.xml</file>
+    <file preprocess="xml-stripblanks">styles/schemes/campbell-light.xml</file>
+    <file preprocess="xml-stripblanks">styles/schemes/dracula-dark.xml</file>
+    <file preprocess="xml-stripblanks">styles/schemes/dracula-light.xml</file>
+    <file preprocess="xml-stripblanks">styles/schemes/gnome-dark.xml</file>
+    <file preprocess="xml-stripblanks">styles/schemes/gnome-light.xml</file>
+    <file preprocess="xml-stripblanks">styles/schemes/linux-dark.xml</file>
+    <file preprocess="xml-stripblanks">styles/schemes/linux-light.xml</file>
+    <file preprocess="xml-stripblanks">styles/schemes/nord-dark.xml</file>
+    <file preprocess="xml-stripblanks">styles/schemes/nord-light.xml</file>
+    <file preprocess="xml-stripblanks">styles/schemes/rxvt-dark.xml</file>
+    <file preprocess="xml-stripblanks">styles/schemes/rxvt-light.xml</file>
+    <file preprocess="xml-stripblanks">styles/schemes/solarized-dark.xml</file>
+    <file preprocess="xml-stripblanks">styles/schemes/solarized-light.xml</file>
+    <file preprocess="xml-stripblanks">styles/schemes/tango-dark.xml</file>
+    <file preprocess="xml-stripblanks">styles/schemes/tango-light.xml</file>
+    <file preprocess="xml-stripblanks">styles/schemes/vs-code-dark.xml</file>
+    <file preprocess="xml-stripblanks">styles/schemes/vs-code-light.xml</file>
+    <file preprocess="xml-stripblanks">styles/schemes/xterm-dark.xml</file>
+    <file preprocess="xml-stripblanks">styles/schemes/xterm-light.xml</file>
+
     <file preprocess="xml-stripblanks">gtk/window.ui</file>
     <file preprocess="xml-stripblanks">gtk/cell.ui</file>
     <file preprocess="xml-stripblanks">gtk/cell_drag.ui</file>
@@ -39,13 +72,14 @@
     <file>icons/16x16/actions/cross-large-symbolic.svg</file>
     <file>icons/16x16/actions/arrow-circular-top-right-symbolic.svg</file>
     <file>icons/16x16/actions/arrow1-top-right-symbolic.svg</file>
+    <file>icons/16x16/actions/preferences-desktop-theme-symbolic.svg</file>
 
     <file>icons/16x16/mimetypes/image-symbolic.svg</file>
     <file>icons/16x16/mimetypes/text-json-symbolic.svg</file>
     <file>icons/16x16/mimetypes/text-symbolic.svg</file>
     <file>icons/16x16/mimetypes/text-markdown-symbolic.svg</file>
     <file>icons/16x16/mimetypes/text-xml-symbolic.svg</file>
-    <file>icons/16x16/mimetypes/text-html-symbolic.svg</file>
+    <file alias="icons/16x16/mimetypes/code-symbolic.svg">icons/16x16/mimetypes/text-html-symbolic.svg</file>
     <file>icons/16x16/mimetypes/text-sql-symbolic.svg</file>
     <file>icons/16x16/mimetypes/text-x-python-symbolic.svg</file>
     <file>icons/16x16/mimetypes/application-pdf-symbolic.svg</file>

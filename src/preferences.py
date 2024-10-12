@@ -17,8 +17,10 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gtk, GObject, Adw
+from gi.repository import Gtk, GObject, Adw, Gio, Gdk, Graphene
 from gi.repository import Panel, GtkSource
+
+from .others.style_manager import StyleManager
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/preferences.ui')
@@ -28,44 +30,112 @@ class Preferences(Adw.PreferencesDialog):
     code_vim_switch = Gtk.Template.Child()
     code_line_number_switch = Gtk.Template.Child()
     code_highlight_row_switch = Gtk.Template.Child()
-    style_flow_box = Gtk.Template.Child()
+    code_wrap_switch = Gtk.Template.Child()
+    code_highligh_brakets_switch = Gtk.Template.Child()
 
     start_switch = Gtk.Template.Child()
+
+    grid_view = Gtk.Template.Child()
 
     def __init__(self):
         super().__init__()
 
-        self.style_manager = Adw.StyleManager.get_default()
-        self.style_manager.connect("notify::dark", self.update_style_scheme)
+        self.prev_style_preview = None
+
+        self.adw_style_manager = Adw.StyleManager.get_default()
+        self.adw_style_manager.connect("notify::dark", self.update_style_scheme)
+
+        self.scheme_manager = GtkSource.StyleSchemeManager()
+        self.scheme_manager.append_search_path(
+            "resource:///io/github/nokse22/PlanetNine/styles/schemes/")
+
+        self.style_manager = StyleManager()
+
+        self.selection_model = Gtk.SingleSelection(
+            model=self.style_manager.palettes)
+
+        self.grid_view.set_model(self.selection_model)
+
+        self.selection_model.connect(
+            "notify::selected", self.on_selected_style_changed)
+
+        self.update_style_scheme()
+
+    def on_selected_style_changed(self, *args):
+        # if self.prev_style_preview:
+        #     self.prev_style_preview.set_selected(False)
+        # self.prev_style_preview = self.style_flow_box.get_selected_children()[0].get_child()
+        # self.prev_style_preview.set_selected(True)
+
+        self.style_manager.selected = self.selection_model.get_selected()
 
         self.update_style_scheme()
 
     def update_style_scheme(self, *args):
-        child = self.style_flow_box.get_last_child()
-        while child:
-            self.style_flow_box.remove(child)
-            child = self.style_flow_box.get_last_child()
+        light = False if self.adw_style_manager.get_dark() else True
 
-        sm = GtkSource.StyleSchemeManager()
+        css_provider = Gtk.CssProvider()
+        palette = self.style_manager.palette
+        colors = palette.light_palette if light else palette.dark_palette
+        primary = colors["background"]
+        secondary = colors["foreground"]
+        titlebar_fg = colors["titlebarforeground"]
+        titlebar_bg = colors["titlebarbackground"]
+        css_provider.load_from_string(f"""
+        :root {{
+            --primary-bg-color: {primary};
+            --primary-fg-color: {secondary};
 
-        available_schemes = [
-            ('Adwaita', 'Adwaita-dark'),
-            ('classic', 'classic-dark'),
-            ('cobalt-light', 'cobalt'),
-            ('kate', 'kate-dark'),
-            ('tango', 'oblivion'),
-            ('solarized-light', 'solarized-dark')
-        ]
+            --headerbar-bg-color: {titlebar_bg};
+            --headerbar-fg-color: {titlebar_fg};
 
-        theme = 1 if Adw.StyleManager.get_default().get_dark() else 0
+            --window-bg-color: {primary};
+            --window-fg-color: {secondary};
+            --view-bg-color: mix({primary}, {secondary}, 0.1);
+            --view-fg-color: {secondary};
 
-        for scheme_id in available_schemes:
-            scheme = sm.get_scheme(scheme_id[theme])
-            preview = GtkSource.StyleSchemePreview.new(scheme)
-            preview.add_css_class("card")
+            --sidebar-bg-color: mix({primary}, {secondary}, 0.05);
+            --sidebar-fg-color: {secondary};
+            --secondary-sidebar-bg-color: mix({primary}, {secondary}, 0.02);
+            --secondary-sidebar-fg-color: {secondary};
 
-            self.style_flow_box.append(preview)
+            --card-bg-color: mix({primary}, {secondary}, 0.08);
+            --card-fg-color: {secondary};
+            --popover-bg-color: {primary};
+            --popover-fg-color: {secondary};
 
-        self.style_flow_box.select_child(
-            self.style_flow_box.get_child_at_index(0)
+            --dialog-bg-color: {primary};
+            --dialog-fg-color: {secondary};
+        }}
+    """)
+
+        display = Gdk.Display.get_default()
+
+        # Add the CSS provider to the screen's style context
+        Gtk.StyleContext.add_provider_for_display(
+            display,
+            css_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )
+
+    @Gtk.Template.Callback("on_grid_view_setup")
+    def on_grid_view_setup(self, _factory, list_item):
+        list_item.set_child(Gtk.Box(
+            halign=Gtk.Align.CENTER,
+            overflow=Gtk.Overflow.HIDDEN
+        ))
+
+    @Gtk.Template.Callback("on_grid_view_bind")
+    def on_grid_view_bind(self, _factory, list_item):
+        widget = list_item.get_child()
+        palette = list_item.get_item()
+
+        scheme = self.scheme_manager.get_scheme(palette.light_source_name)
+        light_preview = GtkSource.StyleSchemePreview.new(scheme)
+
+        scheme = self.scheme_manager.get_scheme(palette.dark_source_name)
+        dark_preview = GtkSource.StyleSchemePreview.new(scheme)
+
+        widget.append(light_preview)
+        widget.append(dark_preview)
+        widget.add_css_class("card")

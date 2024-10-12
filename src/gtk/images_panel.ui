@@ -98,7 +98,7 @@
                   <object class="GtkSeparator"/>
                 </child>
                 <child>
-                  <object class="GtkScrolledWindow">
+                  <object class="GtkScrolledWindow" id="scrolled_window">
                     <property name="hscrollbar-policy">never</property>
                     <child>
                       <object class="GtkListView" id="list_view">
