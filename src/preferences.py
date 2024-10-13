@@ -42,9 +42,6 @@ class Preferences(Adw.PreferencesDialog):
 
         self.prev_style_preview = None
 
-        self.adw_style_manager = Adw.StyleManager.get_default()
-        self.adw_style_manager.connect("notify::dark", self.update_style_scheme)
-
         self.scheme_manager = GtkSource.StyleSchemeManager()
         self.scheme_manager.append_search_path(
             "resource:///io/github/nokse22/PlanetNine/styles/schemes/")
@@ -58,8 +55,6 @@ class Preferences(Adw.PreferencesDialog):
 
         self.selection_model.connect(
             "notify::selected", self.on_selected_style_changed)
-
-        self.update_style_scheme()
 
         # Bind settings to widgets
 
@@ -84,59 +79,12 @@ class Preferences(Adw.PreferencesDialog):
 
         self.settings.bind(
             'selected-theme-n', self.style_manager,
-            'selected', Gio.SettingsBindFlags.BIDIRECTIONAL)
+            'selected', Gio.SettingsBindFlags.DEFAULT)
+
+        self.style_manager.selected = self.settings.get_int('selected-theme-n')
 
     def on_selected_style_changed(self, *args):
         self.style_manager.selected = self.selection_model.get_selected()
-
-        self.update_style_scheme()
-
-    def update_style_scheme(self, *args):
-        light = False if self.adw_style_manager.get_dark() else True
-
-        css_provider = Gtk.CssProvider()
-        palette = self.style_manager.palette
-        colors = palette.light_palette if light else palette.dark_palette
-        primary = colors["background"]
-        secondary = colors["foreground"]
-        titlebar_fg = colors["titlebarforeground"]
-        titlebar_bg = colors["titlebarbackground"]
-        css_provider.load_from_string(f"""
-        :root {{
-            --primary-bg-color: {primary};
-            --primary-fg-color: {secondary};
-
-            --headerbar-bg-color: {titlebar_bg};
-            --headerbar-fg-color: {titlebar_fg};
-
-            --window-bg-color: {primary};
-            --window-fg-color: {secondary};
-            --view-bg-color: mix({primary}, {secondary}, 0.1);
-            --view-fg-color: {secondary};
-
-            --sidebar-bg-color: mix({primary}, {secondary}, 0.05);
-            --sidebar-fg-color: {secondary};
-            --secondary-sidebar-bg-color: mix({primary}, {secondary}, 0.02);
-            --secondary-sidebar-fg-color: {secondary};
-
-            --card-bg-color: mix({primary}, {secondary}, 0.08);
-            --card-fg-color: {secondary};
-            --popover-bg-color: {primary};
-            --popover-fg-color: {secondary};
-
-            --dialog-bg-color: {primary};
-            --dialog-fg-color: {secondary};
-        }}
-    """)
-
-        display = Gdk.Display.get_default()
-
-        # Add the CSS provider to the screen's style context
-        Gtk.StyleContext.add_provider_for_display(
-            display,
-            css_provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-        )
 
     @Gtk.Template.Callback("on_grid_view_setup")
     def on_grid_view_setup(self, _factory, list_item):

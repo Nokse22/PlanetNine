@@ -270,7 +270,6 @@ class NotebookPage(Panel.Widget):
     def get_selected_cell_index(self):
         selected_cell = self.cells_list_box.get_selected_row()
 
-        self.cells_list_box.get_row_at_index
         for index in range(0, self.notebook_model.get_n_items()):
             if self.cells_list_box.get_row_at_index(index) == selected_cell:
                 return index

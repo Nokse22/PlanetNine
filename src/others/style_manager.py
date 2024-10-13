@@ -17,7 +17,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import GObject, Gio, Adw, GtkSource
+from gi.repository import GObject, Gio, Adw, GtkSource, Gtk, Gdk
 
 import xml.etree.ElementTree as ET
 import configparser
@@ -132,6 +132,7 @@ class StyleManager(GObject.GObject):
             self._selected = _selected
             self.notify("selected")
             self.emit("style-changed")
+            self.update_style_scheme()
 
     @GObject.Property(type=GObject.GObject)
     def palette(self):
@@ -144,15 +145,63 @@ class StyleManager(GObject.GObject):
     def get_avalaible_palettes(self):
         return self._palettes
 
-    def on_dark_changed(self):
+    def on_dark_changed(self, *args):
         self.emit("style-changed")
+        self.update_style_scheme()
 
     def get_current_scheme(self):
         if self.adw_style_manager.get_dark():
             scheme = self.palette.dark_source_name
-            print(scheme)
             return self.style_scheme_manager.get_scheme(scheme)
         else:
             scheme = self.palette.light_source_name
-            print(scheme)
             return self.style_scheme_manager.get_scheme(scheme)
+
+    def update_style_scheme(self, *args):
+        light = False if self.adw_style_manager.get_dark() else True
+        palette = self.palette
+        colors = palette.light_palette if light else palette.dark_palette
+
+        primary = colors["background"]
+        secondary = colors["foreground"]
+        titlebar_fg = colors["titlebarforeground"]
+        titlebar_bg = colors["titlebarbackground"]
+
+        css_provider = Gtk.CssProvider()
+
+        css_provider.load_from_string(f"""
+        :root {{
+            --primary-bg-color: {primary};
+            --primary-fg-color: {secondary};
+
+            --headerbar-bg-color: {titlebar_bg};
+            --headerbar-fg-color: {titlebar_fg};
+
+            --window-bg-color: {primary};
+            --window-fg-color: {secondary};
+            --view-bg-color: mix({primary}, {secondary}, 0.1);
+            --view-fg-color: {secondary};
+
+            --sidebar-bg-color: mix({primary}, {secondary}, 0.05);
+            --sidebar-fg-color: {secondary};
+            --secondary-sidebar-bg-color: mix({primary}, {secondary}, 0.02);
+            --secondary-sidebar-fg-color: {secondary};
+
+            --card-bg-color: mix({primary}, {secondary}, 0.08);
+            --card-fg-color: {secondary};
+            --popover-bg-color: {primary};
+            --popover-fg-color: {secondary};
+
+            --dialog-bg-color: {primary};
+            --dialog-fg-color: {secondary};
+        }}
+        """)
+
+        display = Gdk.Display.get_default()
+
+        # Add the CSS provider to the screen's style context
+        Gtk.StyleContext.add_provider_for_display(
+            display,
+            css_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )

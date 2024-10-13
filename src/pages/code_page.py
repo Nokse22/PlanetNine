@@ -209,7 +209,6 @@ class CodePage(Panel.Widget):
 
     def update_style_scheme(self, *args):
         scheme = self.style_manager.get_current_scheme()
-        print(scheme)
         self.code_buffer.set_style_scheme(scheme)
 
     def set_kernel(self, jupyter_kernel):

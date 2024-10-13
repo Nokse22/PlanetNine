@@ -36,6 +36,8 @@ from .json_viewer import JsonViewer
 from ..models.cell import Cell, CellType
 from ..models.output import OutputType, DataType
 
+from ..others.style_manager import StyleManager
+
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/cell.ui')
 class CellUI(Gtk.Box):
@@ -86,12 +88,8 @@ class CellUI(Gtk.Box):
         self.code_buffer.set_language(lang)
         self.code_buffer.set_highlight_syntax(True)
 
-        sm = GtkSource.StyleSchemeManager()
-        scheme = sm.get_scheme("Adwaita-dark")
-        self.code_buffer.set_style_scheme(scheme)
-
-        self.style_manager = Adw.StyleManager.get_default()
-        self.style_manager.connect("notify::dark", self.update_style_scheme)
+        self.style_manager = StyleManager()
+        self.style_manager.connect("style-changed", self.update_style_scheme)
         self.update_style_scheme()
 
         # ENABLE SPELL CHECK
@@ -140,6 +138,10 @@ class CellUI(Gtk.Box):
             has_arrow=False,
             halign=1,
         )
+
+    def update_style_scheme(self, *args):
+        scheme = self.style_manager.get_current_scheme()
+        self.code_buffer.set_style_scheme(scheme)
 
     @GObject.Property(type=str, default="")
     def source(self):
@@ -277,14 +279,6 @@ class CellUI(Gtk.Box):
             child = TerminalTextView()
             self.output_box.append(child)
         child.insert_with_escapes(text)
-
-    def update_style_scheme(self, *args):
-        scheme_name = "Adwaita"
-        if Adw.StyleManager.get_default().get_dark():
-            scheme_name += "-dark"
-        sm = GtkSource.StyleSchemeManager()
-        scheme = sm.get_scheme(scheme_name)
-        self.code_buffer.set_style_scheme(scheme)
 
     def on_click_released(self, gesture, n_press, click_x, click_y):
         if n_press != 1:
