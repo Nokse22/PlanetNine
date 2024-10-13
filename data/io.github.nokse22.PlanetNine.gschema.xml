@@ -19,5 +19,8 @@
 	  <key name="code-highlight-brackets" type="b">
       <default>true</default>
     </key>
+	  <key name="selected-theme-n" type="i">
+      <default>0</default>
+    </key>
 	</schema>
 </schemalist>

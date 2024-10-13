@@ -23,6 +23,7 @@ from gi.repository import Spelling
 
 from ..others.save_delegate import GenericSaveDelegate
 from ..others.image_loader import ImageLoader
+from ..others.style_manager import StyleManager
 
 from ..utils.converters import get_language_highlight_name
 
@@ -88,8 +89,8 @@ class CodePage(Panel.Widget):
 
         self.set_language_highlight()
 
-        self.style_manager = Adw.StyleManager.get_default()
-        self.style_manager.connect("notify::dark", self.update_style_scheme)
+        self.style_manager = StyleManager()
+        self.style_manager.connect("style-changed", self.update_style_scheme)
         self.update_style_scheme()
 
         # ENABLE SPELL CHECK
@@ -207,11 +208,8 @@ class CodePage(Panel.Widget):
         self.emit("cursor-moved", self.code_buffer, 0)
 
     def update_style_scheme(self, *args):
-        scheme_name = "Adwaita"
-        if Adw.StyleManager.get_default().get_dark():
-            scheme_name += "-dark"
-        sm = GtkSource.StyleSchemeManager()
-        scheme = sm.get_scheme(scheme_name)
+        scheme = self.style_manager.get_current_scheme()
+        print(scheme)
         self.code_buffer.set_style_scheme(scheme)
 
     def set_kernel(self, jupyter_kernel):

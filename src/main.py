@@ -52,30 +52,31 @@ class PlanetnineApplication(Adw.Application):
     def __init__(self):
         super().__init__(application_id='io.github.nokse22.PlanetNine',
                          flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
-        self.create_action('quit', lambda *_: self.quit(), ['<primary>q'])
-        self.create_action('about', self.on_about_action)
-        self.create_action('preferences', self.on_preferences_action, ['<primary>comma'])
-        self.create_action('run', self.on_run_action, ['<primary>Escape'])
+        self.create_action(
+            'quit', lambda *_: self.quit(), ['<primary>q'])
+        self.create_action(
+            'about', self.on_about_action)
+        self.create_action(
+            'preferences', self.on_preferences_action, ['<primary>comma'])
+        self.create_action(
+            'run', self.on_run_action, ['<primary>Escape'])
 
-        self.create_action('save', self.on_save_action, ['<primary>s'])
-        self.create_action('save-all', self.on_save_all_action, ['<primary><shift>s'])
+        self.create_action(
+            'save', self.on_save_action, ['<primary>s'])
+        self.create_action(
+            'save-all', self.on_save_all_action, ['<primary><shift>s'])
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
-
-        self.syle_manager = StyleManager()
 
         self.preferences = None
 
     def do_activate(self):
-        """Called when the application is activated.
-
-        We raise the application's main window, creating it if
-        necessary.
-        """
         self.win = self.props.active_window
         if not self.win:
             self.win = PlanetnineWindow(application=self)
         self.win.present()
+
+        self.preferences = Preferences()
 
         self.win.connect("close-request", self.on_shutdown)
 
@@ -108,23 +109,6 @@ class PlanetnineApplication(Adw.Application):
             return
 
         self.preferences = Preferences()
-
-        self.settings.bind(
-            'code-vim', self.preferences.code_vim_switch,
-            'active', Gio.SettingsBindFlags.DEFAULT)
-        self.settings.bind(
-            'code-line-number', self.preferences.code_line_number_switch,
-            'active', Gio.SettingsBindFlags.DEFAULT)
-        self.settings.bind(
-            'code-highlight-row', self.preferences.code_highlight_row_switch,
-            'active', Gio.SettingsBindFlags.DEFAULT)
-        self.settings.bind(
-            'code-highlight-brackets', self.preferences.code_highligh_brakets_switch,
-            'active', Gio.SettingsBindFlags.DEFAULT)
-
-        self.settings.bind(
-            'start-server-immediately', self.preferences.start_switch,
-            'active', Gio.SettingsBindFlags.DEFAULT)
 
         self.preferences.present(self.props.active_window)
 

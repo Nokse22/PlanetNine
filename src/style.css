@@ -11,7 +11,7 @@ list.notebook-list row {
 
 list.notebook-list row:selected frame{
   background-color:transparent;
-  border: 2px alpha(@accent_color, 0.5) solid;
+  border: 2px alpha(var(--accent-color), 0.5) solid;
   transition: border ease-in-out 100ms;
 }
 
@@ -20,7 +20,7 @@ list.notebook-list row frame{
 }
 
 list.notebook-list row:selected .markdown-view{
-  border: 2px alpha(@accent_color, 0.4) solid;
+  border: 2px alpha(var(--accent-color), 0.4) solid;
 }
 
 list.console {
@@ -52,7 +52,7 @@ list.console row {
 
 .markdown-view {
   background-color: transparent;
-  color: @window_fg_color;
+  color: var(--window-fg-color);
   border: 2px transparent solid;
   border-radius: 12px;
   transition: border ease-in-out 200ms;
@@ -63,9 +63,9 @@ list.console row {
 }
 
 .drag-widget {
-  background-color: @window_bg_color;
+  background-color: var(--window-bg-color);
   border-radius: 15px;
-  border: 1px @borders solid;
+  border: 1px var(--borders) solid;
 }
 
 .output markdownview{
@@ -93,7 +93,6 @@ gridview {
 gridview child {
   padding: 2px;
   border-radius: 14px;
-  align-self: center;
 }
 
 gridview child:selected box {
@@ -105,7 +104,7 @@ gridview child:selected box {
 }
 
 .matrixviewer header > button {
-  background-color: @sidebar_bg_color;
+  background-color: var(--sidebar-bg-color);
 }
 
 .index-cell {

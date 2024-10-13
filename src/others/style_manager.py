@@ -17,7 +17,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import GObject, Gio
+from gi.repository import GObject, Gio, Adw, GtkSource
 
 import xml.etree.ElementTree as ET
 import configparser
@@ -45,8 +45,8 @@ class Palette(GObject.GObject):
         self.name = palette.attrib
         self.display_name = palette.attrib
 
-        self.dark_source_name = palette.find('source').get('light')
-        self.light_source_name = palette.find('source').get('dark')
+        self.dark_source_name = palette.find('source').get('dark')
+        self.light_source_name = palette.find('source').get('light')
 
         color_file = palette.find('colors').get('name')
         palettes_data = Gio.resources_lookup_data(
@@ -72,10 +72,10 @@ class Palette(GObject.GObject):
         for key, value in self.config_parser.items(section):
             palette[key] = value
 
-        # palette["titlebarbackground"] = palette.get(
-        #     "titlebarbackground", palette.get("Background"))
-        # palette["titlebarforeground"] = palette.get(
-        #     "titlebarforeground", palette.get("Foreground"))
+        palette["titlebarbackground"] = palette.get(
+            "titlebarbackground", palette.get("Background"))
+        palette["titlebarforeground"] = palette.get(
+            "titlebarforeground", palette.get("Foreground"))
 
         return palette
 
@@ -83,12 +83,33 @@ class Palette(GObject.GObject):
 class StyleManager(GObject.GObject):
     __gtype_name__ = "StyleManager"
 
+    __gsignals__ = {
+        'style-changed': (GObject.SignalFlags.RUN_FIRST, None, ()),
+    }
+
+    _instance = None
+    _initialized = False
+
+    _palettes = Gio.ListStore.new(Palette)
+
+    _selected = 0
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(StyleManager, cls).__new__(cls)
+        return cls._instance
+
     def __init__(self):
         super().__init__()
+        if self._initialized:
+            return
 
-        self._palettes = Gio.ListStore.new(Palette)
+        self.adw_style_manager = Adw.StyleManager.get_default()
+        self.adw_style_manager.connect("notify::dark", self.on_dark_changed)
 
-        self._selected = 9
+        self.style_scheme_manager = GtkSource.StyleSchemeManager()
+        self.style_scheme_manager.append_search_path(
+            "resource:///io/github/nokse22/PlanetNine/styles/schemes/")
 
         palettes_data = Gio.resources_lookup_data(
             "/io/github/nokse22/PlanetNine/styles/palettes/palettes.xml",
@@ -99,7 +120,7 @@ class StyleManager(GObject.GObject):
         for palette in palettes:
             self._palettes.append(Palette(palette))
 
-        print(self._palettes)
+        StyleManager._initialized = True
 
     @GObject.Property(type=int)
     def selected(self):
@@ -107,9 +128,10 @@ class StyleManager(GObject.GObject):
 
     @selected.setter
     def selected(self, _selected):
-        print(_selected)
-        self._selected = _selected
-        self.notify("selected")
+        if _selected != self._selected:
+            self._selected = _selected
+            self.notify("selected")
+            self.emit("style-changed")
 
     @GObject.Property(type=GObject.GObject)
     def palette(self):
@@ -121,3 +143,16 @@ class StyleManager(GObject.GObject):
 
     def get_avalaible_palettes(self):
         return self._palettes
+
+    def on_dark_changed(self):
+        self.emit("style-changed")
+
+    def get_current_scheme(self):
+        if self.adw_style_manager.get_dark():
+            scheme = self.palette.dark_source_name
+            print(scheme)
+            return self.style_scheme_manager.get_scheme(scheme)
+        else:
+            scheme = self.palette.light_source_name
+            print(scheme)
+            return self.style_scheme_manager.get_scheme(scheme)

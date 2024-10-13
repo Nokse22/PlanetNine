@@ -61,12 +61,32 @@ class Preferences(Adw.PreferencesDialog):
 
         self.update_style_scheme()
 
-    def on_selected_style_changed(self, *args):
-        # if self.prev_style_preview:
-        #     self.prev_style_preview.set_selected(False)
-        # self.prev_style_preview = self.style_flow_box.get_selected_children()[0].get_child()
-        # self.prev_style_preview.set_selected(True)
+        # Bind settings to widgets
 
+        self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
+
+        self.settings.bind(
+            'code-vim', self.code_vim_switch,
+            'active', Gio.SettingsBindFlags.DEFAULT)
+        self.settings.bind(
+            'code-line-number', self.code_line_number_switch,
+            'active', Gio.SettingsBindFlags.DEFAULT)
+        self.settings.bind(
+            'code-highlight-row', self.code_highlight_row_switch,
+            'active', Gio.SettingsBindFlags.DEFAULT)
+        self.settings.bind(
+            'code-highlight-brackets', self.code_highligh_brakets_switch,
+            'active', Gio.SettingsBindFlags.DEFAULT)
+
+        self.settings.bind(
+            'start-server-immediately', self.start_switch,
+            'active', Gio.SettingsBindFlags.DEFAULT)
+
+        self.settings.bind(
+            'selected-theme-n', self.style_manager,
+            'selected', Gio.SettingsBindFlags.BIDIRECTIONAL)
+
+    def on_selected_style_changed(self, *args):
         self.style_manager.selected = self.selection_model.get_selected()
 
         self.update_style_scheme()
