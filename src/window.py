@@ -53,6 +53,12 @@ from .panels.images_panel import ImagesPanel
 from .panels.terminal_panel import TerminalPanel
 from .panels.kernel_terminal_panel import KernelTerminalPanel
 
+from .interfaces.kernel import IKernel
+from .interfaces.cells import ICells
+from .interfaces.saveable import ISaveable
+from .interfaces.disconnectable import IDisconnectable
+from .interfaces.cursor import ICursor
+
 from .widgets.launcher import Launcher
 
 from .utils.converters import is_mime_displayable
@@ -661,17 +667,18 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     def on_focus_changed(self, *args):
         page = self.get_visible_page()
 
-        if (isinstance(page, NotebookPage) or
-                isinstance(page, ConsolePage) or
-                isinstance(page, CodePage)):
+        print("isinstance(page, IKernel) = ", isinstance(page, IKernel))
+        print("isinstance(page, ICursor) = ", isinstance(page, ICursor))
 
+        if isinstance(page, IKernel):
             if self.previous_page:
                 self.previous_page.disconnect_by_func(self.update_kernel_info)
                 self.previous_page.disconnect_by_func(self.on_cursor_moved)
 
             page.connect("kernel-info-changed", self.update_kernel_info)
+            if isinstance(page, ICursor):
+                page.connect("cursor-moved", self.on_cursor_moved)
             self.update_kernel_info(page)
-            page.connect("cursor-moved", self.on_cursor_moved)
             self.previous_page = page
 
             self.omni_bar.set_visible(True)
@@ -841,13 +848,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         if isinstance(page, NotebookPage):
             page.add_cell(cell)
 
-        print(page.notebook_model)
-
     def run_clicked(self, *args):
         page = self.get_visible_page()
-        if isinstance(page, NotebookPage):
-            page.run_selected_cell()
-        elif isinstance(page, CodePage):
+        if isinstance(page, ICells):
             page.run_selected_cell()
 
     def on_jupyter_server_started(self, server):
@@ -881,6 +884,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             widget.disconnect_by_func(self.on_cursor_moved)
 
             self.previous_page = None
+
+        print(f"Frame closed: {widget}")
+
+        if isinstance(widget, IDisconnectable):
+            widget.disconnect()
 
     @Gtk.Template.Callback("on_key_pressed")
     def on_key_pressed(self, controller, keyval, keycode, state):

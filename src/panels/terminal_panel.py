@@ -19,6 +19,8 @@
 
 from gi.repository import Gtk, Panel, Adw, Gdk, Vte
 
+from ..others.style_manager import StyleManager
+
 
 class TerminalPanel(Panel.Widget):
     __gtype_name__ = 'TerminalPanel'
@@ -42,8 +44,8 @@ class TerminalPanel(Panel.Widget):
 
         # Style Manager to update when dark/light
 
-        self.style_manager = Adw.StyleManager.get_default()
-        self.style_manager.connect("notify::dark", self.update_style_scheme)
+        self.style_manager = StyleManager()
+        self.style_manager.connect("style-changed", self.update_style_scheme)
         self.update_style_scheme()
 
     def feed(self, feed_string):
@@ -51,15 +53,26 @@ class TerminalPanel(Panel.Widget):
         self.vte_terminal.feed([ord(char) for char in feed_string + "\r\n"])
 
     def update_style_scheme(self, *args):
+        colors = self.style_manager.get_current_colors()
         background = Gdk.RGBA()
         foreground = Gdk.RGBA()
 
-        background.parse('rgba(0, 0, 0, 0)')
+        background.parse(colors["background"])
 
-        if Adw.StyleManager.get_default().get_dark():
-            foreground.parse('#ffffff')
-        else:
-            foreground.parse('rgba(0, 0, 0, 0.8)')
+        foreground.parse(colors["foreground"])
+
+        colors_list = []
+
+        for i in range(0, 16):
+            color = Gdk.RGBA()
+            color.parse(colors[f"color{i}"])
+            colors_list.append(color)
 
         self.vte_terminal.set_color_background(background)
         self.vte_terminal.set_color_foreground(foreground)
+
+        self.vte_terminal.set_colors(
+            foreground,
+            background,
+            colors_list
+        )

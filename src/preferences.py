@@ -33,6 +33,8 @@ class Preferences(Adw.PreferencesDialog):
     code_wrap_switch = Gtk.Template.Child()
     code_highligh_brakets_switch = Gtk.Template.Child()
 
+    notebook_line_number_switch = Gtk.Template.Child()
+
     start_switch = Gtk.Template.Child()
 
     grid_view = Gtk.Template.Child()
@@ -50,7 +52,6 @@ class Preferences(Adw.PreferencesDialog):
 
         self.selection_model = Gtk.SingleSelection(
             model=self.style_manager.palettes)
-
         self.grid_view.set_model(self.selection_model)
 
         self.selection_model.connect(
@@ -59,6 +60,10 @@ class Preferences(Adw.PreferencesDialog):
         # Bind settings to widgets
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
+
+        self.settings.bind(
+            'notebook-line-number', self.notebook_line_number_switch,
+            'active', Gio.SettingsBindFlags.DEFAULT)
 
         self.settings.bind(
             'code-vim', self.code_vim_switch,
@@ -82,6 +87,7 @@ class Preferences(Adw.PreferencesDialog):
             'selected', Gio.SettingsBindFlags.DEFAULT)
 
         self.style_manager.selected = self.settings.get_int('selected-theme-n')
+        self.selection_model.set_selected(self.settings.get_int('selected-theme-n'))
 
     def on_selected_style_changed(self, *args):
         self.style_manager.selected = self.selection_model.get_selected()

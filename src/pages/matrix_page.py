@@ -138,7 +138,7 @@ class MatrixPage(Panel.Widget):
     def __on_unrealized(self, *args):
         self.disconnect_by_func(self.__on_unrealized)
 
-        self.save_delegate.unbind_all()
+        self.save_delegate.disconnect_all()
 
         print(f"Unrealize: {self}")
 

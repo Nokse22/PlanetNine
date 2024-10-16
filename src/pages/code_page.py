@@ -27,7 +27,11 @@ from ..others.style_manager import StyleManager
 
 from ..utils.converters import get_language_highlight_name
 
-import sys
+from ..interfaces.saveable import ISaveable
+from ..interfaces.disconnectable import IDisconnectable
+from ..interfaces.kernel import IKernel
+from ..interfaces.cursor import ICursor
+
 import os
 
 GObject.type_register(GtkSource.Map)
@@ -35,14 +39,8 @@ GObject.type_register(GtkSource.VimIMContext)
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/code_page.ui')
-class CodePage(Panel.Widget):
+class CodePage(Panel.Widget, ISaveable, IDisconnectable, ICursor, IKernel):
     __gtype_name__ = 'CodePage'
-
-    __gsignals__ = {
-        'kernel-info-changed': (GObject.SignalFlags.RUN_FIRST, None, ()),
-        'cursor-moved':
-            (GObject.SignalFlags.RUN_FIRST, None, (Gtk.TextBuffer, int))
-    }
 
     source_view = Gtk.Template.Child()
     code_buffer = Gtk.Template.Child()
@@ -52,8 +50,6 @@ class CodePage(Panel.Widget):
 
     def __init__(self, _path=None):
         super().__init__()
-
-        self.connect("unrealize", self.__on_unrealized)
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
@@ -167,12 +163,9 @@ class CodePage(Panel.Widget):
 
         return self.code_buffer.get_text(start_iter, end_iter, False)
 
-    def run_selected_cell(self):
-        code_portion = self.get_selected_cell_content()
-        self.jupyter_kernel.execute(
-            code_portion,
-            self.run_code_callback
-        )
+    #
+    #
+    #
 
     def run_code_callback(self, msg):
         if msg is None or msg['header'] is None:
@@ -204,22 +197,9 @@ class CodePage(Panel.Widget):
     def on_text_changed(self, *args):
         self.set_modified(True)
 
-    def on_cursor_position_changed(self, *args):
-        self.emit("cursor-moved", self.code_buffer, 0)
-
     def update_style_scheme(self, *args):
         scheme = self.style_manager.get_current_scheme()
         self.code_buffer.set_style_scheme(scheme)
-
-    def set_kernel(self, jupyter_kernel):
-        if self.jupyter_kernel:
-            self.jupyter_kernel.disconnect_by_func(self.on_kernel_info_changed)
-
-        self.jupyter_kernel = jupyter_kernel
-        self.jupyter_kernel.connect(
-            "status-changed", self.on_kernel_info_changed)
-
-        self.emit("kernel-info-changed")
 
     def set_language_highlight(self):
         # TODO change the language based on the file mimetype
@@ -231,11 +211,36 @@ class CodePage(Panel.Widget):
 
         self.code_buffer.set_highlight_syntax(True)
 
-    def on_kernel_info_changed(self, *args):
-        self.emit("kernel-info-changed")
+    #
+    #   Implement Cursor Interface
+    #
+
+    def on_cursor_position_changed(self, *args):
+        self.emit("cursor-moved", self.code_buffer, 0)
+
+    #
+    # Implement Kernel Interface
+    #
 
     def get_kernel(self):
         return self.jupyter_kernel
+
+    def set_kernel(self, jupyter_kernel):
+        if self.jupyter_kernel:
+            self.jupyter_kernel.disconnect_by_func(self.on_kernel_info_changed)
+
+        self.jupyter_kernel = jupyter_kernel
+        self.jupyter_kernel.connect(
+            "status-changed", self.on_kernel_info_changed)
+
+        self.emit("kernel-info-changed")
+
+    def on_kernel_info_changed(self, *args):
+        self.emit("kernel-info-changed")
+
+    #
+    #   Implement Saveable Page Interface
+    #
 
     def get_path(self):
         return self.path
@@ -251,18 +256,38 @@ class CodePage(Panel.Widget):
         end = self.code_buffer.get_end_iter()
         return self.code_buffer.get_text(start, end, True)
 
-    def __on_unrealized(self, *args):
+    #
+    #   Implement Cells Interface
+    #
+
+    def run_selected_cell(self):
+        code_portion = self.get_selected_cell_content()
+        self.jupyter_kernel.execute(
+            code_portion,
+            self.run_code_callback
+        )
+
+    def run_all_cells(self):
+        self.jupyter_kernel.execute(
+            self.get_content(),
+            self.run_code_callback
+        )
+
+    #
+    #   Implement Disconnectable Interface
+    #
+
+    def disconnect(self, *args):
         self.style_manager.disconnect_by_func(self.update_style_scheme)
         self.code_buffer.disconnect_by_func(self.on_cursor_position_changed)
+        self.code_buffer.disconnect_by_func(self.on_text_changed)
 
-        self.save_delegate.unbind_all()
+        self.save_delegate.disconnect_all()
 
         if self.jupyter_kernel:
             self.jupyter_kernel.disconnect_by_func(self.on_kernel_info_changed)
 
-        self.disconnect_by_func(self.__on_unrealized)
+        print(f"closing: {self}")
 
-        print("unrealize:", sys.getrefcount(self))
-
-    def __del__(self, *args):
+    def __del__(self):
         print(f"DELETING {self}")

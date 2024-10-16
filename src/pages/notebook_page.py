@@ -23,7 +23,6 @@ from gi.repository import Gdk
 from gi.repository import Panel
 
 import os
-import sys
 import nbformat
 
 from ..models.cell import Cell, CellType
@@ -32,18 +31,16 @@ from ..models.output import Output, OutputType
 from ..backend.command_line import CommandLine
 from ..completion_providers.completion_providers import LSPCompletionProvider, WordsCompletionProvider
 from ..others.save_delegate import GenericSaveDelegate
+from ..interfaces.saveable import ISaveable
+from ..interfaces.disconnectable import IDisconnectable
+from ..interfaces.cursor import ICursor
+from ..interfaces.kernel import IKernel
 
 
 @Gtk.Template(
     resource_path='/io/github/nokse22/PlanetNine/gtk/notebook_page.ui')
-class NotebookPage(Panel.Widget):
+class NotebookPage(Panel.Widget, ISaveable, IDisconnectable, IKernel, ICursor):
     __gtype_name__ = 'NotebookPage'
-
-    __gsignals__ = {
-        'kernel-info-changed': (GObject.SignalFlags.RUN_FIRST, None, ()),
-        'cursor-moved':
-            (GObject.SignalFlags.RUN_FIRST, None, (Gtk.TextBuffer, int))
-    }
 
     cells_list_box = Gtk.Template.Child()
     list_drop_target = Gtk.Template.Child()
@@ -53,8 +50,6 @@ class NotebookPage(Panel.Widget):
 
     def __init__(self, _notebook_model):
         super().__init__()
-
-        self.connect("unrealize", self.__on_unrealized)
 
         self.bindings = []
 
@@ -78,8 +73,7 @@ class NotebookPage(Panel.Widget):
         self.save_delegate = GenericSaveDelegate(self)
         self.set_save_delegate(self.save_delegate)
 
-        if self.get_path():
-            self.save_delegate.set_is_draft(False)
+        self.set_path(self.get_path())
 
         self.cells_list_box.bind_model(
             self.notebook_model,
@@ -93,6 +87,10 @@ class NotebookPage(Panel.Widget):
 
         if self.notebook_model.get_n_items() == 0:
             self.add_cell(Cell(CellType.CODE))
+
+    #
+    #
+    #
 
     def on_selected_cell_changed(self, *args):
         selected_row = self.cells_list_box.get_selected_row()
@@ -108,17 +106,7 @@ class NotebookPage(Panel.Widget):
                 "notify::cursor-position",
                 self.on_cursor_position_changed, index)
 
-    def on_cursor_position_changed(self, buffer, pos, index):
-        self.emit("cursor-moved", buffer, index + 1)
-
-    def run_selected_cell(self):
-        cell = self.get_selected_cell()
-        self.run_cell(cell)
-
-    def run_all_cells(self):
-        for index, cell in enumerate(self.notebook_model):
-            if cell.cell_type == CellType.CODE:
-                self.run_cell(cell)
+            self.previous_buffer = buffer
 
     def run_cell(self, cell):
         if cell.cell_type != CellType.CODE:
@@ -192,27 +180,6 @@ class NotebookPage(Panel.Widget):
                 cell.executing = False
                 print("cell finished executing")
 
-    def set_kernel(self, jupyter_kernel):
-        kernel = self.get_kernel()
-
-        if kernel:
-            kernel.disconnect_by_func(self.on_kernel_status_changed)
-
-        self.notebook_model.jupyter_kernel = jupyter_kernel
-        self.notebook_model.jupyter_kernel.connect(
-            "status-changed", self.on_kernel_status_changed)
-        self.emit("kernel-info-changed")
-
-    def on_kernel_status_changed(self, kernel, status):
-        self.emit("kernel-info-changed")
-
-        if status == "starting":
-            for cell in self.notebook_model:
-                cell.executing = False
-
-    def get_kernel(self):
-        return self.notebook_model.jupyter_kernel
-
     def create_widgets(self, cell):
         cell = CellUI(cell)
         cell.connect("request-delete", self.on_cell_request_delete)
@@ -252,6 +219,8 @@ class NotebookPage(Panel.Widget):
         else:
             self.notebook_model.append(cell)
 
+        self.set_modified(True)
+
         found, position = self.notebook_model.find(cell)
 
         if found:
@@ -280,6 +249,10 @@ class NotebookPage(Panel.Widget):
         row = self.cells_list_box.get_row_at_index(index)
         if row:
             self.cells_list_box.select_row(row)
+
+    #
+    #   Drag and Drop
+    #
 
     def on_drop_target_drop(self, drop_target, cell, x, y):
         target_row = self.cells_list_box.get_row_at_y(y)
@@ -330,21 +303,74 @@ class NotebookPage(Panel.Widget):
     def on_drop_target_leave(self, drop_target):
         self.cells_list_box.drag_unhighlight_row()
 
-    def get_content(self):
-        return nbformat.writes(
-            self.notebook_model.get_notebook_node())
+    #
+    #   Implement Cursor Interface
+    #
+
+    def on_cursor_position_changed(self, buffer, pos, index):
+        self.emit("cursor-moved", buffer, index + 1)
+
+    #
+    #   Implement Saveable Page Interface
+    #
 
     def get_path(self):
         return self.notebook_model.get_path()
 
     def set_path(self, _path):
         self.notebook_model.set_path(_path)
-        self.save_delegate.set_is_draft(False)
+        if not _path:
+            self.save_delegate.set_is_draft(True)
+        else:
+            self.save_delegate.set_is_draft(False)
 
-    def do_close(self, *args):
-        print("close")
+    def get_content(self):
+        return nbformat.writes(
+            self.notebook_model.get_notebook_node())
 
-    def __on_unrealized(self, *args):
+    #
+    #   Implement Kernel Page Interface
+    #
+
+    def set_kernel(self, jupyter_kernel):
+        kernel = self.get_kernel()
+
+        if kernel:
+            kernel.disconnect_by_func(self.on_kernel_status_changed)
+
+        self.notebook_model.jupyter_kernel = jupyter_kernel
+        self.notebook_model.jupyter_kernel.connect(
+            "status-changed", self.on_kernel_status_changed)
+        self.emit("kernel-info-changed")
+
+    def get_kernel(self):
+        return self.notebook_model.jupyter_kernel
+
+    def on_kernel_status_changed(self, kernel, status):
+        self.emit("kernel-info-changed")
+
+        if status == "starting":
+            for cell in self.notebook_model:
+                cell.executing = False
+
+    #
+    #   Implement Cells Interface
+    #
+
+    def run_selected_cell(self):
+        cell = self.get_selected_cell()
+        self.run_cell(cell)
+
+    def run_all_cells(self):
+        for index, cell in enumerate(self.notebook_model):
+            if cell.cell_type == CellType.CODE:
+                self.run_cell(cell)
+
+    #
+    #   Implement Disconnectable Interface
+    #
+
+    def disconnect(self, *args):
         self.list_drop_target.disconnect_by_func(self.on_drop_target_drop)
         self.list_drop_target.disconnect_by_func(self.on_drop_target_motion)
         self.list_drop_target.disconnect_by_func(self.on_drop_target_leave)
@@ -359,6 +385,7 @@ class NotebookPage(Panel.Widget):
             cell = self.cells_list_box.get_row_at_index(index).get_child()
             cell.disconnect_by_func(self.on_cell_request_delete)
             cell.disconnect_by_func(self.on_cell_source_changed)
+            cell.disconnect()
 
         kernel = self.get_kernel()
         if kernel:
@@ -373,11 +400,9 @@ class NotebookPage(Panel.Widget):
             binding.unbind()
         del self.bindings
 
-        self.save_delegate.unbind_all()
+        self.save_delegate.disconnect_all()
 
-        self.disconnect_by_func(self.__on_unrealized)
+        print(f"closing: {self}")
 
-        print("unrealize:", sys.getrefcount(self))
-
-    def __del__(self, *args):
+    def __del__(self):
         print(f"DELETING {self}")

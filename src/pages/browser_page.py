@@ -20,12 +20,12 @@
 from gi.repository import Gtk, GObject, Gio, GLib
 from gi.repository import Panel, WebKit
 
-import sys
+from ..interfaces.disconnectable import IDisconnectable
 
 GObject.type_register(WebKit.WebView)
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/browser_page.ui')
-class BrowserPage(Panel.Widget):
+class BrowserPage(Panel.Widget, IDisconnectable):
     __gtype_name__ = 'BrowserPage'
 
     __gsignals__ = {
@@ -46,8 +46,6 @@ class BrowserPage(Panel.Widget):
 
         self.actions_signals = []
         self.bindings = []
-
-        self.connect("unrealize", self.__on_unrealized)
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
@@ -143,7 +141,7 @@ class BrowserPage(Panel.Widget):
         self.actions_signals.append((action, callback))
         return action
 
-    def __on_unrealized(self, *args):
+    def disconnect(self, *args):
         self.back_button.disconnect_by_func(self.on_back_clicked)
         self.forward_button.disconnect_by_func(self.on_forward_clicked)
         self.reload_button.disconnect_by_func(self.on_reload_clicked)
@@ -162,9 +160,7 @@ class BrowserPage(Panel.Widget):
             binding.unbind()
         del self.bindings
 
-        self.disconnect_by_func(self.__on_unrealized)
+        print(f"closing: {self}")
 
-        print("unrealize:", sys.getrefcount(self))
-
-    def __del__(self, *args):
+    def __del__(self):
         print(f"DELETING {self}")

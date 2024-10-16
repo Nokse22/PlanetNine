@@ -28,19 +28,17 @@ from ..completion_providers.completion_providers import LSPCompletionProvider, W
 
 from ..utils.converters import get_language_highlight_name
 
+from ..interfaces.disconnectable import IDisconnectable
+
+from ..others.style_manager import StyleManager
+
 GObject.type_register(Panel.Widget)
 
 
 @Gtk.Template(
     resource_path='/io/github/nokse22/PlanetNine/gtk/console_page.ui')
-class ConsolePage(Panel.Widget):
+class ConsolePage(Panel.Widget, IDisconnectable):
     __gtype_name__ = 'ConsolePage'
-
-    __gsignals__ = {
-        'kernel-info-changed': (GObject.SignalFlags.RUN_FIRST, None, ()),
-        'cursor-moved':
-            (GObject.SignalFlags.RUN_FIRST, None, (Gtk.TextBuffer, int))
-    }
 
     source_view = Gtk.Template.Child()
     code_buffer = Gtk.Template.Child()
@@ -55,8 +53,6 @@ class ConsolePage(Panel.Widget):
         self.actions_signals = []
         self.bindings = []
 
-        self.connect("unrealize", self.__on_unrealized)
-
         self.send_button.connect("clicked", self.on_send_clicked)
 
         self.code_buffer.connect(
@@ -69,8 +65,8 @@ class ConsolePage(Panel.Widget):
         self.code_buffer.set_language(lang)
         self.code_buffer.set_highlight_syntax(True)
 
-        self.style_manager = Adw.StyleManager.get_default()
-        self.style_manager.connect("notify::dark", self.update_style_scheme)
+        self.style_manager = StyleManager()
+        self.style_manager.connect("style-changed", self.update_style_scheme)
         self.update_style_scheme()
 
         # ENABLE SPELL CHECK
@@ -119,11 +115,7 @@ class ConsolePage(Panel.Widget):
         return self.jupyter_kernel
 
     def update_style_scheme(self, *args):
-        scheme_name = "Adwaita"
-        if Adw.StyleManager.get_default().get_dark():
-            scheme_name += "-dark"
-        sm = GtkSource.StyleSchemeManager()
-        scheme = sm.get_scheme(scheme_name)
+        scheme = self.style_manager.get_current_scheme()
         self.code_buffer.set_style_scheme(scheme)
 
     def on_send_clicked(self, *args):
@@ -193,7 +185,7 @@ class ConsolePage(Panel.Widget):
         end = self.code_buffer.get_end_iter()
         return self.code_buffer.get_text(start, end, True)
 
-    def __on_unrealized(self, *args):
+    def disconnect(self, *args):
         self.style_manager.disconnect_by_func(self.update_style_scheme)
         self.send_button.disconnect_by_func(self.on_send_clicked)
         self.code_buffer.disconnect_by_func(self.on_cursor_position_changed)
@@ -208,8 +200,6 @@ class ConsolePage(Panel.Widget):
         for binding in self.bindings:
             binding.unbind()
         del self.bindings
-
-        self.disconnect_by_func(self.__on_unrealized)
 
         print("unrealize:", sys.getrefcount(self))
 

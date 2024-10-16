@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="planetnine">
 	<schema id="io.github.nokse22.PlanetNine" path="/io/github/nokse22/PlanetNine/">
+	  <key name="notebook-line-number" type="b">
+      <default>false</default>
+    </key>
 	  <key name="code-vim" type="b">
       <default>false</default>
     </key>

@@ -24,21 +24,9 @@
         <source light="gnome-light" dark="gnome-dark"/>
         <colors name="gnome"/>
     </palette>
-    <palette name="Linux">
-        <source light="linux-light" dark="linux-dark"/>
-        <colors name="linux"/>
-    </palette>
     <palette name="Nord">
         <source light="nord-light" dark="nord-dark"/>
         <colors name="nord"/>
-    </palette>
-    <palette name="Rxvt">
-        <source light="rxvt-light" dark="rxvt-dark"/>
-        <colors name="rxvt"/>
-    </palette>
-    <palette name="Tango">
-        <source light="tango-light" dark="tango-dark"/>
-        <colors name="tango"/>
     </palette>
     <palette name="VS Code">
         <source light="vs-code-light" dark="vs-code-dark"/>
@@ -47,6 +35,10 @@
     <palette name="Xterm">
         <source light="xterm-light" dark="xterm-dark"/>
         <colors name="xterm"/>
+    </palette>
+    <palette name="Catppuccin">
+        <source light="catppuccin-light" dark="catppuccin-dark"/>
+        <colors name="catppuccin"/>
     </palette>
 </palettes>
 

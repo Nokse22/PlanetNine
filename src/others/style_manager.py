@@ -112,7 +112,7 @@ class StyleManager(GObject.GObject):
             "resource:///io/github/nokse22/PlanetNine/styles/schemes/")
 
         palettes_data = Gio.resources_lookup_data(
-            "/io/github/nokse22/PlanetNine/styles/palettes/palettes.xml",
+            "/io/github/nokse22/PlanetNine/styles/palettes.xml",
             Gio.ResourceLookupFlags.NONE).get_data().decode('utf-8')
 
         palettes = ET.fromstring(palettes_data)
@@ -121,6 +121,8 @@ class StyleManager(GObject.GObject):
             self._palettes.append(Palette(palette))
 
         StyleManager._initialized = True
+
+        self.css_provider = Gtk.CssProvider()
 
     @GObject.Property(type=int)
     def selected(self):
@@ -149,6 +151,9 @@ class StyleManager(GObject.GObject):
         self.emit("style-changed")
         self.update_style_scheme()
 
+    def get_dark(self):
+        return self.adw_style_manager.get_dark()
+
     def get_current_scheme(self):
         if self.adw_style_manager.get_dark():
             scheme = self.palette.dark_source_name
@@ -157,51 +162,59 @@ class StyleManager(GObject.GObject):
             scheme = self.palette.light_source_name
             return self.style_scheme_manager.get_scheme(scheme)
 
+    def get_current_colors(self):
+        if self.adw_style_manager.get_dark():
+            return self.palette.dark_palette
+        else:
+            return self.palette.light_palette
+
     def update_style_scheme(self, *args):
-        light = False if self.adw_style_manager.get_dark() else True
-        palette = self.palette
-        colors = palette.light_palette if light else palette.dark_palette
+        Gtk.StyleContext.remove_provider_for_display(
+            Gdk.Display.get_default(),
+            self.css_provider
+        )
+
+        if "Adwaita" in self.palette.name:
+            return
+
+        colors = self.get_current_colors()
 
         primary = colors["background"]
         secondary = colors["foreground"]
         titlebar_fg = colors["titlebarforeground"]
         titlebar_bg = colors["titlebarbackground"]
 
-        css_provider = Gtk.CssProvider()
-
-        css_provider.load_from_string(f"""
+        self.css_provider.load_from_string(f"""
         :root {{
             --primary-bg-color: {primary};
             --primary-fg-color: {secondary};
-
             --headerbar-bg-color: {titlebar_bg};
             --headerbar-fg-color: {titlebar_fg};
-
+            --headerbar-border-color: var(--window-fg-color);
             --window-bg-color: {primary};
             --window-fg-color: {secondary};
-            --view-bg-color: mix({primary}, {secondary}, 0.1);
+            --view-bg-color: color-mix(in srgb, {primary} 90%, {secondary} 10%);
             --view-fg-color: {secondary};
-
-            --sidebar-bg-color: mix({primary}, {secondary}, 0.05);
+            --sidebar-bg-color: color-mix(in srgb, {primary} 95%, {secondary} 5%);
             --sidebar-fg-color: {secondary};
-            --secondary-sidebar-bg-color: mix({primary}, {secondary}, 0.02);
+            --sidebar-backdrop-color: mix(var(--sidebar-bg-color), var(--window-bg-color), .5);
+            --secondary-sidebar-bg-color: color-mix(in srgb, {primary} 98%, {secondary} 2%);
             --secondary-sidebar-fg-color: {secondary};
-
-            --card-bg-color: mix({primary}, {secondary}, 0.08);
-            --card-fg-color: {secondary};
-            --popover-bg-color: {primary};
-            --popover-fg-color: {secondary};
-
-            --dialog-bg-color: {primary};
-            --dialog-fg-color: {secondary};
+            --popover-bg-color: color-mix(in srgb, {primary} 95%, white 5%);
+            --popover-fg-color: var(--window-fg-color);
+            --dialog-bg-color: color-mix(in srgb, {primary} 95%, white 5%);
+            --dialog-fg-color: var(--window-fg-color);
+            --accent-bg-color: color-mix(in srgb, {secondary} 80%, {primary} 20%);
+            --accent-fg-color: {primary};
+            --accent-color: color-mix(in srgb, var(--accent-bg-color) 90%, {secondary} 10%);
+            --dark-fill-bg-color: var(--headerbar-bg-color);
+            --card-bg-color: {'alpha(white, .08)' if self.get_dark() else 'alpha(white, .8)'};
+            --card-fg-color: var(--window-fg-color);
         }}
         """)
 
-        display = Gdk.Display.get_default()
-
-        # Add the CSS provider to the screen's style context
         Gtk.StyleContext.add_provider_for_display(
-            display,
-            css_provider,
+            Gdk.Display.get_default(),
+            self.css_provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )

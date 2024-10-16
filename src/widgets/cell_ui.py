@@ -27,7 +27,6 @@ from gi.repository import Gdk, GdkPixbuf
 import hashlib
 import base64
 import os
-import sys
 
 from .markdown_textview import MarkdownTextView
 from .terminal_textview import TerminalTextView
@@ -68,11 +67,11 @@ class CellUI(Gtk.Box):
     def __init__(self, cell):
         super().__init__()
 
+        self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
+
         self.actions_signals = []
         self.bindings = []
         self.providers = []
-
-        self.connect("unrealize", self.__on_unrealized)
 
         self.code_buffer.connect("changed", self.on_source_changed)
         self.drag_source.connect("prepare", self.on_drag_source_prepare)
@@ -131,6 +130,13 @@ class CellUI(Gtk.Box):
         self.cell.connect("output-added", self.on_add_output)
         self.cell.connect("output-reset", self.on_reset_output)
         self.cell.connect("notify::executing", self.on_executing_changed)
+
+        self.settings.bind(
+            'notebook-line-number',
+            self.source_view,
+            'show-line-numbers',
+            Gio.SettingsBindFlags.DEFAULT
+        )
 
         # POPOVER
         self.popover = Gtk.PopoverMenu(
@@ -354,7 +360,11 @@ class CellUI(Gtk.Box):
     def on_add_output(self, cell, output):
         self.add_output(output)
 
-    def __on_unrealized(self, *args):
+    #
+    #   Implement Disconnectable Interface
+    #
+
+    def disconnect(self, *args):
         self.style_manager.disconnect_by_func(self.update_style_scheme)
         self.cell.disconnect_by_func(self.on_execution_count_changed)
         self.cell.disconnect_by_func(self.on_add_output)
@@ -379,11 +389,9 @@ class CellUI(Gtk.Box):
             provider.unregister(self.code_buffer)
             self.source_view.get_completion().remove_provider(provider)
 
-        self.disconnect_by_func(self.__on_unrealized)
-
-        print("unrealize: ", sys.getrefcount(self))
+        print(f"closing: {self}")
 
         del self.cell
 
-    def __del__(self, *args):
+    def __del__(self):
         print(f"DELETING {self}")

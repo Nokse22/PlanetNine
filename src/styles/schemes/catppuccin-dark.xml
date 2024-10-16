@@ -1,28 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- This file was generated from https://github.com/Gogh-Co/Gogh/tree/master/themes/ -->
-<style-scheme id="tango-light" name="Tango Light" version="1.0">
+<style-scheme id="catppuccin-dark" name="Catppuccin Dark" version="1.0">
 
-  <color name="Foreground" value="#2e3436"/>
-  <color name="Background" value="#eeeeec"/>
-  <color name="Cursor" value="#2e3436"/>
-  <color name="Gutter" value="#bebfbe"/>
-  <color name="CurrentLine" value="#e4e4e2"/>
-  <color name="Color0" value="#2e3436"/>
-  <color name="Color1" value="#cc0000"/>
-  <color name="Color2" value="#4e9a06"/>
-  <color name="Color3" value="#c4a000"/>
-  <color name="Color4" value="#3465a4"/>
-  <color name="Color5" value="#75507b"/>
-  <color name="Color6" value="#06989a"/>
-  <color name="Color7" value="#d3d7cf"/>
-  <color name="Color8" value="#555753"/>
-  <color name="Color9" value="#ef2929"/>
-  <color name="Color10" value="#8ae234"/>
-  <color name="Color11" value="#fce94f"/>
-  <color name="Color12" value="#729fcf"/>
-  <color name="Color13" value="#ad7fa8"/>
-  <color name="Color14" value="#34e2e2"/>
-  <color name="Color15" value="#eeeeec"/>
+  <color name="Foreground" value="#cdd6f4"/>
+  <color name="Background" value="#1e1e2e"/>
+  <color name="Cursor" value="#cdd6f4"/>
+  <color name="Gutter" value="#494c5f"/>
+  <color name="CurrentLine" value="#262737"/>
+  <color name="Color0" value="#45475a"/>
+  <color name="Color1" value="#f38ba8"/>
+  <color name="Color2" value="#a6e3a1"/>
+  <color name="Color3" value="#f9e2af"/>
+  <color name="Color4" value="#89b4fa"/>
+  <color name="Color5" value="#f5c2e7"/>
+  <color name="Color6" value="#94e2d5"/>
+  <color name="Color7" value="#bac2de"/>
+  <color name="Color8" value="#585b70"/>
+  <color name="Color9" value="#f38ba8"/>
+  <color name="Color10" value="#a6e3a1"/>
+  <color name="Color11" value="#f9e2af"/>
+  <color name="Color12" value="#89b4fa"/>
+  <color name="Color13" value="#f5c2e7"/>
+  <color name="Color14" value="#94e2d5"/>
+  <color name="Color15" value="#a6adc8"/>
 
   <style name="text" background="Background" foreground="Foreground"/>
   <style name="cursor" foreground="Cursor"/>
@@ -35,7 +35,7 @@
   <style name="def:base-n-integer" foreground="Color5"/>
   <style name="def:boolean" foreground="Color5"/>
   <style name="def:character" foreground="Color5"/>
-  <style name="def:comment" foreground="#676b6c"/>
+  <style name="def:comment" foreground="#989eb8"/>
   <style name="def:doc-comment-element" bold="true"/>
   <style name="def:constant" foreground="Color5"/>
   <style name="def:decimal" foreground="Color5"/>

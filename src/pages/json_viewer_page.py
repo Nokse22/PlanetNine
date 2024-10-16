@@ -24,11 +24,13 @@ from gi.repository import Spelling
 from ..others.save_delegate import GenericSaveDelegate
 from ..widgets.json_viewer import JsonViewer
 
+from ..interfaces.disconnectable import IDisconnectable
+
 import os
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/json_viewer_page.ui')
-class JsonViewerPage(Panel.Widget):
+class JsonViewerPage(Panel.Widget, IDisconnectable):
     __gtype_name__ = 'JsonViewerPage'
 
     path = GObject.Property(type=str, default="")
@@ -40,8 +42,6 @@ class JsonViewerPage(Panel.Widget):
 
     def __init__(self, _path=None):
         super().__init__()
-
-        self.connect("unrealize", self.__on_unrealized)
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
@@ -130,16 +130,18 @@ class JsonViewerPage(Panel.Widget):
         scheme = sm.get_scheme(scheme_name)
         self.buffer.set_style_scheme(scheme)
 
-    def __on_unrealized(self, *args):
+    #
+    #   Implement Disconnectable Interface
+    #
+
+    def disconnect(self, *args):
         self.style_manager.disconnect_by_func(self.update_style_scheme)
         self.stack.disconnect_by_func(self.on_page_changed)
         self.buffer.disconnect_by_func(self.on_json_changed)
 
-        self.save_delegate.unbind_all()
+        self.save_delegate.disconnect_all()
 
-        self.disconnect_by_func(self.__on_unrealized)
-
-        print(f"Unrealize {self}")
+        print(f"closing: {self}")
 
     def __del__(self, *args):
         print(f"DELETING {self}")

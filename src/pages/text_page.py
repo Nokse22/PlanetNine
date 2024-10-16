@@ -25,6 +25,10 @@ from ..others.save_delegate import GenericSaveDelegate
 
 from ..utils.converters import get_language_highlight_name
 
+from ..interfaces.saveable import ISaveable
+from ..interfaces.disconnectable import IDisconnectable
+from ..interfaces.cursor import ICursor
+
 import os
 
 GObject.type_register(GtkSource.Map)
@@ -32,13 +36,8 @@ GObject.type_register(GtkSource.VimIMContext)
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/text_page.ui')
-class TextPage(Panel.Widget):
+class TextPage(Panel.Widget, ISaveable, IDisconnectable, ICursor):
     __gtype_name__ = 'TextPage'
-
-    __gsignals__ = {
-        'cursor-moved':
-            (GObject.SignalFlags.RUN_FIRST, None, (Gtk.TextBuffer, int))
-    }
 
     path = GObject.Property(type=str, default="")
 
@@ -47,8 +46,6 @@ class TextPage(Panel.Widget):
 
     def __init__(self, _path=None):
         super().__init__()
-
-        self.connect("unrealize", self.__on_unrealized)
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
@@ -101,12 +98,6 @@ class TextPage(Panel.Widget):
         self.buffer.connect(
             "notify::cursor-position", self.on_cursor_position_changed)
 
-    def on_text_changed(self, *args):
-        self.set_modified(True)
-
-    def on_cursor_position_changed(self, *args):
-        self.emit("cursor-moved", self.buffer, 0)
-
     def set_path(self, _path):
         self.path = _path
         self.set_title(
@@ -120,6 +111,13 @@ class TextPage(Panel.Widget):
         end = self.buffer.get_end_iter()
         return self.buffer.get_text(start, end, True)
 
+    #
+    #
+    #
+
+    def on_text_changed(self, *args):
+        self.set_modified(True)
+
     def update_style_scheme(self, *args):
         scheme_name = "Adwaita"
         if Adw.StyleManager.get_default().get_dark():
@@ -128,14 +126,23 @@ class TextPage(Panel.Widget):
         scheme = sm.get_scheme(scheme_name)
         self.buffer.set_style_scheme(scheme)
 
-    def __on_unrealized(self, *args):
-        self.disconnect_by_func(self.__on_unrealized)
+    #
+    #   Implement Cursor Interface
+    #
 
+    def on_cursor_position_changed(self, *args):
+        self.emit("cursor-moved", self.buffer, 0)
+
+    #
+    #   Implement Disconnectable Interface
+    #
+
+    def disconnect(self, *args):
         self.style_manager.disconnect_by_func(self.update_style_scheme)
         self.buffer.disconnect_by_func(self.on_text_changed)
         self.buffer.disconnect_by_func(self.on_cursor_position_changed)
 
-        self.save_delegate.unbind_all()
+        self.save_delegate.disconnect_all()
 
         print(f"Unrealize: {self}")
 
