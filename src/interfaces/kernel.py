@@ -18,30 +18,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from gi.repository import GObject
-from .interface import Interface
 
 
-class IKernel(GObject.GObject, Interface):
+class IKernel(GObject.GObject):
     __gtype_name__ = 'IKernel'
 
-    def __init__(cls, **kwargs):
-        super().__init__()
-        print("Adding signal for ", cls)
-        GObject.signal_new(
-            'kernel-info-changed',
-            cls,
-            GObject.SignalFlags.RUN_FIRST,
-            None,
-            ()
-        )
-
-    # gsignals = {
-    #     'kernel-info-changed': (
-    #         GObject.SignalFlags.RUN_FIRST,
-    #         None,
-    #         ()
-    #     )
-    # }
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.kernel_info_changed = GObject.Signal('kernel-info-changed')
 
     def get_kernel(self):
         raise NotImplementedError

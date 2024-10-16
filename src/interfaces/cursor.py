@@ -18,29 +18,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from gi.repository import GObject, Gtk
-from .interface import Interface
 
 
-class ICursor(GObject.GObject, Interface):
+class ICursor(GObject.GObject):
     __gtype_name__ = 'ICursor'
 
-    # gsignals = {
-    #     'cursor-moved': (
-    #         GObject.SignalFlags.RUN_FIRST,
-    #         None,
-    #         (Gtk.TextBuffer, int)
-    #     )
-    # }
-
-    def __init__(cls, **kwargs):
-        super().__init__()
-        print("Adding signal for ", cls)
-        GObject.signal_new(
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.cursor_moved = GObject.Signal(
             'cursor-moved',
-            cls,
-            GObject.SignalFlags.RUN_FIRST,
-            None,
-            (Gtk.TextBuffer, int)
+            arg_types=([Gtk.TextBuffer, int])
         )
 
     def move_cursor(self):

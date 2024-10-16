@@ -18,10 +18,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from gi.repository import GObject
-from .interface import Interface
 
 
-class ISaveable(GObject.GObject, Interface):
+class ISaveable(GObject.GObject):
     __gtype_name__ = 'ISaveable'
 
     def get_path(self):

@@ -18,10 +18,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from gi.repository import GObject
-from .interface import Interface
 
 
-class IDisconnectable(GObject.GObject, Interface):
+class IDisconnectable(GObject.GObject):
     __gtype_name__ = 'IDisconnectable'
 
     def disconnect(self):

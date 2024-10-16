@@ -28,16 +28,18 @@ from ..completion_providers.completion_providers import LSPCompletionProvider, W
 
 from ..utils.converters import get_language_highlight_name
 
-from ..interfaces.disconnectable import IDisconnectable
-
 from ..others.style_manager import StyleManager
+
+from ..interfaces.disconnectable import IDisconnectable
+from ..interfaces.kernel import IKernel
+from ..interfaces.cursor import ICursor
 
 GObject.type_register(Panel.Widget)
 
 
 @Gtk.Template(
     resource_path='/io/github/nokse22/PlanetNine/gtk/console_page.ui')
-class ConsolePage(Panel.Widget, IDisconnectable):
+class ConsolePage(Panel.Widget, IDisconnectable, IKernel, ICursor):
     __gtype_name__ = 'ConsolePage'
 
     source_view = Gtk.Template.Child()
