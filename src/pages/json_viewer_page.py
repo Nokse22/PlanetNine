@@ -22,6 +22,8 @@ from gi.repository import Panel, GtkSource
 from gi.repository import Spelling
 
 from ..others.save_delegate import GenericSaveDelegate
+from ..others.style_manager import StyleManager
+
 from ..widgets.json_viewer import JsonViewer
 
 from ..interfaces.disconnectable import IDisconnectable
@@ -52,12 +54,8 @@ class JsonViewerPage(Panel.Widget, IDisconnectable):
         self.buffer.set_language(lang)
         self.buffer.set_highlight_syntax(True)
 
-        sm = GtkSource.StyleSchemeManager()
-        scheme = sm.get_scheme("Adwaita-dark")
-        self.buffer.set_style_scheme(scheme)
-
-        self.style_manager = Adw.StyleManager.get_default()
-        self.style_manager.connect("notify::dark", self.update_style_scheme)
+        self.style_manager = StyleManager()
+        self.style_manager.connect("style-changed", self.update_style_scheme)
         self.update_style_scheme()
 
         # ENABLE SPELL CHECK
@@ -112,23 +110,26 @@ class JsonViewerPage(Panel.Widget, IDisconnectable):
 
             self.is_changed = False
 
+    def update_style_scheme(self, *args):
+        scheme = self.style_manager.get_current_scheme()
+        self.buffer.set_style_scheme(scheme)
+
+    #
+    #   Implement Saveable Page Interface
+    #
+
     def set_path(self, _path):
         self.path = _path
         self.set_title(
             os.path.basename(self.path) if self.path else "Untitled.json")
 
+    def get_path(self):
+        return self.path
+
     def get_content(self):
         start = self.buffer.get_start_iter()
         end = self.buffer.get_end_iter()
         return self.buffer.get_text(start, end, True)
-
-    def update_style_scheme(self, *args):
-        scheme_name = "Adwaita"
-        if Adw.StyleManager.get_default().get_dark():
-            scheme_name += "-dark"
-        sm = GtkSource.StyleSchemeManager()
-        scheme = sm.get_scheme(scheme_name)
-        self.buffer.set_style_scheme(scheme)
 
     #
     #   Implement Disconnectable Interface

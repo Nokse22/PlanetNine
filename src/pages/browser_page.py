@@ -24,7 +24,9 @@ from ..interfaces.disconnectable import IDisconnectable
 
 GObject.type_register(WebKit.WebView)
 
-@Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/browser_page.ui')
+
+@Gtk.Template(
+    resource_path='/io/github/nokse22/PlanetNine/gtk/browser_page.ui')
 class BrowserPage(Panel.Widget, IDisconnectable):
     __gtype_name__ = 'BrowserPage'
 
@@ -140,6 +142,10 @@ class BrowserPage(Panel.Widget, IDisconnectable):
         self.action_group.add_action(action)
         self.actions_signals.append((action, callback))
         return action
+
+    #
+    #   Implement Disconnectable Interface
+    #
 
     def disconnect(self, *args):
         self.back_button.disconnect_by_func(self.on_back_clicked)

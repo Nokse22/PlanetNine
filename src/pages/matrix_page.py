@@ -24,12 +24,15 @@ from ..others.save_delegate import GenericSaveDelegate
 
 from ..widgets.matrix_viewer import MatrixViewer, MatrixRow, Matrix
 
+from ..interfaces.cursor import ICursor
+from ..interfaces.saveable import ISaveable
+
 import os
 import csv
 import io
 
 
-class MatrixPage(Panel.Widget):
+class MatrixPage(Panel.Widget, ISaveable, ICursor):
     __gtype_name__ = 'MatrixPage'
 
     path = GObject.Property(type=str, default="")
@@ -83,14 +86,6 @@ class MatrixPage(Panel.Widget):
     def on_text_changed(self, *args):
         self.set_modified(True)
 
-    def set_path(self, _path):
-        self.path = _path
-        self.set_title(
-            os.path.basename(self.path) if self.path else "Untitled")
-
-    def get_content(self):
-        return ""
-
     def matrix_from_csv(self, file):
         # Open the file for reading
         file_input_stream = file.read()
@@ -135,12 +130,29 @@ class MatrixPage(Panel.Widget):
 
         return matrix
 
-    def __on_unrealized(self, *args):
-        self.disconnect_by_func(self.__on_unrealized)
+    #
+    #   Implement Saveable Page Interface
+    #
 
+    def get_path(self):
+        return self.path
+
+    def set_path(self, _path):
+        self.path = _path
+        self.set_title(
+            os.path.basename(self.path) if self.path else "Untitled")
+
+    def get_content(self):
+        return ""
+
+    #
+    #   Implement Disconnectable Interface
+    #
+
+    def disconnect(self, *args):
         self.save_delegate.disconnect_all()
 
-        print(f"Unrealize: {self}")
+        print(f"closing: {self}")
 
     def __del__(self, *args):
         print(f"DELETING {self}")

@@ -92,8 +92,16 @@ class ConsolePage(Panel.Widget, IDisconnectable, IKernel, ICursor):
         completion.add_provider(completion_words)
         # completion.add_provider(LSPCompletionProvider())
 
+    #
+    #   Implement Cursor Interface
+    #
+
     def on_cursor_position_changed(self, *args):
         self.emit("cursor-moved", self.code_buffer, 0)
+
+    #
+    # Implement Kernel Interface
+    #
 
     def set_kernel(self, jupyter_kernel):
         lm = GtkSource.LanguageManager()
@@ -110,11 +118,15 @@ class ConsolePage(Panel.Widget, IDisconnectable, IKernel, ICursor):
 
         self.emit("kernel-info-changed")
 
+    def get_kernel(self):
+        return self.jupyter_kernel
+
     def on_kernel_info_changed(self, *args):
         self.emit("kernel-info-changed")
 
-    def get_kernel(self):
-        return self.jupyter_kernel
+    #
+    #
+    #
 
     def update_style_scheme(self, *args):
         scheme = self.style_manager.get_current_scheme()

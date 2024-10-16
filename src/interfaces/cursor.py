@@ -31,4 +31,4 @@ class ICursor(GObject.GObject):
         )
 
     def move_cursor(self):
-        pass
+        raise NotImplementedError
