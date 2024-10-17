@@ -265,6 +265,7 @@ class CodePage(
         self.path = _path
         self.set_title(
             os.path.basename(self.path) if self.path else "Untitled")
+        self.save_delegate.set_subtitle(_path)
         self.save_delegate.set_is_draft(False)
 
     def get_content(self):

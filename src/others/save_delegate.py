@@ -33,9 +33,12 @@ class GenericSaveDelegate(Panel.SaveDelegate):
         self.page = page
 
         self.bindings.append(
-            self.bind_property("title", self.page, "title"))
+            self.page.bind_property("title", self, "title", 1))
         self.bindings.append(
-            self.bind_property("icon-name", self.page, "icon-name"))
+            self.page.bind_property("icon-name", self, "icon-name", 1))
+
+        self.set_title("Title")
+        self.set_subtitle("/path/to/file")
 
         self.update_draft_status()
 

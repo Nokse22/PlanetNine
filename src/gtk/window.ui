@@ -17,7 +17,6 @@
     <property name="content">
       <object class="PanelDock" id="dock">
         <property name="reveal-start">true</property>
-        <property name="reveal-bottom">true</property>
         <property name="start-width">250</property>
         <property name="end-width">250</property>
         <property name="vexpand">true</property>

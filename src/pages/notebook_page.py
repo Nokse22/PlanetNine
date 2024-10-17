@@ -347,6 +347,7 @@ class NotebookPage(
 
     def set_path(self, _path):
         self.notebook_model.set_path(_path)
+        self.save_delegate.set_subtitle(_path)
         if not _path:
             self.save_delegate.set_is_draft(True)
         else:

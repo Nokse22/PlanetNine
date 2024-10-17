@@ -845,19 +845,28 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def close(self):
-        if self.jupyter_server.get_is_running():
-            asyncio.create_task(self._quit())
-            return True
-        else:
-            return False
+        self.grid.agree_to_close_async(None, self.finish_close)
+        return True
+
+    def finish_close(self, _grid, result):
+        try:
+            success = self.grid.agree_to_close_finish(result)
+            print("RESULT: ", success)
+            if success:
+                asyncio.create_task(self._quit())
+        except Exception as e:
+            print(e)
 
     async def _quit(self):
-        choice = await dialog_choose_async(self, self.quit_dialog)
+        if self.jupyter_server.get_is_running():
+            choice = await dialog_choose_async(self, self.quit_dialog)
 
-        if choice == 'quit':
-            self.jupyter_server.stop()
+            if choice == 'quit':
+                self.jupyter_server.stop()
+            else:
+                return
 
-            self.activate_action("app.quit")
+        self.activate_action("app.quit")
 
     #
     #   VARIOUS

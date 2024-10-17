@@ -17,7 +17,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gtk, Panel, Adw, Gdk, Vte
+from gi.repository import Gtk, Panel, Gdk, Vte
 
 from ..others.style_manager import StyleManager
 
@@ -57,7 +57,7 @@ class TerminalPanel(Panel.Widget):
         background = Gdk.RGBA()
         foreground = Gdk.RGBA()
 
-        background.parse(colors["background"])
+        background.parse("rgba(0, 0, 0, 0)")
 
         foreground.parse(colors["foreground"])
 
