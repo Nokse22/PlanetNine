@@ -140,6 +140,8 @@ class MatrixPage(Panel.Widget, ISaveable, ICursor, ILanguage):
     def set_language(self, _language):
         self.language = _language
 
+        self.emit('language-changed')
+
     #
     #   Implement Saveable Page Interface
     #

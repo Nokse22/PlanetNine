@@ -36,13 +36,14 @@ from ..interfaces.disconnectable import IDisconnectable
 from ..interfaces.cursor import ICursor
 from ..interfaces.kernel import IKernel
 from ..interfaces.language import ILanguage
+from ..interfaces.cells import ICells
 
 
 @Gtk.Template(
     resource_path='/io/github/nokse22/PlanetNine/gtk/notebook_page.ui')
 class NotebookPage(
             Panel.Widget, ISaveable, IDisconnectable,
-            IKernel, ICursor, ILanguage):
+            IKernel, ICursor, ILanguage, ICells):
     __gtype_name__ = 'NotebookPage'
 
     cells_list_box = Gtk.Template.Child()
@@ -328,7 +329,7 @@ class NotebookPage(
         # TODO Need to ask the kernel to change the language if it make sense
         #           or set as fixed
 
-        pass
+        self.emit('language-changed')
 
     #
     #   Implement Cursor Interface

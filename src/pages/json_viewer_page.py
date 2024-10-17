@@ -124,6 +124,9 @@ class JsonViewerPage(Panel.Widget, IDisconnectable, ILanguage, ISaveable):
         lang = lm.get_language(self.language)
         self.buffer.set_language(lang)
         self.buffer.set_highlight_syntax(True)
+
+        self.emit('language-changed')
+
     #
     #   Implement Saveable Page Interface
     #

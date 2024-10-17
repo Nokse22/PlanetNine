@@ -136,6 +136,8 @@ class TextPage(Panel.Widget, ISaveable, IDisconnectable, ICursor, ILanguage):
         self.code_buffer.set_language(lang)
         self.code_buffer.set_highlight_syntax(True)
 
+        self.emit('language-changed')
+
     #
     #   Implement Cursor Interface
     #

@@ -684,7 +684,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         # Language Interface (Text, Notebook, Code, Console, Json, Table)
         if isinstance(page, ILanguage):
-            page.connect("notify::language", self.update_page_language)
+            page.connect("language-changed", self.update_page_language)
             self.update_page_language(page)
             self.language_label.set_visible(True)
         else:

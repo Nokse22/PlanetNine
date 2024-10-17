@@ -23,7 +23,7 @@ from gi.repository import GObject
 class ILanguage:
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        cls.cursor_moved = GObject.Signal('language-changed')
+        cls.language_changed = GObject.Signal('language-changed')
         cls.language = GObject.Property(type=str, default="")
 
     def get_language(self):
@@ -31,3 +31,4 @@ class ILanguage:
 
     def set_language(self, _language):
         self.language = _language
+        self.emit('language-changed')
