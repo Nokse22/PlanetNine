@@ -53,8 +53,6 @@ class ConsoleCell(Gtk.Box):
 
         self.code_buffer.set_text(content)
 
-        self.connect("unrealize", self.__on_unrealized)
-
         self.code_buffer.set_highlight_syntax(True)
 
         self.style_manager = Adw.StyleManager.get_default()
@@ -139,10 +137,8 @@ class ConsoleCell(Gtk.Box):
         lang = lm.get_language(lang_name)
         self.code_buffer.set_language(lang)
 
-    def __on_unrealized(self, *args):
+    def disconnect(self, *args):
         self.style_manager.disconnect_by_func(self.update_style_scheme)
-
-        self.disconnect_by_func(self.__on_unrealized)
 
         print("unrealize: ", sys.getrefcount(self))
 

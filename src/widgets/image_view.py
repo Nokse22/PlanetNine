@@ -60,7 +60,7 @@ class ImageView(Gtk.Picture):
     def on_drag_source_end(self, source, drag, delete_data):
         print("how do i delete", source, drag, delete_data)
 
-    def __on_unrealized(self, *args):
+    def disconnect(self, *args):
         pass
 
     def __del__(self, *args):

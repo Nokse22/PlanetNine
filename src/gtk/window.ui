@@ -81,6 +81,7 @@
                   <object class="GtkMenuButton">
                     <property name="primary">True</property>
                     <property name="icon-name">open-menu-symbolic</property>
+                    <property name="always-show-arrow">false</property>
                     <property name="tooltip-text" translatable="yes">Main Menu</property>
                     <property name="menu-model">primary_menu</property>
                   </object>
@@ -185,15 +186,19 @@
                   </object>
                 </child>
                 <child type="suffix">
-                  <object class="GtkLabel" id="language_label">
+                  <object class="GtkMenuButton" id="language_button">
                     <property name="visible">false</property>
+                    <property name="menu-model">languages_menu</property>
+                    <property name="always-show-arrow">false</property>
+                    <property name="direction">up</property>
                   </object>
                 </child>
                 <child type="suffix">
                   <object class="GtkMenuButton" id="position_menu_button">
                     <property name="visible">false</property>
+                    <property name="always-show-arrow">false</property>
                   <property name="direction">up</property>
-                  <property name="label">Cell 1, Ln 1, Col 2</property>
+                  <property name="label">Cell 0, Ln 0, Col 0</property>
                   <property name="popover">
                     <object class="GtkPopover">
                       <property name="child">
@@ -203,11 +208,17 @@
                             <object class="GtkBox">
                               <property name="spacing">6</property>
                               <child>
-                                <object class="GtkEntry"></object>
+                                <object class="GtkEntry">
+                                  <property name="buffer">
+                                    <object class="GtkEntryBuffer" id="move_cursor_entry_buffer"></object>
+                                  </property>
+                                  <signal name="activate" handler="on_move_cursor_activated"/>
+                                </object>
                               </child>
                               <child>
                                 <object class="GtkButton">
                                   <property name="label">Go</property>
+                                  <signal name="clicked" handler="on_move_cursor_activated"/>
                                   <style>
                                     <class name="suggested-action"></class>
                                   </style>
@@ -225,6 +236,7 @@
                  <object class="GtkMenuButton" id="kernel_status_menu">
                   <property name="direction">up</property>
                    <property name="visible">false</property>
+                   <property name="always-show-arrow">false</property>
                   <property name="popover">
                     <object class="GtkPopover">
                       <property name="child">
@@ -418,5 +430,8 @@
         <attribute name="action">app.quit</attribute>
       </item>
     </section>
+  </menu>
+  <menu id="languages_menu">
+
   </menu>
 </interface>

@@ -29,12 +29,15 @@ from ..widgets.json_viewer import JsonViewer
 from ..interfaces.disconnectable import IDisconnectable
 from ..interfaces.language import ILanguage
 from ..interfaces.saveable import ISaveable
+from ..interfaces.cursor import ICursor
 
 import os
 
 
-@Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/json_viewer_page.ui')
-class JsonViewerPage(Panel.Widget, IDisconnectable, ILanguage, ISaveable):
+@Gtk.Template(
+    resource_path='/io/github/nokse22/PlanetNine/gtk/json_viewer_page.ui')
+class JsonViewerPage(
+        Panel.Widget, IDisconnectable, ILanguage, ISaveable, ICursor):
     __gtype_name__ = 'JsonViewerPage'
 
     path = GObject.Property(type=str, default="")
@@ -91,6 +94,8 @@ class JsonViewerPage(Panel.Widget, IDisconnectable, ILanguage, ISaveable):
         self.is_changed = True
 
         self.buffer.connect("changed", self.on_json_changed)
+        self.buffer.connect(
+            "notify::cursor-position", self.on_cursor_position_changed)
 
         self.stack.connect("notify::visible-child-name", self.on_page_changed)
 
@@ -112,6 +117,19 @@ class JsonViewerPage(Panel.Widget, IDisconnectable, ILanguage, ISaveable):
     def update_style_scheme(self, *args):
         scheme = self.style_manager.get_current_scheme()
         self.buffer.set_style_scheme(scheme)
+
+    #
+    #   Implement Cursor Interface
+    #
+
+    def on_cursor_position_changed(self, *args):
+        self.emit("cursor-moved", self.buffer, 0)
+
+    def move_cursor(self, line, column, _index=0):
+        succ, cursor_iter = self.buffer.get_iter_at_line_offset(
+            line, column)
+        if succ:
+            self.buffer.place_cursor(cursor_iter)
 
     #
     #   Implement Language Interface
@@ -152,6 +170,7 @@ class JsonViewerPage(Panel.Widget, IDisconnectable, ILanguage, ISaveable):
         self.style_manager.disconnect_by_func(self.update_style_scheme)
         self.stack.disconnect_by_func(self.on_page_changed)
         self.buffer.disconnect_by_func(self.on_json_changed)
+        self.buffer.disconnect_by_func(self.on_cursor_position_changed)
 
         self.save_delegate.disconnect_all()
 

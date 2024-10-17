@@ -33,12 +33,11 @@ class GenericSaveDelegate(Panel.SaveDelegate):
         self.page = page
 
         self.bindings.append(
-            self.page.bind_property("title", self, "title", 1))
+            self.bind_property("title", self.page, "title"))
         self.bindings.append(
-            self.page.bind_property("icon-name", self, "icon-name", 1))
+            self.bind_property("icon-name", self.page, "icon-name"))
 
-        self.set_title("Title")
-        self.set_subtitle("/path/to/file")
+        self.set_title("")
 
         self.update_draft_status()
 
@@ -136,3 +135,4 @@ class GenericSaveDelegate(Panel.SaveDelegate):
         except Exception as e:
             print(f"Error writing file: {e}")
             return None
+

@@ -71,8 +71,6 @@ class MatrixViewer(Gtk.ColumnView):
     def __init__(self):
         super().__init__()
 
-        self.connect("unrealize", self.__on_unrealized)
-
         self.set_show_column_separators(True)
         self.set_show_row_separators(True)
 
@@ -120,9 +118,7 @@ class MatrixViewer(Gtk.ColumnView):
         else:
             widget.set_label(str(row.get_cell(index)))
 
-    def __on_unrealized(self, *args):
-        self.disconnect_by_func(self.__on_unrealized)
-
+    def disconnect(self, *args):
         for column in self.get_columns():
             factory = column.get_factory()
             factory.disconnect_by_func(self.on_factory_setup)
@@ -130,7 +126,7 @@ class MatrixViewer(Gtk.ColumnView):
 
         self.set_model(None)
 
-        print(f"Unrealize {self}")
+        print(f"Closing: {self}")
 
     def __del__(self, *args):
         print(f"DELETING {self}")

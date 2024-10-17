@@ -57,12 +57,6 @@ class NotebookPage(
 
         self.bindings = []
 
-        self.list_drop_target.connect("drop", self.on_drop_target_drop)
-        self.list_drop_target.connect("motion", self.on_drop_target_motion)
-        self.list_drop_target.connect("leave", self.on_drop_target_leave)
-
-        self.cells_list_box.connect(
-            "selected-rows-changed", self.on_selected_cell_changed)
         self.previous_buffer = None
 
         self.notebook_model = _notebook_model
@@ -92,9 +86,12 @@ class NotebookPage(
         if self.notebook_model.get_n_items() == 0:
             self.add_cell(Cell(CellType.CODE))
 
-    #
-    #
-    #
+        self.list_drop_target.connect("drop", self.on_drop_target_drop)
+        self.list_drop_target.connect("motion", self.on_drop_target_motion)
+        self.list_drop_target.connect("leave", self.on_drop_target_leave)
+
+        self.cells_list_box.connect(
+            "selected-rows-changed", self.on_selected_cell_changed)
 
     def on_selected_cell_changed(self, *args):
         selected_row = self.cells_list_box.get_selected_row()
@@ -111,6 +108,8 @@ class NotebookPage(
                 self.on_cursor_position_changed, index)
 
             self.previous_buffer = buffer
+
+            self.emit("cursor-moved", buffer, index + 1)
 
     def run_cell(self, cell):
         if cell.cell_type != CellType.CODE:
@@ -337,6 +336,18 @@ class NotebookPage(
 
     def on_cursor_position_changed(self, buffer, pos, index):
         self.emit("cursor-moved", buffer, index + 1)
+
+    def move_cursor(self, line, column, index):
+        index = index - 1
+        if index < self.notebook_model.get_n_items():
+            row = self.cells_list_box.get_row_at_index(index)
+            buffer = row.get_child().code_buffer
+
+            succ, cursor_iter = buffer.get_iter_at_line_offset(
+                line, column)
+            if succ:
+                self.set_selected_cell_index(index)
+                buffer.place_cursor(cursor_iter)
 
     #
     #   Implement Saveable Page Interface

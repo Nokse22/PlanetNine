@@ -85,9 +85,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     server_status_label = Gtk.Template.Child()
     start_sidebar_panel_frame = Gtk.Template.Child()
     bottom_panel_frame = Gtk.Template.Child()
-    language_label = Gtk.Template.Child()
+    language_button = Gtk.Template.Child()
     position_menu_button = Gtk.Template.Child()
     add_cell_button = Gtk.Template.Child()
+    move_cursor_entry_buffer = Gtk.Template.Child()
 
     cache_dir = os.environ["XDG_CACHE_HOME"]
     files_cache_dir = os.path.join(cache_dir, "files")
@@ -100,7 +101,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         #     Gio.SubprocessFlags.NONE
         # )
 
-        self.connect("notify::focus-widget", self.on_focus_changed)
+        self.connect_after("notify::focus-widget", self.on_focus_changed)
 
         self.jupyter_server = JupyterServer()
 
@@ -111,11 +112,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
-        #
         #   ADDING AND BINDING STATIC PANELS
-        #
 
-        # TODO Save the last position and restore it at startup
+        # TODO Save the arrangement of the panels and restore it at startup
 
         self.kernel_manager_panel = KernelManagerPanel(
             self.jupyter_server.avalaible_kernels,
@@ -144,9 +143,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.select_kernel_combo_row.set_model(self.all_kernels)
 
-        #
         #   NEW CELL ON VISIBLE NOTEBOOK
-        #
 
         self.create_action(
             'add-text-cell',
@@ -158,20 +155,15 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             'add-raw-cell',
             lambda *_: self.add_cell_to_selected_notebook(Cell(CellType.TEXT)))
 
-        #
         #   NEW BROWSER PAGE
-        #
 
         self.create_action_with_target(
             'new-browser-page',
             GLib.VariantType.new("s"),
             self.open_browser_page)
 
-        #
         #   NEW NOTEBOOK/CONSOLE/CODE WITH NEW KERNEL BY NAME
-        #
         #   if name is empty it will start the default kernel
-        #
 
         self.create_action_with_target(
             'new-notebook-name',
@@ -188,9 +180,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             GLib.VariantType.new("s"),
             self.on_new_code_action)
 
-        #
         #   NEW NOTEBOOK/CONSOLE/CODE WITH EXISTING KERNEL BY ID
-        #
 
         self.create_action_with_target(
             'new-notebook-id',
@@ -207,9 +197,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             GLib.VariantType.new("s"),
             self.on_new_code_id_action)
 
-        #
         #   OPERATION ON RUNNING KERNEL
-        #
 
         self.create_action_with_target(
             'shutdown-kernel-id',
@@ -226,9 +214,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             GLib.VariantType.new("s"),
             self.restart_kernel_by_id)
 
-        #
         #   ACTIONS FOR THE VIEWED NOTEBOOK/CODE/CONSOLE
-        #
 
         self.run_action = self.create_action(
             'run-selected', self.run_clicked)
@@ -246,9 +232,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.create_action(
             'change-kernel', self.change_kernel)
 
-        #
         #   OTHER ACTIONS
-        #
 
         self.create_action(
             'open-notebook', self.on_open_notebook_action)
@@ -291,9 +275,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         else:
             print("The example folder does not exist.")
 
-        #
         #   START SERVER IMMEDIATELY
-        #
 
         if self.settings.get_boolean("start-server-immediately"):
             self.jupyter_server.start()
@@ -500,7 +482,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     def save_viewed(self):
         page = self.get_visible_page()
-        if page:
+        if isinstance(page, ISaveable):
             page.get_save_delegate().save_async(
                 None, self.on_saved_finished)
 
@@ -548,10 +530,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             title="Open File",
             filters=filter_list,
         )
-
-        file = await dialog.open(self)
-
-        self.open_notebook(file.get_path())
+        try:
+            file = await dialog.open(self)
+            self.open_notebook(file.get_path())
+        except Exception as e:
+            print(e)
 
     def on_open_code_action(self, *args):
         asyncio.create_task(self._on_open_code_action())
@@ -577,10 +560,13 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     def on_open_file_action(self, action, variant):
         file_path = variant.get_string()
+
+        if self.raise_page_if_open(file_path):
+            return
+
         self.open_file(file_path)
 
     def open_file(self, file_path):
-
         gfile = Gio.File.new_for_path(file_path)
 
         file_info = gfile.query_info("standard::content-type", 0, None)
@@ -611,6 +597,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     def open_file_with_text(self, action, variant):
         file_path = variant.get_string()
 
+        if self.raise_page_if_open(file_path):
+            return
+
         gfile = Gio.File.new_for_path(file_path)
 
         file_info = gfile.query_info("standard::content-type", 0, None)
@@ -623,6 +612,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         asyncio.create_task(self._open_notebook(file_path))
 
     async def _open_notebook(self, file_path):
+        if self.raise_page_if_open(file_path):
+            return
+
         if file_path:
             notebook = Notebook.new_from_file(file_path)
             page = NotebookPage(notebook)
@@ -646,6 +638,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         asyncio.create_task(self._open_code(file_path))
 
     async def _open_code(self, file_path):
+        if self.raise_page_if_open(file_path):
+            return
+
         page = CodePage(file_path)
 
         # TODO start kernel or ask which kernel to start, now it starts the
@@ -660,6 +655,25 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.grid.add(page)
 
         return page
+
+    def raise_page_if_open(self, file_path):
+        result = False
+
+        def check_frame(frame):
+            nonlocal result
+            for adw_page in frame.get_pages():
+                page = adw_page.get_child()
+                print(page, isinstance(page, ISaveable))
+                print(page.get_path(), file_path, page.get_path() == file_path)
+                if isinstance(page, ISaveable):
+                    if page.get_path() == file_path:
+                        result = True
+                        frame.set_visible_child(page)
+                        return
+
+        self.grid.foreach_frame(check_frame)
+
+        return result
 
     #
     #   CONNECT STATIC UI TO VISIBLE PAGE PROPERTIES
@@ -686,13 +700,20 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         if isinstance(page, ILanguage):
             page.connect("language-changed", self.update_page_language)
             self.update_page_language(page)
-            self.language_label.set_visible(True)
+            if page.get_is_language_settable():
+                self.language_button.set_active(True)
+            else:
+                self.language_button.set_active(False)
+            self.language_button.set_visible(True)
         else:
-            self.language_label.set_visible(False)
+            self.language_button.set_visible(False)
 
         # Cursor Interface (Text, Notebook, Code, Console, Json, Table)
         if isinstance(page, ICursor):
             page.connect("cursor-moved", self.on_cursor_moved)
+            # TODO Implement this function in all the pages
+            # buffer, index = page.get_cursor_position()
+            # self.on_cursor_moved(page, buffer, index)
             self.position_menu_button.set_visible(True)
         else:
             self.position_menu_button.set_visible(False)
@@ -733,7 +754,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         if lang == "" or lang is None:
             lang = _("None")
 
-        self.language_label.set_label(lang.title())
+        self.language_button.set_label(lang.title())
 
     def on_cursor_moved(self, page, buffer, index):
         insert_mark = buffer.get_insert()
@@ -744,13 +765,20 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         # Used to indicate the line and column number
         position = _("Ln ") + str(line_n) + _(", Col ") + str(column_n)
 
-        if index == 0:
+        entry_position = str(line_n) + ":" + str(column_n)
 
+        if index == 0:
             self.position_menu_button.set_label(position)
+            self.move_cursor_entry_buffer.set_text(
+                entry_position, len(entry_position))
         else:
             # Used to indicate the focused cell
             position = _("Cell ") + str(index) + ", " + position
             self.position_menu_button.set_label(position)
+
+            entry_position = str(index) + ":" + entry_position
+            self.move_cursor_entry_buffer.set_text(
+                entry_position, len(entry_position))
 
     def disconnect_page_funcs(self, page):
         if isinstance(page, IKernel):
@@ -759,6 +787,23 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             page.disconnect_by_func(self.on_cursor_moved)
         if isinstance(page, ILanguage):
             page.disconnect_by_func(self.update_page_language)
+
+    #
+    #   MOVE CURSOR
+    #
+
+    @Gtk.Template.Callback("on_move_cursor_activated")
+    def on_move_cursor_activated(self, *args):
+        page = self.get_visible_page()
+        if isinstance(page, ICursor):
+            text = self.move_cursor_entry_buffer.get_text()
+            parts = text.split(":")
+            print(parts)
+            if len(parts) == 3:
+                page.move_cursor(int(parts[1]), int(parts[2]), int(parts[0]))
+            elif len(parts) == 2:
+                page.move_cursor(int(parts[0]), int(parts[1]))
+
     #
     #   CHANGE/SELECT KERNEL OF THE VISIBLE PAGE
     #
@@ -768,7 +813,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         asyncio.create_task(self._change_kernel(notebook))
 
     async def _change_kernel(self, notebook):
-        self.select_kernel_combo_row.set_selected(1)
+        self.select_kernel_combo_row.set_selected(0)
         # 2 + len of avalab kernels + pos in kernels
 
         choice = await dialog_choose_async(self, self.select_kernel_dialog)
@@ -778,10 +823,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             kernel = self.select_kernel_combo_row.get_selected_item()
 
             if isinstance(kernel, JupyterKernelInfo):
-                success, new_kernel = await self.jupyter_server.start_kernel_by_name(kernel.name)
-                if success:
+                succ, new_ker = await self.jupyter_server.start_kernel_by_name(
+                    kernel.name)
+                if succ:
                     print("kernel has restarted")
-                    notebook.set_kernel(new_kernel)
+                    notebook.set_kernel(new_ker)
                     self.update_kernel_info(notebook)
                 else:
                     print("kernel has NOT restarted")

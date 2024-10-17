@@ -33,8 +33,6 @@ class VariablesPanel(Panel.Widget):
     def __init__(self):
         super().__init__()
 
-        # self.connect("unrealize", self.__on_unrealized)
-
         self.column_name.get_factory().connect("setup", self.on_factory_setup)
         self.column_name.get_factory().connect(
             "bind", self.on_factory_bind, "name")
@@ -71,9 +69,7 @@ class VariablesPanel(Panel.Widget):
 
         widget.set_label(value)
 
-    def __on_unrealized(self, *args):
-        self.disconnect_by_func(self.__on_unrealized)
-
+    def disconnect(self, *args):
         for column in self.column_view.get_columns():
             factory = column.get_factory()
             factory.disconnect_by_func(self.on_factory_setup)

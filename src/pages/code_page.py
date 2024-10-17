@@ -56,9 +56,6 @@ class CodePage(
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
-        self.code_buffer.connect(
-            "notify::cursor-position", self.on_cursor_position_changed)
-
         self.jupyter_kernel = None
 
         self.path = _path
@@ -123,7 +120,9 @@ class CodePage(
 
             self.code_buffer.set_text(content)
 
-            self.set_path(_path)
+            self.set_path(self.path)
+        else:
+            self.set_path(None)
 
         # VIEW SETTINGS
 
@@ -141,6 +140,8 @@ class CodePage(
         )
 
         self.code_buffer.connect("changed", self.on_text_changed)
+        self.code_buffer.connect(
+            "notify::cursor-position", self.on_cursor_position_changed)
 
     def get_selected_cell_content(self):
         cursor_iter = self.code_buffer.get_iter_at_mark(
@@ -234,6 +235,12 @@ class CodePage(
     def on_cursor_position_changed(self, *args):
         self.emit("cursor-moved", self.code_buffer, 0)
 
+    def move_cursor(self, line, column, _index=0):
+        succ, cursor_iter = self.code_buffer.get_iter_at_line_offset(
+            line, column)
+        if succ:
+            self.code_buffer.place_cursor(cursor_iter)
+
     #
     # Implement Kernel Interface
     #
@@ -266,7 +273,10 @@ class CodePage(
         self.set_title(
             os.path.basename(self.path) if self.path else "Untitled")
         self.save_delegate.set_subtitle(_path)
-        self.save_delegate.set_is_draft(False)
+        if not _path:
+            self.save_delegate.set_is_draft(True)
+        else:
+            self.save_delegate.set_is_draft(False)
 
     def get_content(self):
         start = self.code_buffer.get_start_iter()

@@ -22,6 +22,8 @@ from gi.repository import Panel, WebKit
 
 from ..interfaces.disconnectable import IDisconnectable
 
+from ..others.no_save_delegate import NoSaveDelegate
+
 GObject.type_register(WebKit.WebView)
 
 
@@ -50,6 +52,10 @@ class BrowserPage(Panel.Widget, IDisconnectable):
         self.bindings = []
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
+
+        self.save_delagate = NoSaveDelegate()
+        self.set_save_delegate(self.save_delagate)
+        self.set_modified(False)
 
         self.search_entry.connect("activate", self.on_entry_activated)
 

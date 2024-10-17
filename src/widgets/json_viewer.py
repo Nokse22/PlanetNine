@@ -49,8 +49,6 @@ class TreeWidget(Adw.Bin):
     def __init__(self):
         super().__init__()
 
-        self.connect("unrealize", self.__on_unrealized)
-
         box = Gtk.Box(
             spacing=6,
             margin_start=3,
@@ -104,9 +102,7 @@ class TreeWidget(Adw.Bin):
         else:
             self.value_label.set_text(f"{value}")
 
-    def __on_unrealized(self, *args):
-        self.disconnect_by_func(self.__on_unrealized)
-
+    def disconnect(self, *args):
         self.click_controller.disconnect_by_func(self.on_click_released)
 
         print(f"Unrealize {self}")
@@ -123,8 +119,6 @@ class JsonViewer(Gtk.Box):
 
         self.set_orientation(Gtk.Orientation.VERTICAL)
         self.set_spacing(12)
-
-        self.connect("unrealize", self.__on_unrealized)
 
     def create_tree_view(self, tree_model):
         tree_list_model = Gtk.TreeListModel.new(
@@ -204,9 +198,7 @@ class JsonViewer(Gtk.Box):
         widget.set_key(tree_node.node_type, tree_node.key)
         widget.set_value(tree_node.node_type, tree_node.content)
 
-    def __on_unrealized(self, *args):
-        self.disconnect_by_func(self.__on_unrealized)
-
+    def disconnect(self, *args):
         list_view = self.get_first_child()
 
         while list_view:

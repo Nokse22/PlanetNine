@@ -32,3 +32,6 @@ class ILanguage:
     def set_language(self, _language):
         self.language = _language
         self.emit('language-changed')
+
+    def get_is_language_settable(self):
+        return False  # By default the language is not settable

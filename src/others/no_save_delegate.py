@@ -1,4 +1,4 @@
-# cursor.py
+# no_save_delegate.py
 #
 # Copyright 2024 Nokse22
 #
@@ -17,19 +17,27 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import GObject, Gtk
+from gi.repository import Panel, Gtk, GObject, Gio, GLib
+import asyncio
+
+from gettext import gettext as _
 
 
-class ICursor:
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        cls.cursor_moved = GObject.Signal(
-            'cursor-moved',
-            arg_types=([Gtk.TextBuffer, int])
-        )
+class NoSaveDelegate(Panel.SaveDelegate):
+    __gtype_name__ = 'NoSaveDelegate'
 
-    def move_cursor(self, line, column, index=0):
-        raise NotImplementedError
+    def __init__(self):
+        super().__init__()
+        self.set_is_draft(False)
 
-    def get_cursor_position(self):
-        raise NotImplementedError
+    def do_close(self):
+        print("do close")
+
+    def do_discard(self):
+        print("do discard")
+
+    def do_save_async(self, cancellable, callback, user_data):
+        print("do save async")
+
+    def do_save_finish(self, result):
+        return True

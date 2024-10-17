@@ -33,6 +33,8 @@ import csv
 import io
 
 
+# @Gtk.Template(
+#     resource_path='/io/github/nokse22/PlanetNine/gtk/matrix_page.ui')
 class MatrixPage(Panel.Widget, ISaveable, ICursor, ILanguage):
     __gtype_name__ = 'MatrixPage'
 
@@ -40,8 +42,6 @@ class MatrixPage(Panel.Widget, ISaveable, ICursor, ILanguage):
 
     def __init__(self, _path=None):
         super().__init__()
-
-        self.connect("unrealize", self.__on_unrealized)
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
@@ -163,6 +163,7 @@ class MatrixPage(Panel.Widget, ISaveable, ICursor, ILanguage):
 
     def disconnect(self, *args):
         self.save_delegate.disconnect_all()
+        self.matrix_viewer.disconnect()
 
         print(f"closing: {self}")
 

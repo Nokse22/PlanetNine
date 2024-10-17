@@ -32,8 +32,6 @@ class MarkdownTextView(Gtk.TextView):
     def __init__(self):
         super().__init__()
 
-        self.connect("unrealize", self.__on_unrealized)
-
         self.set_css_name("markdownview")
 
         self.set_wrap_mode(Gtk.WrapMode.WORD)
@@ -41,20 +39,34 @@ class MarkdownTextView(Gtk.TextView):
 
         self.buffer = self.get_buffer()
 
-        self.buffer.create_tag("h1", weight=Pango.Weight.BOLD, scale=2.0, foreground="#78aeed")
-        self.buffer.create_tag("h2", weight=Pango.Weight.BOLD, scale=1.8, foreground="#78aeed")
-        self.buffer.create_tag("h3", weight=Pango.Weight.BOLD, scale=1.6, foreground="#78aeed")
-        self.buffer.create_tag("h4", weight=Pango.Weight.BOLD, scale=1.4, foreground="#78aeed")
-        self.buffer.create_tag("h5", weight=Pango.Weight.BOLD, scale=1.2, foreground="#78aeed")
-        self.buffer.create_tag("h6", weight=Pango.Weight.BOLD, scale=1, foreground="#78aeed")
+        self.buffer.create_tag(
+            "h1", weight=Pango.Weight.BOLD, scale=2.0, foreground="#78aeed")
+        self.buffer.create_tag(
+            "h2", weight=Pango.Weight.BOLD, scale=1.8, foreground="#78aeed")
+        self.buffer.create_tag(
+            "h3", weight=Pango.Weight.BOLD, scale=1.6, foreground="#78aeed")
+        self.buffer.create_tag(
+            "h4", weight=Pango.Weight.BOLD, scale=1.4, foreground="#78aeed")
+        self.buffer.create_tag(
+            "h5", weight=Pango.Weight.BOLD, scale=1.2, foreground="#78aeed")
+        self.buffer.create_tag(
+            "h6", weight=Pango.Weight.BOLD, scale=1, foreground="#78aeed")
 
-        self.buffer.create_tag("bold", weight=Pango.Weight.BOLD)
-        self.buffer.create_tag("italic", style=Pango.Style.ITALIC)
-        self.buffer.create_tag("code", style=Pango.Style.OBLIQUE, background="#f0f0f0")
-        self.buffer.create_tag("bold_italic", weight=Pango.Weight.BOLD, style=Pango.Style.ITALIC)
-        self.buffer.create_tag("block_code", family="Monospace", background="#f0f0f0")
-        self.buffer.create_tag("link", foreground="#3584E4", underline=Pango.Underline.SINGLE)
-        self.buffer.create_tag("quote", style=Pango.Style.ITALIC, foreground="#6a737d", left_margin=20)
+        self.buffer.create_tag(
+            "bold", weight=Pango.Weight.BOLD)
+        self.buffer.create_tag(
+            "italic", style=Pango.Style.ITALIC)
+        self.buffer.create_tag(
+            "code", style=Pango.Style.OBLIQUE, background="#f0f0f0")
+        self.buffer.create_tag(
+            "bold_italic", weight=Pango.Weight.BOLD, style=Pango.Style.ITALIC)
+        self.buffer.create_tag(
+            "block_code", family="Monospace", background="#f0f0f0")
+        self.buffer.create_tag(
+            "link", foreground="#3584E4", underline=Pango.Underline.SINGLE)
+        self.buffer.create_tag(
+            "quote", style=Pango.Style.ITALIC,
+            foreground="#6a737d", left_margin=20)
 
         self.full_line_tags = [
             ("# ", "h1"),
@@ -229,12 +241,10 @@ class MarkdownTextView(Gtk.TextView):
                     else:
                         buffer.insert(loc, new_order_bullet, -1)
 
-    def __on_unrealized(self, *args):
+    def disconnect(self, *args):
         self.buffer.disconnect_by_func(self.on_text_changed)
         self.buffer.disconnect_by_func(self.on_text_inserted)
         self.buffer.disconnect_by_func(self.on_text_deleted)
-
-        self.disconnect_by_func(self.__on_unrealized)
 
         print("unrealize:", sys.getrefcount(self))
 

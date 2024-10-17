@@ -145,6 +145,12 @@ class TextPage(Panel.Widget, ISaveable, IDisconnectable, ICursor, ILanguage):
     def on_cursor_position_changed(self, *args):
         self.emit("cursor-moved", self.buffer, 0)
 
+    def move_cursor(self, line, column, _index=0):
+        succ, cursor_iter = self.code_buffer.get_iter_at_line_offset(
+            line, column)
+        if succ:
+            self.code_buffer.place_cursor(cursor_iter)
+
     #
     #   Implement Disconnectable Interface
     #
@@ -156,7 +162,7 @@ class TextPage(Panel.Widget, ISaveable, IDisconnectable, ICursor, ILanguage):
 
         self.save_delegate.disconnect_all()
 
-        print(f"Unrealize: {self}")
+        print(f"Closing: {self}")
 
     def __del__(self, *args):
         print(f"DELETING {self}")
