@@ -20,9 +20,7 @@
 from gi.repository import GObject
 
 
-class IKernel(GObject.GObject):
-    __gtype_name__ = 'IKernel'
-
+class IKernel:
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         cls.kernel_info_changed = GObject.Signal('kernel-info-changed')

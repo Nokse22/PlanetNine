@@ -27,12 +27,14 @@ from ..others.style_manager import StyleManager
 from ..widgets.json_viewer import JsonViewer
 
 from ..interfaces.disconnectable import IDisconnectable
+from ..interfaces.language import ILanguage
+from ..interfaces.saveable import ISaveable
 
 import os
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/json_viewer_page.ui')
-class JsonViewerPage(Panel.Widget, IDisconnectable):
+class JsonViewerPage(Panel.Widget, IDisconnectable, ILanguage, ISaveable):
     __gtype_name__ = 'JsonViewerPage'
 
     path = GObject.Property(type=str, default="")
@@ -47,12 +49,9 @@ class JsonViewerPage(Panel.Widget, IDisconnectable):
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
-        # SET THE LANGUAGE STYLE SCHEME
+        # SET THE LANGUAGE and STYLE SCHEME
 
-        lm = GtkSource.LanguageManager()
-        lang = lm.get_language("json")
-        self.buffer.set_language(lang)
-        self.buffer.set_highlight_syntax(True)
+        self.set_language("json")
 
         self.style_manager = StyleManager()
         self.style_manager.connect("style-changed", self.update_style_scheme)
@@ -114,6 +113,17 @@ class JsonViewerPage(Panel.Widget, IDisconnectable):
         scheme = self.style_manager.get_current_scheme()
         self.buffer.set_style_scheme(scheme)
 
+    #
+    #   Implement Language Interface
+    #
+
+    def set_language(self, _language):
+        self.language = _language
+
+        lm = GtkSource.LanguageManager()
+        lang = lm.get_language(self.language)
+        self.buffer.set_language(lang)
+        self.buffer.set_highlight_syntax(True)
     #
     #   Implement Saveable Page Interface
     #

@@ -1,4 +1,4 @@
-# disconnectable.py
+# language.py
 #
 # Copyright 2024 Nokse22
 #
@@ -17,7 +17,17 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from gi.repository import GObject
 
-class IDisconnectable:
-    def disconnect(self):
-        raise NotImplementedError
+
+class ILanguage:
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.cursor_moved = GObject.Signal('language-changed')
+        cls.language = GObject.Property(type=str, default="")
+
+    def get_language(self):
+        return self.language
+
+    def set_language(self, _language):
+        self.language = _language

@@ -35,11 +35,14 @@ from ..interfaces.saveable import ISaveable
 from ..interfaces.disconnectable import IDisconnectable
 from ..interfaces.cursor import ICursor
 from ..interfaces.kernel import IKernel
+from ..interfaces.language import ILanguage
 
 
 @Gtk.Template(
     resource_path='/io/github/nokse22/PlanetNine/gtk/notebook_page.ui')
-class NotebookPage(Panel.Widget, ISaveable, IDisconnectable, IKernel, ICursor):
+class NotebookPage(
+            Panel.Widget, ISaveable, IDisconnectable,
+            IKernel, ICursor, ILanguage):
     __gtype_name__ = 'NotebookPage'
 
     cells_list_box = Gtk.Template.Child()
@@ -302,6 +305,30 @@ class NotebookPage(Panel.Widget, ISaveable, IDisconnectable, IKernel, ICursor):
 
     def on_drop_target_leave(self, drop_target):
         self.cells_list_box.drag_unhighlight_row()
+
+    #
+    #   Implement Language Interface
+    #
+
+    def get_language(self):
+        kernel = self.get_kernel()
+        if kernel:
+            self.language = kernel.language
+            return self.language
+        else:
+            return None
+
+    def set_language(self, _language):
+        # self.get_kernel().language = _language
+        # self.language = _language
+        # lang = self.language_manager.get_language(self.language)
+        # self.code_buffer.set_language(lang)
+        # self.code_buffer.set_highlight_syntax(True)
+
+        # TODO Need to ask the kernel to change the language if it make sense
+        #           or set as fixed
+
+        pass
 
     #
     #   Implement Cursor Interface

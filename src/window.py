@@ -58,6 +58,7 @@ from .interfaces.cells import ICells
 from .interfaces.saveable import ISaveable
 from .interfaces.disconnectable import IDisconnectable
 from .interfaces.cursor import ICursor
+from .interfaces.language import ILanguage
 
 from .widgets.launcher import Launcher
 
@@ -667,41 +668,48 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     def on_focus_changed(self, *args):
         page = self.get_visible_page()
 
-        print("isinstance(page, IKernel) = ", isinstance(page, IKernel))
-        print("isinstance(page, ICursor) = ", isinstance(page, ICursor))
+        self.disconnect_page_funcs(self.previous_page)
 
+        # Kernel Interface (Notebook, Code, Console)
         if isinstance(page, IKernel):
-            if self.previous_page:
-                self.previous_page.disconnect_by_func(self.update_kernel_info)
-                self.previous_page.disconnect_by_func(self.on_cursor_moved)
-
             page.connect("kernel-info-changed", self.update_kernel_info)
-            if isinstance(page, ICursor):
-                page.connect("cursor-moved", self.on_cursor_moved)
             self.update_kernel_info(page)
-            self.previous_page = page
 
             self.omni_bar.set_visible(True)
-            self.language_label.set_visible(True)
             self.kernel_status_menu.set_visible(True)
 
-            if isinstance(page, NotebookPage):
-                self.add_cell_button.set_visible(True)
-            else:
-                self.add_cell_button.set_visible(False)
         else:
-            self.position_menu_button.set_visible(False)
-            self.language_label.set_visible(False)
             self.omni_bar.set_visible(False)
             self.kernel_status_menu.set_visible(False)
+
+        # Language Interface (Text, Notebook, Code, Console, Json, Table)
+        if isinstance(page, ILanguage):
+            page.connect("notify::language", self.update_page_language)
+            self.update_page_language(page)
+            self.language_label.set_visible(True)
+        else:
+            self.language_label.set_visible(False)
+
+        # Cursor Interface (Text, Notebook, Code, Console, Json, Table)
+        if isinstance(page, ICursor):
+            page.connect("cursor-moved", self.on_cursor_moved)
+            self.position_menu_button.set_visible(True)
+        else:
+            self.position_menu_button.set_visible(False)
+
+        # Add Cells only for Notebook
+        if isinstance(page, NotebookPage):
+            self.add_cell_button.set_visible(True)
+        else:
             self.add_cell_button.set_visible(False)
+
+        self.previous_page = page
 
     def update_kernel_info(self, page):
         kernel = page.get_kernel()
         if kernel:
             self.kernel_status_menu.set_label(kernel.status)
             self.omni_label.set_label(kernel.display_name)
-            self.language_label.set_label(kernel.language.title() or "None")
 
             self.variables_panel.set_model(kernel.get_variables())
             self.kernel_terminal.set_kernel(kernel)
@@ -720,6 +728,13 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self.restart_kernel_and_run_action.set_enabled(False)
             self.restart_kernel_action.set_enabled(False)
 
+    def update_page_language(self, page):
+        lang = page.get_language()
+        if lang == "" or lang is None:
+            lang = _("None")
+
+        self.language_label.set_label(lang.title())
+
     def on_cursor_moved(self, page, buffer, index):
         insert_mark = buffer.get_insert()
         iter_at_cursor = buffer.get_iter_at_mark(insert_mark)
@@ -737,8 +752,13 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             position = _("Cell ") + str(index) + ", " + position
             self.position_menu_button.set_label(position)
 
-        self.position_menu_button.set_visible(True)
-
+    def disconnect_page_funcs(self, page):
+        if isinstance(page, IKernel):
+            page.disconnect_by_func(self.update_kernel_info)
+        if isinstance(page, ICursor):
+            page.disconnect_by_func(self.on_cursor_moved)
+        if isinstance(page, ILanguage):
+            page.disconnect_by_func(self.update_page_language)
     #
     #   CHANGE/SELECT KERNEL OF THE VISIBLE PAGE
     #
@@ -880,8 +900,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     def on_page_closed(self, frame, widget):
         if widget == self.previous_page:
-            widget.disconnect_by_func(self.update_kernel_info)
-            widget.disconnect_by_func(self.on_cursor_moved)
+            self.disconnect_page_funcs(widget)
 
             self.previous_page = None
 

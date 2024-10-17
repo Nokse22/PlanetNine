@@ -31,6 +31,7 @@ from ..interfaces.saveable import ISaveable
 from ..interfaces.disconnectable import IDisconnectable
 from ..interfaces.kernel import IKernel
 from ..interfaces.cursor import ICursor
+from ..interfaces.language import ILanguage
 
 import os
 
@@ -39,7 +40,9 @@ GObject.type_register(GtkSource.VimIMContext)
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/code_page.ui')
-class CodePage(Panel.Widget, ISaveable, IDisconnectable, ICursor, IKernel):
+class CodePage(
+            Panel.Widget, ISaveable, IDisconnectable,
+            ICursor, IKernel, ILanguage):
     __gtype_name__ = 'CodePage'
 
     source_view = Gtk.Template.Child()
@@ -83,7 +86,11 @@ class CodePage(Panel.Widget, ISaveable, IDisconnectable, ICursor, IKernel):
 
         # SET THE LANGUAGE and STYLE SCHEME
 
-        self.set_language_highlight()
+        self.language_manager = GtkSource.LanguageManager()
+        self.language_manager.append_search_path(
+            "resource:///io/github/nokse22/PlanetNine/custom_languages/")
+
+        self.set_language("python3")
 
         self.style_manager = StyleManager()
         self.style_manager.connect("style-changed", self.update_style_scheme)
@@ -201,14 +208,21 @@ class CodePage(Panel.Widget, ISaveable, IDisconnectable, ICursor, IKernel):
         scheme = self.style_manager.get_current_scheme()
         self.code_buffer.set_style_scheme(scheme)
 
-    def set_language_highlight(self):
-        # TODO change the language based on the file mimetype
-        lm = GtkSource.LanguageManager()
-        lm.append_search_path(
-            "resource:///io/github/nokse22/PlanetNine/custom_languages/")
-        lang = lm.get_language("python3cells")
-        self.code_buffer.set_language(lang)
+    #
+    #   Implement Language Interface
+    #
 
+    def set_language(self, _language):
+        self.language = _language
+
+        if self.language + "cells" in self.language_manager.get_language_ids():
+            lang = self.language_manager.get_language(self.language + "cells")
+        else:
+            lang = self.language
+
+        # TODO change the language based on the file mimetype
+
+        self.code_buffer.set_language(lang)
         self.code_buffer.set_highlight_syntax(True)
 
     #

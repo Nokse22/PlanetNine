@@ -26,13 +26,14 @@ from ..widgets.matrix_viewer import MatrixViewer, MatrixRow, Matrix
 
 from ..interfaces.cursor import ICursor
 from ..interfaces.saveable import ISaveable
+from ..interfaces.language import ILanguage
 
 import os
 import csv
 import io
 
 
-class MatrixPage(Panel.Widget, ISaveable, ICursor):
+class MatrixPage(Panel.Widget, ISaveable, ICursor, ILanguage):
     __gtype_name__ = 'MatrixPage'
 
     path = GObject.Property(type=str, default="")
@@ -45,6 +46,8 @@ class MatrixPage(Panel.Widget, ISaveable, ICursor):
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
         # SET UP
+
+        self.language = "csv"
 
         self.matrix_viewer = MatrixViewer()
         self.matrix_viewer.set_vexpand(True)
@@ -129,6 +132,13 @@ class MatrixPage(Panel.Widget, ISaveable, ICursor):
             row_number += 1
 
         return matrix
+
+    #
+    #   Implement Language Interface
+    #
+
+    def set_language(self, _language):
+        self.language = _language
 
     #
     #   Implement Saveable Page Interface

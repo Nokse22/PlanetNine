@@ -17,12 +17,8 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import GObject
 
-
-class ISaveable(GObject.GObject):
-    __gtype_name__ = 'ISaveable'
-
+class ISaveable:
     def get_path(self):
         raise NotImplementedError
 

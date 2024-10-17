@@ -20,9 +20,7 @@
 from gi.repository import GObject, Gtk
 
 
-class ICursor(GObject.GObject):
-    __gtype_name__ = 'ICursor'
-
+class ICursor:
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         cls.cursor_moved = GObject.Signal(

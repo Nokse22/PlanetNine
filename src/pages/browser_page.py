@@ -79,7 +79,7 @@ class BrowserPage(Panel.Widget, IDisconnectable):
         self.bookmarks = [
             ('Duck Duck Go', 'https://start.duckduckgo.com/'),
             ('GNOME', 'https://www.gnome.org/'),
-            ('Python Tutorials', 'https://docs.python.org/3/tutorial/index.html')
+            ('Python Tutorials', 'https://docs.python.org/3/tutorial')
         ]
 
         for name, url in self.bookmarks:

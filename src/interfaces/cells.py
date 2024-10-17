@@ -17,12 +17,8 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import GObject
 
-
-class ICells(GObject.GObject):
-    __gtype_name__ = 'ICells'
-
+class ICells:
     def run_selected_cell(self):
         raise NotImplementedError
 

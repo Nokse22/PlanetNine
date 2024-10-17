@@ -28,6 +28,7 @@ from ..utils.converters import get_language_highlight_name
 from ..interfaces.saveable import ISaveable
 from ..interfaces.disconnectable import IDisconnectable
 from ..interfaces.cursor import ICursor
+from ..interfaces.language import ILanguage
 
 import os
 
@@ -36,7 +37,7 @@ GObject.type_register(GtkSource.VimIMContext)
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/text_page.ui')
-class TextPage(Panel.Widget, ISaveable, IDisconnectable, ICursor):
+class TextPage(Panel.Widget, ISaveable, IDisconnectable, ICursor, ILanguage):
     __gtype_name__ = 'TextPage'
 
     path = GObject.Property(type=str, default="")
@@ -51,10 +52,9 @@ class TextPage(Panel.Widget, ISaveable, IDisconnectable, ICursor):
 
         # SET THE LANGUAGE
 
-        # lm = GtkSource.LanguageManager()
-        # lang = lm.get_language("python3")
-        # self.code_buffer.set_language(lang)
-        # self.code_buffer.set_highlight_syntax(True)
+        self.language = ""
+
+        self.language_manager = GtkSource.LanguageManager()
 
         # SET STYLE SCHEME
 
@@ -125,6 +125,16 @@ class TextPage(Panel.Widget, ISaveable, IDisconnectable, ICursor):
         sm = GtkSource.StyleSchemeManager()
         scheme = sm.get_scheme(scheme_name)
         self.buffer.set_style_scheme(scheme)
+
+    #
+    #   Implement Language Interface
+    #
+
+    def set_language(self, _language):
+        self.language = _language
+        lang = self.language_manager.get_language(self.language)
+        self.code_buffer.set_language(lang)
+        self.code_buffer.set_highlight_syntax(True)
 
     #
     #   Implement Cursor Interface
