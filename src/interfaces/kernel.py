@@ -20,6 +20,8 @@
 from gi.repository import GObject
 
 
+# The IKernel interface is used for any page that has a kernel associated
+#       with it
 class IKernel:
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)

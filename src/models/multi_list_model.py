@@ -20,15 +20,8 @@
 from gi.repository import Gtk, GObject, Gio
 
 
-class Prova(GObject.GObject):
-    __gtype_name__ = 'Prova'
-
-    def __init__(self, _name):
-        super().__init__()
-
-        self.display_name = _name
-
-
+# Is used to merge multiple ListStore together and display them separatly
+#       using Gtk.SectionModel in a Gtk.ListView
 class MultiListModel(GObject.GObject, Gio.ListModel, Gtk.SectionModel):
     __gtype_name__ = 'MultiListModel'
 

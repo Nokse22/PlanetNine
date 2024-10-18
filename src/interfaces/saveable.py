@@ -18,6 +18,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
+# The ISaveable interface is used for all pages that have a content that
+#       has to be saved before closing
 class ISaveable:
     def get_path(self):
         raise NotImplementedError

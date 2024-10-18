@@ -22,7 +22,6 @@ from gi.repository import GObject
 from enum import IntEnum
 
 import nbformat
-import json
 
 
 class OutputType(IntEnum):
@@ -42,6 +41,7 @@ class DataType(IntEnum):
     IMAGE_SVG = 7
 
 
+# This represent a cell output
 class Output(GObject.GObject):
     __gtype_name__ = 'Output'
 

@@ -20,6 +20,8 @@
 from gi.repository import GObject
 
 
+# The ILanguage interface is used for any page that has a set language to
+#       display the language name in the UI
 class ILanguage:
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)

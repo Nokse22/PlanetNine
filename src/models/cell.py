@@ -33,6 +33,7 @@ class CellType(IntEnum):
     RAW = 2
 
 
+# This object holds the content and output of a notebook cell
 class Cell(GObject.GObject):
     __gtype_name__ = 'Cell'
 

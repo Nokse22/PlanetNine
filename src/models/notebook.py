@@ -26,6 +26,7 @@ import os
 from .cell import Cell
 
 
+# This object represent the content of a Notebook and holds all the cells
 class Notebook(Gio.ListStore):
     __gtype_name__ = 'Notebook'
 

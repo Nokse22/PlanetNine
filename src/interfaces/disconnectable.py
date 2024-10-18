@@ -18,6 +18,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
+# The IDisconnectable interface is used for any widget that needs to
+#       disconnect signal to be able to free the memory
 class IDisconnectable:
     def disconnect(self):
         raise NotImplementedError
