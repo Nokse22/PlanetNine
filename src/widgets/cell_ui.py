@@ -262,7 +262,11 @@ class CellUI(Gtk.Box):
         with open(html_page_path, 'w') as f:
             f.write(html_string)
 
-        box = Gtk.Box(spacing=12, halign=Gtk.Align.CENTER)
+        box = Gtk.Box(
+            spacing=12,
+            margin_top=6,
+            margin_bottom=6,
+            halign=Gtk.Align.CENTER)
         button = Gtk.Button(
             css_classes=["html-button"],
             action_name="win.new-browser-page",

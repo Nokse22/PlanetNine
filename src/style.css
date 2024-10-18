@@ -1,5 +1,6 @@
 .html-button {
   border-radius: 12px;
+  border: 1px solid var(--headerbar-shade-color);
 }
 
 list.notebook-list {
