@@ -20,6 +20,8 @@
 from gi.repository import GObject, Gtk
 
 
+# The ICursor interface is used for any page that has a TextView or SourceView
+#       to show the cursor position in the UI and also go to a position
 class ICursor:
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)

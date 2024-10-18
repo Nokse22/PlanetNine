@@ -18,6 +18,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
+# The ICells interface is used in NotebookPage and CodePage that
+#       can be divided into cells and single cells can be executed
 class ICells:
     def run_selected_cell(self):
         raise NotImplementedError
@@ -26,4 +28,7 @@ class ICells:
         raise NotImplementedError
 
     def run_selected_cell_go_on(self):
+        raise NotImplementedError
+
+    def add_cell(self, cell_type):
         raise NotImplementedError

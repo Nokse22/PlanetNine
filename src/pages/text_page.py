@@ -22,6 +22,7 @@ from gi.repository import Panel, GtkSource
 from gi.repository import Spelling
 
 from ..others.save_delegate import GenericSaveDelegate
+from ..others.style_manager import StyleManager
 
 from ..utils.converters import get_language_highlight_name
 
@@ -56,10 +57,10 @@ class TextPage(Panel.Widget, ISaveable, IDisconnectable, ICursor, ILanguage):
 
         self.language_manager = GtkSource.LanguageManager()
 
-        # SET STYLE SCHEME
+        # STYLE SCHEME
 
-        self.style_manager = Adw.StyleManager.get_default()
-        self.style_manager.connect("notify::dark", self.update_style_scheme)
+        self.style_manager = StyleManager()
+        self.style_manager.connect("style-changed", self.update_style_scheme)
         self.update_style_scheme()
 
         # ENABLE SPELL CHECK
@@ -119,11 +120,7 @@ class TextPage(Panel.Widget, ISaveable, IDisconnectable, ICursor, ILanguage):
         self.set_modified(True)
 
     def update_style_scheme(self, *args):
-        scheme_name = "Adwaita"
-        if Adw.StyleManager.get_default().get_dark():
-            scheme_name += "-dark"
-        sm = GtkSource.StyleSchemeManager()
-        scheme = sm.get_scheme(scheme_name)
+        scheme = self.style_manager.get_current_scheme()
         self.buffer.set_style_scheme(scheme)
 
     #
@@ -133,8 +130,8 @@ class TextPage(Panel.Widget, ISaveable, IDisconnectable, ICursor, ILanguage):
     def set_language(self, _language):
         self.language = _language
         lang = self.language_manager.get_language(self.language)
-        self.code_buffer.set_language(lang)
-        self.code_buffer.set_highlight_syntax(True)
+        self.buffer.set_language(lang)
+        self.buffer.set_highlight_syntax(True)
 
         self.emit('language-changed')
 
@@ -145,11 +142,14 @@ class TextPage(Panel.Widget, ISaveable, IDisconnectable, ICursor, ILanguage):
     def on_cursor_position_changed(self, *args):
         self.emit("cursor-moved", self.buffer, 0)
 
+    def get_cursor_position(self):
+        return self.buffer, 0
+
     def move_cursor(self, line, column, _index=0):
-        succ, cursor_iter = self.code_buffer.get_iter_at_line_offset(
+        succ, cursor_iter = self.buffer.get_iter_at_line_offset(
             line, column)
         if succ:
-            self.code_buffer.place_cursor(cursor_iter)
+            self.buffer.place_cursor(cursor_iter)
 
     #
     #   Implement Disconnectable Interface

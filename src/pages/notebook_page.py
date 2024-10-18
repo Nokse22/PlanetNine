@@ -215,7 +215,8 @@ class NotebookPage(
                     if row:
                         self.cells_list_box.select_row(row)
 
-    def add_cell(self, cell):
+    def add_cell(self, cell_type):
+        cell = Cell(cell_type)
         if self.notebook_model.get_n_items() > 1:
             index = self.get_selected_cell_index()
             self.notebook_model.insert(index + 1, cell)
@@ -336,6 +337,13 @@ class NotebookPage(
 
     def on_cursor_position_changed(self, buffer, pos, index):
         self.emit("cursor-moved", buffer, index + 1)
+
+    def get_cursor_position(self):
+        cell_ui = self.cells_list_box.get_selected_row().get_child()
+        buffer = cell_ui.code_buffer
+        index = self.get_selected_cell_index()
+
+        return buffer, index
 
     def move_cursor(self, line, column, index):
         index = index - 1

@@ -32,6 +32,7 @@ from ..interfaces.disconnectable import IDisconnectable
 from ..interfaces.kernel import IKernel
 from ..interfaces.cursor import ICursor
 from ..interfaces.language import ILanguage
+from ..interfaces.cells import ICells
 
 import os
 
@@ -42,7 +43,7 @@ GObject.type_register(GtkSource.VimIMContext)
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/code_page.ui')
 class CodePage(
             Panel.Widget, ISaveable, IDisconnectable,
-            ICursor, IKernel, ILanguage):
+            ICursor, IKernel, ILanguage, ICells):
     __gtype_name__ = 'CodePage'
 
     source_view = Gtk.Template.Child()
@@ -235,6 +236,9 @@ class CodePage(
     def on_cursor_position_changed(self, *args):
         self.emit("cursor-moved", self.code_buffer, 0)
 
+    def get_cursor_position(self):
+        return self.code_buffer, 0
+
     def move_cursor(self, line, column, _index=0):
         succ, cursor_iter = self.code_buffer.get_iter_at_line_offset(
             line, column)
@@ -299,6 +303,37 @@ class CodePage(
             self.get_content(),
             self.run_code_callback
         )
+
+    def add_cell(self, cell_type):
+        self.code_buffer.begin_user_action()
+
+        bounds = self.code_buffer.get_selection_bounds()
+        start, end = None, None
+        if bounds:
+            start, end = bounds
+
+        if bounds and start != end:
+            start_line = start.get_line()
+            end_line = end.get_line()
+
+            succ, iter_start = self.code_buffer.get_iter_at_line(start_line)
+            self.code_buffer.insert(iter_start, "# %%\n")
+
+            succ, iter_end = self.code_buffer.get_iter_at_line(end_line)
+            iter_end.forward_to_line_end()
+            iter_end.forward_line()
+            iter_end.forward_line()
+            self.code_buffer.insert(iter_end, "# %%\n")
+        else:
+            cursor = self.code_buffer.get_iter_at_mark(
+                self.code_buffer.get_insert())
+            line = cursor.get_line()
+            succ, iter_line = self.code_buffer.get_iter_at_line(line)
+            self.code_buffer.insert(iter_line, "# %%\n")
+
+        self.code_buffer.set_modified(True)
+
+        self.code_buffer.end_user_action()
 
     #
     #   Implement Disconnectable Interface
