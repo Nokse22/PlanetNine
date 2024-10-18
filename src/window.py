@@ -153,13 +153,13 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.create_action(
             'add-text-cell',
-            lambda *_: self.add_cell_to_selected_notebook(Cell(CellType.TEXT)))
+            lambda *_: self.add_cell_to_page(CellType.TEXT))
         self.create_action(
             'add-code-cell',
-            lambda *_: self.add_cell_to_selected_notebook(Cell(CellType.CODE)))
+            lambda *_: self.add_cell_to_page(CellType.CODE))
         self.create_action(
             'add-raw-cell',
-            lambda *_: self.add_cell_to_selected_notebook(Cell(CellType.TEXT)))
+            lambda *_: self.add_cell_to_page(CellType.TEXT))
 
         #   NEW BROWSER PAGE
 
@@ -556,9 +556,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             filters=filter_list,
         )
 
-        file = await dialog.open(self)
-
-        self.open_code(file.get_path())
+        try:
+            file = await dialog.open(self)
+            self.open_code(file.get_path())
+        except Exception as e:
+            print(e)
 
     #
     #   OPEN ANY FILE
@@ -717,15 +719,13 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         # Cursor Interface (Text, Notebook, Code, Console, Json, Table)
         if isinstance(page, ICursor):
             page.connect("cursor-moved", self.on_cursor_moved)
-            # TODO Implement this function in all the pages
-            # buffer, index = page.get_cursor_position()
-            # self.on_cursor_moved(page, buffer, index)
+            buffer, index = page.get_cursor_position()
+            self.on_cursor_moved(page, buffer, index)
             self.position_menu_button.set_visible(True)
         else:
             self.position_menu_button.set_visible(False)
 
-        # Add Cells only for Notebook
-        if isinstance(page, NotebookPage):
+        if isinstance(page, ICells):
             self.add_cell_button.set_visible(True)
         else:
             self.add_cell_button.set_visible(False)
@@ -924,10 +924,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #   VARIOUS
     #
 
-    def add_cell_to_selected_notebook(self, cell):
+    def add_cell_to_page(self, cell_type):
         page = self.get_visible_page()
-        if isinstance(page, NotebookPage):
-            page.add_cell(cell)
+        if isinstance(page, ICells):
+            page.add_cell(cell_type)
 
     def run_clicked(self, *args):
         page = self.get_visible_page()
