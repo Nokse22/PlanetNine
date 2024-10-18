@@ -50,8 +50,8 @@
     <file preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
 
     <file>icons/16x16/actions/arrow-circular-small-top-right-symbolic.svg</file>
-    <file>icons/16x16/actions/play-symbolic.svg</file>
-    <file>icons/16x16/actions/seek-forward-large-symbolic.svg</file>
+    <file>icons/16x16/actions/run-cell-symbolic.svg</file>
+    <file>icons/16x16/actions/run-cell-and-proceed-symbolic.svg</file>
     <file>icons/16x16/actions/stop-symbolic.svg</file>
     <file>icons/16x16/actions/terminal-symbolic.svg</file>
     <file>icons/16x16/actions/left-symbolic.svg</file>
@@ -68,6 +68,7 @@
     <file>icons/16x16/actions/arrow-circular-top-right-symbolic.svg</file>
     <file>icons/16x16/actions/arrow1-top-right-symbolic.svg</file>
     <file>icons/16x16/actions/preferences-desktop-theme-symbolic.svg</file>
+    <file>icons/16x16/actions/run-line-symbolic.svg</file>
 
     <file>icons/16x16/mimetypes/image-symbolic.svg</file>
     <file>icons/16x16/mimetypes/text-json-symbolic.svg</file>
