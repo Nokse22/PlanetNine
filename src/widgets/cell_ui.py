@@ -19,7 +19,7 @@
 
 from gi.repository import Adw
 from gi.repository import Gtk
-from gi.repository import Gio
+from gi.repository import Gio, GLib
 from gi.repository import GObject, WebKit
 from gi.repository import GtkSource, Spelling
 from gi.repository import Gdk, GdkPixbuf
@@ -27,6 +27,7 @@ from gi.repository import Gdk, GdkPixbuf
 import hashlib
 import base64
 import os
+import random
 
 from .markdown_textview import MarkdownTextView
 from .terminal_textview import TerminalTextView
@@ -63,6 +64,9 @@ class CellUI(Gtk.Box):
     _cell_type = CellType.CODE
 
     cache_dir = os.environ["XDG_CACHE_HOME"]
+
+    images_path = os.path.join(cache_dir, "g_images")
+    html_path = os.path.join(cache_dir, "g_html")
 
     def __init__(self, cell):
         super().__init__()
@@ -253,17 +257,27 @@ class CellUI(Gtk.Box):
         child.set_text(markdown_string)
 
     def add_output_html(self, html_string):
-        webview = WebKit.WebView(height_request=300)
-        webview.load_html(html_string, None)
-        print("HTML", html_string)
-        self.output_box.append(webview)
+        sha256_hash = random.randint(0, 10000)
+        html_page_path = os.path.join(self.html_path, f"{sha256_hash}.html")
+        with open(html_page_path, 'w') as f:
+            f.write(html_string)
+
+        box = Gtk.Box(spacing=12, halign=Gtk.Align.CENTER)
+        button = Gtk.Button(
+            css_classes=["html-button"],
+            action_name="win.new-browser-page",
+            action_target=GLib.Variant('s', "file://" + html_page_path))
+        box.append(Gtk.Image(icon_name="earth-symbolic"))
+        box.append(Gtk.Label(label="Open Generated HTML in Browser"))
+        box.append(Gtk.Image(icon_name="right-symbolic"))
+        button.set_child(box)
+        self.output_box.append(button)
 
     def add_output_image(self, image_content):
         image_data = base64.b64decode(image_content)
         sha256_hash = hashlib.sha256(image_data).hexdigest()
 
-        image_path = os.path.join(
-            self.cache_dir, "g_images", f"{sha256_hash}.png")
+        image_path = os.path.join(self.images_path, f"{sha256_hash}.png")
         with open(image_path, 'wb') as f:
             f.write(image_data)
 

@@ -39,8 +39,6 @@ class ImagesPanel(Panel.Widget):
     cache_dir = os.environ["XDG_CACHE_HOME"]
     images_path = os.path.join(cache_dir, "g_images")
 
-    os.makedirs(images_path, exist_ok=True)
-
     def __init__(self):
         super().__init__()
 

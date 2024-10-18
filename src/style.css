@@ -1,3 +1,7 @@
+.html-button {
+  border-radius: 12px;
+}
+
 list.notebook-list {
   background-color: transparent;
 }
@@ -261,7 +265,7 @@ panelstatusbar {
   font-size: 0.9em;
   padding-top: 1px;
   box-shadow: inset 0 1px var(--headerbar-shade-color);
-  background: var(--headerbar-bg-color);
+  /* background: var(--headerbar-bg-color); */
   color: var(--headerbar-fg-color);
 }
 panelstatusbar:backdrop {

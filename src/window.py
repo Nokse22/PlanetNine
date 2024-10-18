@@ -93,6 +93,12 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     cache_dir = os.environ["XDG_CACHE_HOME"]
     files_cache_dir = os.path.join(cache_dir, "files")
 
+    images_path = os.path.join(cache_dir, "g_images")
+    html_path = os.path.join(cache_dir, "g_html")
+
+    os.makedirs(images_path, exist_ok=True)
+    os.makedirs(html_path, exist_ok=True)
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
