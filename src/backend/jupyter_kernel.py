@@ -170,11 +170,12 @@ class JupyterKernel(GObject.GObject):
                 elif msg_type == 'execute_input':
                     code = msg_content['code']
                     start = f"In [{msg_content['execution_count']}]"
-                    code_modified = "\n".join(
-                        " " * len(start) + ln for ln in code.splitlines())
+                    # code_modified = "\n".join(
+                    #     " " * len(start) + ln for ln in code.splitlines())
+                    # \n{code_modified}
 
                     self.messages.append(
-                        f"\033[32;1m{start}\033[0m\n{code_modified}")
+                        f"\033[32;1m{start}\033[0m Code Executed")
 
                 elif msg_type == 'error':
                     self.messages.append("\n".join(msg_content['traceback']))
