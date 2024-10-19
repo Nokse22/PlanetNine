@@ -26,15 +26,14 @@
               <object class="AdwHeaderBar" id="header_bar">
                 <property name="centering-policy">loose</property>
                 <property name="title-widget">
-                  <object class="GtkBox">
+                  <object class="GtkBox" id="kernel_controls">
                     <property name="spacing">6</property>
                     <child>
                       <object class="PanelOmniBar" id="omni_bar">
-                        <property name="visible">false</property>
                         <property name="icon-name">run-cell-symbolic</property>
                         <property name="width-request">200</property>
                         <property name="menu-model">run-menu</property>
-                        <property name="action-name">win.run-selected</property>
+                        <property name="action-name">win.run-cell</property>
                         <child type="prefix">
                           <object class="GtkLabel" id="omni_label">
                             <property name="label" translatable="yes">No Kernel</property>
@@ -44,20 +43,26 @@
                     </child>
                     <child>
                       <object class="GtkButton">
-                        <property name="icon-name">run-line-symbolic</property>
-                        <property name="action-name">win.run-selected</property>
+                        <property name="icon-name">run-cell-symbolic</property>
+                        <property name="action-name">win.run-cell</property>
                       </object>
                     </child>
                     <child>
                       <object class="GtkButton">
-                        <property name="icon-name">view-refresh-symbolic</property>
-                        <property name="action-name">win.restart-kernel-visible</property>
+                        <property name="icon-name">run-line-symbolic</property>
+                        <property name="action-name">win.run-line</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="icon-name">run-cell-and-proceed-symbolic</property>
+                        <property name="action-name">win.run-cell-and-proceed</property>
                       </object>
                     </child>
                     <child>
                       <object class="GtkButton">
                         <property name="icon-name">media-playback-pause-symbolic</property>
-                        <property name="action-name">win.run-selected</property>
+                        <property name="action-name">win.run-cell</property>
                       </object>
                     </child>
                   </object>

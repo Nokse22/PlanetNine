@@ -304,6 +304,22 @@ class CodePage(
             self.run_code_callback
         )
 
+    # Only for code page
+    def run_line(self):
+        start_iter = self.code_buffer.get_iter_at_mark(
+            self.code_buffer.get_insert())
+
+        start_iter.set_line_offset(0)
+        end_iter = start_iter.copy()
+        end_iter.forward_to_line_end()
+
+        code_portion = self.code_buffer.get_text(start_iter, end_iter, False)
+
+        self.jupyter_kernel.execute(
+            code_portion,
+            self.run_code_callback
+        )
+
     def add_cell(self, cell_type):
         self.code_buffer.begin_user_action()
 

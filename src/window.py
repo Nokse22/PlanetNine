@@ -74,7 +74,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     server_terminal = Gtk.Template.Child()
     kernel_terminal = Gtk.Template.Child()
     grid = Gtk.Template.Child()
-    omni_bar = Gtk.Template.Child()
+    kernel_controls = Gtk.Template.Child()
     kernel_status_menu = Gtk.Template.Child()
     select_kernel_dialog = Gtk.Template.Child()
     shutdown_kernel_dialog = Gtk.Template.Child()
@@ -222,14 +222,20 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         #   ACTIONS FOR THE VIEWED NOTEBOOK/CODE/CONSOLE
 
-        self.run_action = self.create_action(
-            'run-selected', self.run_clicked)
+        self.run_selected_action = self.create_action(
+            'run-cell', self.on_run)
+        self.run_cell_and_proceed_action = self.create_action(
+            'run-cell-and-proceed', self.on_run_line)
+        self.run_line_action = self.create_action(
+            'run-line', self.on_run_line)
         self.restart_kernel_action = self.create_action(
             'restart-kernel-visible', self.restart_kernel_visible)
         self.restart_kernel_and_run_action = self.create_action(
             'restart-kernel-and-run', self.restart_kernel_and_run)
 
-        self.run_action.set_enabled(False)
+        self.run_cell_and_proceed_action.set_enabled(False)
+        self.run_line_action.set_enabled(False)
+        self.run_selected_action.set_enabled(False)
         self.restart_kernel_and_run_action.set_enabled(False)
         self.restart_kernel_action.set_enabled(False)
 
@@ -697,11 +703,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             page.connect("kernel-info-changed", self.update_kernel_info)
             self.update_kernel_info(page)
 
-            self.omni_bar.set_visible(True)
+            self.kernel_controls.set_visible(True)
             self.kernel_status_menu.set_visible(True)
 
         else:
-            self.omni_bar.set_visible(False)
+            self.kernel_controls.set_visible(False)
             self.kernel_status_menu.set_visible(False)
 
         # Language Interface (Text, Notebook, Code, Console, Json, Table)
@@ -741,7 +747,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self.variables_panel.set_model(kernel.get_variables())
             self.kernel_terminal.set_kernel(kernel)
 
-            self.run_action.set_enabled(True)
+            self.run_cell_and_proceed_action.set_enabled(True)
+            self.run_line_action.set_enabled(True)
+            self.run_selected_action.set_enabled(True)
             self.restart_kernel_and_run_action.set_enabled(True)
             self.restart_kernel_action.set_enabled(True)
         else:
@@ -751,7 +759,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self.variables_panel.set_model(None)
             self.kernel_terminal.set_kernel(None)
 
-            self.run_action.set_enabled(False)
+            self.run_cell_and_proceed_action.set_enabled(False)
+            self.run_line_action.set_enabled(False)
+            self.run_selected_action.set_enabled(False)
             self.restart_kernel_and_run_action.set_enabled(False)
             self.restart_kernel_action.set_enabled(False)
 
@@ -929,10 +939,15 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         if isinstance(page, ICells):
             page.add_cell(cell_type)
 
-    def run_clicked(self, *args):
+    def on_run(self, *args):
         page = self.get_visible_page()
         if isinstance(page, ICells):
             page.run_selected_cell()
+
+    def on_run_line(self, *args):
+        page = self.get_visible_page()
+        if isinstance(page, CodePage):
+            page.run_line()
 
     def on_jupyter_server_started(self, server):
         self.server_status_label.set_label("Server Connected")
