@@ -17,21 +17,14 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Adw
 from gi.repository import Gtk
-from gi.repository import WebKit
 from gi.repository import GtkSource
-from gi.repository import GdkPixbuf
 
-import hashlib
-import base64
 import os
 import sys
 
-from .markdown_textview import MarkdownTextView
-from .terminal_textview import TerminalTextView
-
-from ..models.output import OutputType, DataType
+from ..others.output_loader import OutputLoader
+from ..others.style_manager import StyleManager
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/console_cell.ui')
@@ -55,33 +48,15 @@ class ConsoleCell(Gtk.Box):
 
         self.code_buffer.set_highlight_syntax(True)
 
-        self.style_manager = Adw.StyleManager.get_default()
-        self.style_manager.connect("notify::dark", self.update_style_scheme)
+        self.output_loader = OutputLoader(self.output_box)
+
+        self.style_manager = StyleManager()
+        self.style_manager.connect("style-changed", self.update_style_scheme)
         self.update_style_scheme()
 
     def add_output(self, output):
         self.output_scrolled_window.set_visible(True)
-
-        match output.output_type:
-            case OutputType.STREAM:
-                self.add_output_text(output.text)
-
-            case OutputType.DISPLAY_DATA:
-                match output.data_type:
-                    case DataType.TEXT:
-                        self.add_output_text(output.data_content)
-                    case DataType.IMAGE_PNG:
-                        self.add_output_image(output.data_content)
-                    case DataType.HTML:
-                        self.add_output_html(output.data_content)
-                    case DataType.MARKDOWN:
-                        self.add_output_markdown(output.data_content)
-
-            case OutputType.EXECUTE_RESULT:
-                print(output.data_content)
-
-            case OutputType.ERROR:
-                self.add_output_text(output.traceback)
+        self.output_loader.add_output(output)
 
     def reset_output(self):
         self.output_scrolled_window.set_visible(False)
@@ -91,45 +66,8 @@ class ConsoleCell(Gtk.Box):
             self.output_box.remove(child)
             child = self.output_box.get_first_child()
 
-    def add_output_markdown(self, markdown_string):
-        child = MarkdownTextView()
-        child.set_editable(False)
-        self.output_box.append(child)
-        child.set_text(markdown_string)
-
-    def add_output_html(self, html_string):
-        webview = WebKit.WebView()
-        webview.load_html(html_string, None)
-        self.output_box.append(webview)
-
-    def add_output_image(self, image_content):
-        image_data = base64.b64decode(image_content)
-        sha256_hash = hashlib.sha256(image_data).hexdigest()
-
-        image_path = os.path.join(self.cache_dir, f"{sha256_hash}.png")
-        with open(image_path, 'wb') as f:
-            f.write(image_data)
-
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file(image_path)
-        image = Gtk.Picture.new_for_pixbuf(pixbuf)
-        image.set_size_request(-1, pixbuf.get_height())
-
-        self.output_scrolled_window.set_visible(True)
-        self.output_box.append(image)
-
-    def add_output_text(self, text):
-        child = self.output_box.get_last_child()
-        if not isinstance(child, TerminalTextView):
-            child = TerminalTextView()
-            self.output_box.append(child)
-        child.insert_with_escapes(text)
-
     def update_style_scheme(self, *args):
-        scheme_name = "Adwaita"
-        if Adw.StyleManager.get_default().get_dark():
-            scheme_name += "-dark"
-        sm = GtkSource.StyleSchemeManager()
-        scheme = sm.get_scheme(scheme_name)
+        scheme = self.style_manager.get_current_scheme()
         self.code_buffer.set_style_scheme(scheme)
 
     def set_language(self, lang_name):
