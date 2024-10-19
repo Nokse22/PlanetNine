@@ -177,7 +177,7 @@ class JsonViewerPage(
 
         self.save_delegate.disconnect_all()
 
-        print(f"closing: {self}")
+        print(f"Disconnected:  {self}")
 
     def __del__(self, *args):
         print(f"DELETING {self}")

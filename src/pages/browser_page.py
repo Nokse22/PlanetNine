@@ -172,7 +172,7 @@ class BrowserPage(Panel.Widget, IDisconnectable):
             binding.unbind()
         del self.bindings
 
-        print(f"closing: {self}")
+        print(f"Disconnected:  {self}")
 
     def __del__(self):
         print(f"DELETING {self}")

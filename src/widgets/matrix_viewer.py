@@ -126,7 +126,7 @@ class MatrixViewer(Gtk.ColumnView):
 
         self.set_model(None)
 
-        print(f"Closing: {self}")
+        print(f"Disconnected:  {self}")
 
     def __del__(self, *args):
         print(f"DELETING {self}")

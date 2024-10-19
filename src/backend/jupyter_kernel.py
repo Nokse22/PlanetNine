@@ -234,9 +234,8 @@ class JupyterKernel(GObject.GObject):
             asyncio.create_task(self._execute(code, callback, *args))
 
     async def _execute(self, code, callback, *args):
-        print("AWAITING READY")
-        # await self.wait_for_idle()
-        await self.kernel_client.wait_for_ready()
+        # print("AWAITING READY")
+        # await self.kernel_client.wait_for_ready()
 
         code += '\n%whos'  # added %whos to get the variables
         # FIXME if it's not ipykernel it should not be used

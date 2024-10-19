@@ -1,4 +1,4 @@
-# window.py
+# console_cell.py
 #
 # Copyright 2024 Nokse
 #
@@ -27,17 +27,15 @@ from ..others.output_loader import OutputLoader
 from ..others.style_manager import StyleManager
 
 
-@Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/console_cell.ui')
+@Gtk.Template(
+    resource_path='/io/github/nokse22/PlanetNine/gtk/console_cell.ui')
 class ConsoleCell(Gtk.Box):
     __gtype_name__ = 'ConsoleCell'
 
     source_view = Gtk.Template.Child()
     code_buffer = Gtk.Template.Child()
     output_scrolled_window = Gtk.Template.Child()
-    count_label = Gtk.Template.Child()
     output_box = Gtk.Template.Child()
-    right_click_menu = Gtk.Template.Child()
-    click_gesture = Gtk.Template.Child()
 
     cache_dir = os.environ["XDG_CACHE_HOME"]
 
@@ -57,14 +55,6 @@ class ConsoleCell(Gtk.Box):
     def add_output(self, output):
         self.output_scrolled_window.set_visible(True)
         self.output_loader.add_output(output)
-
-    def reset_output(self):
-        self.output_scrolled_window.set_visible(False)
-
-        child = self.output_box.get_first_child()
-        while child:
-            self.output_box.remove(child)
-            child = self.output_box.get_first_child()
 
     def update_style_scheme(self, *args):
         scheme = self.style_manager.get_current_scheme()

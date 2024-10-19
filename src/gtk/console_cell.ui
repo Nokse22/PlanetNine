@@ -1,34 +1,11 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!-- Created with Cambalache 0.90.4 -->
 <interface>
-  <!-- interface-name code block.ui -->
   <requires lib="gtk" version="4.12"/>
   <requires lib="gtksource" version="5.0"/>
   <template class="ConsoleCell" parent="GtkBox">
     <property name="valign">start</property>
     <property name="height-request">45</property>
-    <child>
-      <object class="AdwBin">
-        <child>
-          <object class="GtkGestureClick" id="click_gesture">
-            <property name="button">3</property>
-          </object>
-        </child>
-        <property name="width-request">45</property>
-        <child>
-          <object class="GtkLabel" id="count_label">
-            <property name="valign">start</property>
-            <property name="halign">center</property>
-            <property name="margin-top">12</property>
-            <property name="label">0</property>
-            <style>
-              <class name="title-4"/>
-              <class name="dim-label"/>
-            </style>
-          </object>
-        </child>
-      </object>
-    </child>
     <child>
       <object class="GtkBox">
         <property name="orientation">vertical</property>
@@ -36,31 +13,35 @@
         <property name="valign">start</property>
         <property name="hexpand">True</property>
         <child>
-          <object class="GtkSourceView" id="source_view">
-            <property name="height-request">50</property>
-            <property name="width-request">200</property>
-            <property name="monospace">True</property>
-            <property name="editable">False</property>
-            <property name="auto-indent">True</property>
-            <property name="top-margin">6</property>
-            <property name="bottom-margin">6</property>
-            <property name="left-margin">6</property>
-            <property name="right-margin">6</property>
-            <property name="pixels-above-lines">2</property>
-            <property name="pixels-below-lines">2</property>
-            <property name="pixels-inside-wrap">2</property>
-            <property name="wrap-mode">word-char</property>
-            <property name="tab-width">4</property>
-            <property name="buffer">
-              <object class="GtkSourceBuffer" id="code_buffer">
-                <property name="enable-undo">True</property>
-                <property name="highlight-syntax">True</property>
-                <property name="highlight-matching-brackets">True</property>
+          <object class="GtkFrame">
+            <child>
+              <object class="GtkSourceView" id="source_view">
+                <property name="height-request">50</property>
+                <property name="width-request">200</property>
+                <property name="monospace">True</property>
+                <property name="editable">False</property>
+                <property name="auto-indent">True</property>
+                <property name="top-margin">12</property>
+                <property name="bottom-margin">12</property>
+                <property name="left-margin">12</property>
+                <property name="right-margin">6</property>
+                <property name="show-cursor">false</property>
+                <property name="pixels-above-lines">2</property>
+                <property name="pixels-below-lines">2</property>
+                <property name="pixels-inside-wrap">2</property>
+                <property name="wrap-mode">word-char</property>
+                <property name="tab-width">4</property>
+                <property name="buffer">
+                  <object class="GtkSourceBuffer" id="code_buffer">
+                    <property name="highlight-syntax">true</property>
+                    <property name="highlight-matching-brackets">false</property>
+                  </object>
+                </property>
+                <style>
+                  <class name="console-cell-sourceview"/>
+                </style>
               </object>
-            </property>
-            <style>
-              <class name="console-cell-sourceview"/>
-            </style>
+            </child>
           </object>
         </child>
         <child>

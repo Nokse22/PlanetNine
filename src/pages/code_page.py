@@ -365,7 +365,7 @@ class CodePage(
         if self.jupyter_kernel:
             self.jupyter_kernel.disconnect_by_func(self.on_kernel_info_changed)
 
-        print(f"closing: {self}")
+        print(f"Disconnected:  {self}")
 
     def __del__(self):
         print(f"DELETING {self}")

@@ -162,7 +162,7 @@ class TextPage(Panel.Widget, ISaveable, IDisconnectable, ICursor, ILanguage):
 
         self.save_delegate.disconnect_all()
 
-        print(f"Closing: {self}")
+        print(f"Disconnected:  {self}")
 
     def __del__(self, *args):
         print(f"DELETING {self}")

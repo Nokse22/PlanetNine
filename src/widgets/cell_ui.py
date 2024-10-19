@@ -1,4 +1,4 @@
-# window.py
+# cell_ui.py
 #
 # Copyright 2024 Nokse
 #
@@ -322,7 +322,7 @@ class CellUI(Gtk.Box):
             provider.unregister(self.code_buffer)
             self.source_view.get_completion().remove_provider(provider)
 
-        print(f"closing: {self}")
+        print(f"Disconnected:  {self}")
 
         del self.cell
 

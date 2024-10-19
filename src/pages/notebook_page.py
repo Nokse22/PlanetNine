@@ -1,4 +1,4 @@
-# window.py
+# notebook_page.py
 #
 # Copyright 2024 Nokse
 #
@@ -18,7 +18,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from gi.repository import Gtk
-from gi.repository import GObject
 from gi.repository import Gdk
 from gi.repository import Panel
 
@@ -29,7 +28,8 @@ from ..models.cell import Cell, CellType
 from ..widgets.cell_ui import CellUI
 from ..models.output import Output, OutputType
 from ..backend.command_line import CommandLine
-from ..completion_providers.completion_providers import LSPCompletionProvider, WordsCompletionProvider
+# from ..completion_providers.completion_providers import LSPCompletionProvider
+from ..completion_providers.completion_providers import WordsCompletionProvider
 from ..others.save_delegate import GenericSaveDelegate
 from ..interfaces.saveable import ISaveable
 from ..interfaces.disconnectable import IDisconnectable
@@ -450,7 +450,7 @@ class NotebookPage(
 
         self.save_delegate.disconnect_all()
 
-        print(f"closing: {self}")
+        print(f"Disconnected:  {self}")
 
     def __del__(self):
         print(f"DELETING {self}")

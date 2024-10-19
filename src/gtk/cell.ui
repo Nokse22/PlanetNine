@@ -1,7 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!-- Created with Cambalache 0.90.4 -->
 <interface>
-  <!-- interface-name code block.ui -->
   <requires lib="gtk" version="4.12"/>
   <requires lib="gtksource" version="5.0"/>
   <template class="CellUI" parent="GtkBox">

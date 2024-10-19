@@ -165,7 +165,7 @@ class MatrixPage(Panel.Widget, ISaveable, ICursor, ILanguage):
         self.save_delegate.disconnect_all()
         self.matrix_viewer.disconnect()
 
-        print(f"closing: {self}")
+        print(f"Disconnected:  {self}")
 
     def __del__(self, *args):
         print(f"DELETING {self}")

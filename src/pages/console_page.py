@@ -150,15 +150,15 @@ class ConsolePage(Panel.Widget, IDisconnectable, IKernel, ICursor):
         if content == "":
             return
 
-        if content.startswith("!"):
+        # if content.startswith("!"):
             # self.reset_output()
             # self.command_line.run_command(
             #     content[1:].split(" "),
             #     self.run_command_callback,
             #     cell
             # )
-            pass
-        elif self.jupyter_kernel:
+            # pass
+        if self.jupyter_kernel:
             cell = self.add_run_cell(content)
             self.code_buffer.set_text("")
             self.jupyter_kernel.execute(
@@ -176,6 +176,8 @@ class ConsolePage(Panel.Widget, IDisconnectable, IKernel, ICursor):
         msg_type = msg['header']['msg_type']
         content = msg['content']
 
+        print("CONSOLE: ", content)
+
         if msg_type == 'stream':
             output = Output(OutputType.STREAM)
             output.parse(content)
@@ -184,7 +186,6 @@ class ConsolePage(Panel.Widget, IDisconnectable, IKernel, ICursor):
         elif msg_type == 'execute_input':
             count = content['execution_count']
             cell.execution_count = int(count)
-            cell.reset_output()
 
         elif msg_type == 'display_data':
             output = Output(OutputType.DISPLAY_DATA)
@@ -224,7 +225,7 @@ class ConsolePage(Panel.Widget, IDisconnectable, IKernel, ICursor):
             binding.unbind()
         del self.bindings
 
-        print("unrealize:", sys.getrefcount(self))
+        print(f"Disconnected:  {self}")
 
     def __del__(self, *args):
         print(f"DELETING {self}")

@@ -79,7 +79,7 @@ class OutputLoader(GObject.GObject):
         child.set_text(markdown_string)
 
     def add_output_html(self, html_string):
-        sha256_hash = random.randint(0, 10000)
+        sha256_hash = random.randint(0, 1000000)
         html_page_path = os.path.join(self.html_path, f"{sha256_hash}.html")
         with open(html_page_path, 'w') as f:
             f.write(html_string)
