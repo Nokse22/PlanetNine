@@ -25,10 +25,13 @@ from ..widgets. markdown_textview import MarkdownTextView
 
 from ..models.output import OutputType, DataType
 
+from gettext import gettext as _
+
 import hashlib
 import base64
 import os
 import random
+import re
 
 
 class OutputLoader(GObject.GObject):
@@ -45,20 +48,22 @@ class OutputLoader(GObject.GObject):
         self.output_box = _output_box
 
     def add_output(self, output):
-        self.output_box
+        print("adding: ", output)
 
         match output.output_type:
             case OutputType.STREAM:
                 self.add_output_text(output.text)
 
             case OutputType.DISPLAY_DATA | OutputType.EXECUTE_RESULT:
+                # self.add_output_text(output.plain_content)
                 match output.data_type:
                     case DataType.TEXT:
                         self.add_output_text(output.data_content)
                     case DataType.IMAGE_PNG:
                         self.add_output_image(output.data_content)
                     case DataType.HTML:
-                        self.add_output_html(output.data_content)
+                        self.add_output_html(
+                            output.data_content, output.plain_content)
                     case DataType.MARKDOWN:
                         self.add_output_markdown(output.data_content)
                     case DataType.JSON:
@@ -76,11 +81,17 @@ class OutputLoader(GObject.GObject):
         self.output_box.append(child)
         child.set_text(markdown_string)
 
-    def add_output_html(self, html_string):
+    def add_output_html(self, html_string, what):
         sha256_hash = random.randint(0, 1000000)
         html_page_path = os.path.join(self.html_path, f"{sha256_hash}.html")
         with open(html_page_path, 'w') as f:
             f.write(html_string)
+
+        match = re.search(r'\.(\w+)(?:\s|\>)', what)
+        if match:
+            html_name = match.group(1)
+        else:
+            html_name = _("Generated HTML")
 
         box = Gtk.Box(
             spacing=12,
@@ -92,7 +103,7 @@ class OutputLoader(GObject.GObject):
             action_name="win.new-browser-page",
             action_target=GLib.Variant('s', "file://" + html_page_path))
         box.append(Gtk.Image(icon_name="earth-symbolic"))
-        box.append(Gtk.Label(label="Open Generated HTML in Browser"))
+        box.append(Gtk.Label(label="Open {} in Browser".format(html_name)))
         box.append(Gtk.Image(icon_name="right-symbolic"))
         button.set_child(box)
         self.output_box.append(button)

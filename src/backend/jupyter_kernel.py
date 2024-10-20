@@ -150,6 +150,9 @@ class JupyterKernel(GObject.GObject):
                 if not msg:
                     return
 
+                print("IOPUB MSG:")
+                pprint(msg)
+
                 msg = self.extract_variables(msg)
 
                 msg_type = msg['header']['msg_type']
@@ -161,8 +164,6 @@ class JupyterKernel(GObject.GObject):
 
                 print(f"\nReceived {msg_type} MSG with ID: {msg_id}")
                 print(f"Queued message ID is: {self.exec_msg_id}")
-                print("IOPUB MSG:")
-                pprint(msg)
 
                 if msg_type == 'stream':
                     self.messages.append(msg_content['text'])

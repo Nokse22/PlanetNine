@@ -707,6 +707,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self.kernel_status_menu.set_visible(True)
 
         else:
+            self.update_kernel_info(None)
             self.kernel_controls.set_visible(False)
             self.kernel_status_menu.set_visible(False)
 
@@ -739,19 +740,20 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.previous_page = page
 
     def update_kernel_info(self, page):
-        kernel = page.get_kernel()
-        if kernel:
-            self.kernel_status_menu.set_label(kernel.status)
-            self.omni_label.set_label(kernel.display_name)
+        if page:
+            kernel = page.get_kernel()
+            if kernel:
+                self.kernel_status_menu.set_label(kernel.status)
+                self.omni_label.set_label(kernel.display_name)
 
-            self.variables_panel.set_model(kernel.get_variables())
-            self.kernel_terminal.set_kernel(kernel)
+                self.variables_panel.set_model(kernel.get_variables())
+                self.kernel_terminal.set_kernel(kernel)
 
-            self.run_cell_and_proceed_action.set_enabled(True)
-            self.run_line_action.set_enabled(True)
-            self.run_selected_action.set_enabled(True)
-            self.restart_kernel_and_run_action.set_enabled(True)
-            self.restart_kernel_action.set_enabled(True)
+                self.run_cell_and_proceed_action.set_enabled(True)
+                self.run_line_action.set_enabled(True)
+                self.run_selected_action.set_enabled(True)
+                self.restart_kernel_and_run_action.set_enabled(True)
+                self.restart_kernel_action.set_enabled(True)
         else:
             self.kernel_status_menu.set_label("")
             self.omni_label.set_label("No Kernel")

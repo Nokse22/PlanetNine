@@ -84,7 +84,7 @@ class NotebookPage(
         self.command_line = CommandLine()
 
         if self.notebook_model.get_n_items() == 0:
-            self.add_cell(Cell(CellType.CODE))
+            self.add_cell(CellType.CODE)
 
         self.list_drop_target.connect("drop", self.on_drop_target_drop)
         self.list_drop_target.connect("motion", self.on_drop_target_motion)
@@ -171,7 +171,7 @@ class NotebookPage(
             cell.add_output(output)
 
         elif msg_type == 'execute_result':
-            output = Output(OutputType.DISPLAY_DATA)
+            output = Output(OutputType.EXECUTE_RESULT)
             output.parse(content)
             cell.add_output(output)
 
