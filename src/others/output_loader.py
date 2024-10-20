@@ -51,7 +51,7 @@ class OutputLoader(GObject.GObject):
             case OutputType.STREAM:
                 self.add_output_text(output.text)
 
-            case OutputType.DISPLAY_DATA:
+            case OutputType.DISPLAY_DATA | OutputType.EXECUTE_RESULT:
                 match output.data_type:
                     case DataType.TEXT:
                         self.add_output_text(output.data_content)
@@ -63,11 +63,9 @@ class OutputLoader(GObject.GObject):
                         self.add_output_markdown(output.data_content)
                     case DataType.JSON:
                         viewer = JsonViewer()
+                        viewer.add_css_class("output")
                         viewer.parse_json_string(output.data_content)
                         self.output_box.append(viewer)
-
-            case OutputType.EXECUTE_RESULT:
-                print(output.data_content)
 
             case OutputType.ERROR:
                 self.add_output_text(output.traceback)

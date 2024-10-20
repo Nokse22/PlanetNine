@@ -87,6 +87,8 @@ class Output(GObject.GObject):
 
     def parse(self, json_dict):
 
+        print("PARSING: ", self.output_type, json_dict)
+
         match self.output_type:
             case OutputType.STREAM:
                 self.name = json_dict['name']

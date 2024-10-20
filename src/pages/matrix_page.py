@@ -65,13 +65,10 @@ class MatrixPage(Panel.Widget, ISaveable, ILanguage):
 
         self.set_path(_path)
 
-        self.load_file(_path)
+        asyncio.create_task(self._load_file(_path))
 
     def on_text_changed(self, *args):
         self.set_modified(True)
-
-    def load_file(self, file_path):
-        asyncio.create_task(self._load_file(file_path))
 
     async def _load_file(self, file_path):
         if file_path:
@@ -85,11 +82,9 @@ class MatrixPage(Panel.Widget, ISaveable, ILanguage):
                     await self._matrix_from_csv(gfile)
 
             self.matrix_viewer.set_matrix(self.matrix)
-
             self.stack.set_visible_child_name("matrix")
 
     async def _matrix_from_csv(self, file):
-        print("reading file")
         file_input_stream = file.read()
         data_input_stream = Gio.DataInputStream.new(file_input_stream)
 
@@ -103,8 +98,6 @@ class MatrixPage(Panel.Widget, ISaveable, ILanguage):
             if line == '':
                 break
             csv_content += line + "\n"
-
-        print("file read, populating matrix")
 
         data_input_stream.close()
         file_input_stream.close()

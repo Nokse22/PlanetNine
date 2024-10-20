@@ -77,6 +77,10 @@ list.console row {
   background-color: transparent;
 }
 
+.output listview{
+  background-color: transparent;
+}
+
 .sidebar-color {
   background-color: var(--sidebar-bg-color);
 }
