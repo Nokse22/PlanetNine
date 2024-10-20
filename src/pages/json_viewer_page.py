@@ -126,7 +126,7 @@ class JsonViewerPage(
         self.emit("cursor-moved", self.buffer, 0)
 
     def get_cursor_position(self):
-        return self.code_buffer, 0
+        return self.buffer, 0
 
     def move_cursor(self, line, column, _index=0):
         succ, cursor_iter = self.buffer.get_iter_at_line_offset(

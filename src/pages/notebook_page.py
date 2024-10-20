@@ -93,6 +93,8 @@ class NotebookPage(
         self.cells_list_box.connect(
             "selected-rows-changed", self.on_selected_cell_changed)
 
+        self.set_selected_cell_index(0)
+
     def on_selected_cell_changed(self, *args):
         selected_row = self.cells_list_box.get_selected_row()
         if selected_row:

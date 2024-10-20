@@ -18,25 +18,27 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from gi.repository import Gtk, GObject, Gio
-from gi.repository import Panel
+from gi.repository import Panel, GLib
 
 from ..others.save_delegate import GenericSaveDelegate
 
 from ..widgets.matrix_viewer import MatrixViewer, MatrixRow, Matrix
 
-from ..interfaces.cursor import ICursor
 from ..interfaces.saveable import ISaveable
 from ..interfaces.language import ILanguage
 
 import os
 import csv
 import io
+import asyncio
 
 
-# @Gtk.Template(
-#     resource_path='/io/github/nokse22/PlanetNine/gtk/matrix_page.ui')
-class MatrixPage(Panel.Widget, ISaveable, ICursor, ILanguage):
+@Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/matrix_page.ui')
+class MatrixPage(Panel.Widget, ISaveable, ILanguage):
     __gtype_name__ = 'MatrixPage'
+
+    matrix_viewer = Gtk.Template.Child()
+    stack = Gtk.Template.Child()
 
     path = GObject.Property(type=str, default="")
 
@@ -49,18 +51,7 @@ class MatrixPage(Panel.Widget, ISaveable, ICursor, ILanguage):
 
         self.language = "csv"
 
-        self.matrix_viewer = MatrixViewer()
-        self.matrix_viewer.set_vexpand(True)
-        self.matrix_viewer.set_hexpand(True)
-
-        self.scrolled_window = Gtk.ScrolledWindow()
-
-        self.scrolled_window.set_child(self.matrix_viewer)
-
-        self.set_child(self.scrolled_window)
-
-        self.set_title("Matrix.odt")
-        self.set_icon_name("table-symbolic")
+        self.matrix = Matrix()
 
         # ADD SAVE DELEGATE
 
@@ -72,66 +63,70 @@ class MatrixPage(Panel.Widget, ISaveable, ICursor, ILanguage):
 
         # LOAD File
 
-        if _path:
-            gfile = Gio.File.new_for_path(_path)
+        self.set_path(_path)
+
+        self.load_file(_path)
+
+    def on_text_changed(self, *args):
+        self.set_modified(True)
+
+    def load_file(self, file_path):
+        asyncio.create_task(self._load_file(file_path))
+
+    async def _load_file(self, file_path):
+        if file_path:
+            gfile = Gio.File.new_for_path(file_path)
 
             file_info = gfile.query_info("standard::content-type", 0, None)
             mime_type = file_info.get_content_type()
 
             match mime_type:
                 case "text/csv":
-                    matrix = self.matrix_from_csv(gfile)
+                    await self._matrix_from_csv(gfile)
 
-            self.matrix_viewer.set_matrix(matrix)
+            self.matrix_viewer.set_matrix(self.matrix)
 
-            self.set_path(_path)
+            self.stack.set_visible_child_name("matrix")
 
-    def on_text_changed(self, *args):
-        self.set_modified(True)
-
-    def matrix_from_csv(self, file):
-        # Open the file for reading
+    async def _matrix_from_csv(self, file):
+        print("reading file")
         file_input_stream = file.read()
         data_input_stream = Gio.DataInputStream.new(file_input_stream)
 
-        # Read the entire file into memory as a single string
+        if data_input_stream is None:
+            return
+
         csv_content = ""
         while True:
-            line = data_input_stream.read_line_utf8()[0]
-            if line is None:
+            line, _ = await data_input_stream.read_line_async(0)
+            line = line.decode('utf-8')
+            if line == '':
                 break
             csv_content += line + "\n"
 
-        # Close streams
+        print("file read, populating matrix")
+
         data_input_stream.close()
         file_input_stream.close()
 
-        # Use io.StringIO to wrap csv_content and csv.reader to handle parsing
-        matrix = Matrix()
-
-        # Use io.StringIO to read the CSV content as a file-like object
         csv_file = io.StringIO(csv_content)
         csv_reader = csv.reader(csv_file)
 
-        # Read the first line to determine the columns
         try:
             column_names = next(csv_reader)
             for column_name in column_names:
-                matrix.add_column(column_name.strip())
-        except StopIteration:
-            return matrix  # Return an empty matrix if the file is empty
+                self.matrix.add_column(column_name.strip())
+        except Exception as e:
+            print(e)
 
-        # Read the remaining lines for data
         row_number = 1
         for cells in csv_reader:
             row = MatrixRow()
             for cell in cells:
-                row.append(cell.strip())  # Add each cell to the row
+                row.append(cell.strip())
             row.set_number(row_number)
-            matrix.append(row)
+            self.matrix.append(row)
             row_number += 1
-
-        return matrix
 
     #
     #   Implement Language Interface
