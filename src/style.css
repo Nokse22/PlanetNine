@@ -3,6 +3,14 @@
   border: 1px solid var(--headerbar-shade-color);
 }
 
+.chapter-button {
+  background-color: transparent;
+}
+
+.chapter-button label{
+  font-weight: normal;
+}
+
 list.notebook-list {
   background-color: transparent;
 }

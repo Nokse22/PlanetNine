@@ -266,6 +266,29 @@
                   </object>
                 </child>
                 <child type="prefix">
+                  <object class="GtkMenuButton" id="notebook_navigation_menu">
+                    <property name="label">Chapters</property>
+                    <property name="direction">up</property>
+                    <property name="visible">false</property>
+                    <property name="always-show-arrow">false</property>
+                    <property name="popover">
+                      <object class="GtkPopover">
+                        <signal name="map" handler="on_chapter_menu_activated"/>
+                        <property name="child">
+                          <object class="GtkListView" id="chapters_list_view">
+                            <property name="factory">
+                              <object class="GtkSignalListItemFactory">
+                                <signal name="setup" handler="on_chapter_factory_setup"/>
+                                <signal name="bind" handler="on_chapter_factory_bind"/>
+                              </object>
+                            </property>
+                            </object>
+                          </property>
+                        </object>
+                      </property>
+                    </object>
+                  </child>
+                <child type="prefix">
                   <object class="GtkBox">
                     <property name="spacing">12</property>
                     <child>

@@ -21,12 +21,12 @@ from gi.repository import Adw
 from gi.repository import Gtk
 from gi.repository import GLib
 from gi.repository import Gio
-from gi.repository import Gdk
-from gi.repository import Panel
+from gi.repository import Panel, GObject
 
 import os
 import logging
 import asyncio
+import re
 
 from .utils.async_helpers import dialog_choose_async
 
@@ -34,7 +34,7 @@ from .backend.jupyter_server import JupyterServer
 from .backend.jupyter_kernel import JupyterKernel, JupyterKernelInfo
 from .backend.command_line import CommandLine
 
-from .models.cell import Cell, CellType
+from .models.cell import CellType
 from .models.notebook import Notebook
 from .models.multi_list_model import MultiListModel
 
@@ -61,10 +61,19 @@ from .interfaces.cursor import ICursor
 from .interfaces.language import ILanguage
 
 from .widgets.launcher import Launcher
+from .widgets.chapter_row import ChapterRow
 
 from .utils.converters import is_mime_displayable
 
 from gettext import gettext as _
+
+
+class TreeNode(GObject.Object):
+    def __init__(self, node_name, index, children=None):
+        super().__init__()
+        self.node_name = node_name
+        self.index = index
+        self.children = children or []
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/window.ui')
@@ -89,6 +98,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     position_menu_button = Gtk.Template.Child()
     add_cell_button = Gtk.Template.Child()
     move_cursor_entry_buffer = Gtk.Template.Child()
+    notebook_navigation_menu = Gtk.Template.Child()
+    chapters_list_view = Gtk.Template.Child()
 
     cache_dir = os.environ["XDG_CACHE_HOME"]
     files_cache_dir = os.path.join(cache_dir, "files")
@@ -137,8 +148,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.images_panel = ImagesPanel()
         self.bottom_panel_frame.add(self.images_panel)
 
-        # TODO Fix MultiListModel because it crashes when displaying
-        #           the combo_row
         self.all_kernels = MultiListModel()
         self.all_kernels.add_section(
             self.jupyter_server.avalaible_kernels,
@@ -232,6 +241,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             'restart-kernel-visible', self.restart_kernel_visible)
         self.restart_kernel_and_run_action = self.create_action(
             'restart-kernel-and-run', self.restart_kernel_and_run)
+
+        self.create_action_with_target(
+            'select-cell',
+            GLib.VariantType.new("u"),
+            self.on_select_cell_action)
 
         self.run_cell_and_proceed_action.set_enabled(False)
         self.run_line_action.set_enabled(False)
@@ -705,11 +719,16 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
             self.kernel_controls.set_visible(True)
             self.kernel_status_menu.set_visible(True)
-
         else:
             self.update_kernel_info(None)
+
             self.kernel_controls.set_visible(False)
             self.kernel_status_menu.set_visible(False)
+
+        if isinstance(page, NotebookPage):
+            self.notebook_navigation_menu.set_visible(True)
+        else:
+            self.notebook_navigation_menu.set_visible(False)
 
         # Language Interface (Text, Notebook, Code, Console, Json, Table)
         if isinstance(page, ILanguage):
@@ -965,7 +984,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             logging.Logger.debug(f"{e}")
 
     @Gtk.Template.Callback("on_create_frame")
-    def on_create_frame(self, grid):
+    def on_create_frame(self, *args):
         new_frame = Panel.Frame()
         new_frame.set_placeholder(
             Launcher(self.jupyter_server.avalaible_kernels))
@@ -990,3 +1009,88 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     @Gtk.Template.Callback("on_key_pressed")
     def on_key_pressed(self, controller, keyval, keycode, state):
         print(keyval, keycode, state)
+
+    #
+    #   CHAPTER VIEW for NotebookPage
+    #
+
+    def on_select_cell_action(self, action, variant):
+        notebook = self.get_visible_page()
+        if not isinstance(notebook, NotebookPage):
+            return
+
+        notebook.set_selected_cell_index(variant.get_uint32())
+
+    @Gtk.Template.Callback("on_chapter_menu_activated")
+    def on_chapter_menu_activated(self, *args):
+        print("Chapters activated")
+        page = self.get_visible_page()
+        if not isinstance(page, NotebookPage):
+            return
+
+        chapters = []
+
+        header_pattern = re.compile(r'^(#{1,6})\s+(.+)', re.MULTILINE)
+
+        for index, cell in enumerate(page.notebook_model):
+            if cell.cell_type == CellType.TEXT:
+                matches = header_pattern.findall(cell.source)
+
+                for match in matches:
+                    chapters.append((len(match[0]), match[1].strip(), index))
+
+        chapter_model = Gio.ListStore.new(TreeNode)
+
+        level_stack = []
+        for chapter in chapters:
+            level, title, index = chapter
+            node = TreeNode(title, index, [])
+
+            if level == 0:
+                chapter_model.append(node)
+                level_stack = [(level, node)]
+            else:
+                while level_stack and level_stack[-1][0] >= level:
+                    level_stack.pop()
+
+                if not level_stack:
+                    chapter_model.append(node)
+                    level_stack = [(level, node)]
+                    continue
+
+                parent_node = level_stack[-1][1]
+                parent_node.children.append(node)
+
+                level_stack.append((level, node))
+
+        tree_list_model = Gtk.TreeListModel.new(
+            chapter_model, False, True, self.create_model_func)
+
+        selection_model = Gtk.NoSelection(model=tree_list_model)
+
+        self.chapters_list_view.set_model(selection_model)
+
+    def create_model_func(self, item):
+        if item.children == []:
+            return None
+
+        child_model = Gio.ListStore.new(TreeNode)
+        for child in item.children:
+            child_model.append(child)
+        return child_model
+
+    @Gtk.Template.Callback("on_chapter_factory_setup")
+    def on_chapter_factory_setup(self, factory, list_item):
+        list_item.set_child(ChapterRow(css_classes=["chapter-button"]))
+
+    @Gtk.Template.Callback("on_chapter_factory_bind")
+    def on_chapter_factory_bind(self, factory, list_item):
+        item = list_item.get_item()
+        widget = list_item.get_child()
+        widget.expander.set_list_row(item)
+
+        item = list_item.get_item().get_item()
+
+        widget.set_action_name("win.select-cell")
+        widget.set_action_target_value(GLib.Variant('u', item.index))
+        widget.set_text(item.node_name)
