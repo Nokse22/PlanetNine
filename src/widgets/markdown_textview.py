@@ -22,6 +22,7 @@ from gi.repository import Gtk, Pango, GObject
 import sys
 import re
 
+
 class MarkdownTextView(Gtk.TextView):
     __gtype_name__ = 'MarkdownTextView'
 
@@ -105,7 +106,8 @@ class MarkdownTextView(Gtk.TextView):
 
         # Apply full line tags
         for line_start, line_tag in self.full_line_tags:
-            pattern = re.compile(f'^({re.escape(line_start)}.*)$', re.MULTILINE)
+            pattern = re.compile(
+                f'^({re.escape(line_start)}.*)$', re.MULTILINE)
             for match in pattern.finditer(text):
                 start_pos = match.start(1)
                 end_pos = match.end(1)
@@ -115,7 +117,8 @@ class MarkdownTextView(Gtk.TextView):
 
         # Apply in-line tags
         for inline_tag, tag_name in self.in_line_tags:
-            pattern = re.compile(f'({re.escape(inline_tag)}.*?{re.escape(inline_tag)})')
+            pattern = re.compile(
+                f'({re.escape(inline_tag)}.*?{re.escape(inline_tag)})')
             for match in pattern.finditer(text):
                 start_pos = match.start(1)
                 end_pos = match.end(1)
@@ -157,9 +160,11 @@ class MarkdownTextView(Gtk.TextView):
 
         for tag, tag_name in self.full_line_tags:
             if line_text.startswith(tag):
-                buffer.apply_tag_by_name(tag_name, line_start_iter, line_end_iter)
+                buffer.apply_tag_by_name(
+                    tag_name, line_start_iter, line_end_iter)
             else:
-                buffer.remove_tag_by_name(tag_name, line_start_iter, line_end_iter)
+                buffer.remove_tag_by_name(
+                    tag_name, line_start_iter, line_end_iter)
 
         start_iter = cursor_iter.copy()
         start_iter.backward_chars(2)
@@ -173,10 +178,14 @@ class MarkdownTextView(Gtk.TextView):
 
                 start_iter.backward_chars(200)
 
-                if start_search_iter.backward_search(tag, Gtk.TextSearchFlags.TEXT_ONLY):
-                    match_start, match_end = start_search_iter.backward_search(tag, Gtk.TextSearchFlags.TEXT_ONLY)
-                    if len(buffer.get_text(match_start, cursor_iter, False)) != 2 * len(tag):
-                        buffer.apply_tag_by_name(tag_name, match_start, cursor_iter)
+                if start_search_iter.backward_search(
+                        tag, Gtk.TextSearchFlags.TEXT_ONLY):
+                    match_start, match_end = start_search_iter.backward_search(
+                        tag, Gtk.TextSearchFlags.TEXT_ONLY)
+                    if (len(buffer.get_text(match_start, cursor_iter, False))
+                            != 2 * len(tag)):
+                        buffer.apply_tag_by_name(
+                            tag_name, match_start, cursor_iter)
                         break
 
     def on_text_deleted(self, buffer, start, end):
@@ -188,8 +197,10 @@ class MarkdownTextView(Gtk.TextView):
         for tag, tag_name in self.in_line_tags:
             if deleted_text in tag or tag in deleted_text:
                 cursor_iter = start.copy()
-                if cursor_iter.backward_search(tag, Gtk.TextSearchFlags.TEXT_ONLY, None):
-                    match_start, match_end = cursor_iter.backward_search(tag, Gtk.TextSearchFlags.TEXT_ONLY)
+                if cursor_iter.backward_search(
+                        tag, Gtk.TextSearchFlags.TEXT_ONLY, None):
+                    match_start, match_end = cursor_iter.backward_search(
+                        tag, Gtk.TextSearchFlags.TEXT_ONLY)
 
                     # Remove the corresponding text tag
                     buffer.remove_tag_by_name(tag_name, match_end, start)
@@ -235,7 +246,8 @@ class MarkdownTextView(Gtk.TextView):
                     line_end = loc.copy()
                     line_end.backward_char()
 
-                    if line_end.get_line_offset() == len(str(current_order)) + 2:
+                    if (line_end.get_line_offset()
+                            == len(str(current_order)) + 2):
                         start_iter.set_line_offset(0)
                         buffer.delete(start_iter, loc)
                     else:

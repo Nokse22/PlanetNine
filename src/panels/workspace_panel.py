@@ -133,9 +133,11 @@ class WorkspacePanel(Panel.Widget):
 
         for node in os.listdir(folder_path):
             if os.path.isdir(folder_path):
-                self.add_folder(self.workspace_root, os.path.join(folder_path, node))
+                self.add_folder(
+                    self.workspace_root, os.path.join(folder_path, node))
             elif os.path.isfile(folder_path):
-                self.workspace_root.children.append(TreeNode(folder_path, NodeType.FILE))
+                self.workspace_root.children.append(
+                    TreeNode(folder_path, NodeType.FILE))
 
     #
     #   ADD FILES/FOLDERS (only in other files)
@@ -157,7 +159,8 @@ class WorkspacePanel(Panel.Widget):
             return
 
         for file in result:
-            self.files_root.children.append(TreeNode(file.get_path(), NodeType.FILE))
+            self.files_root.children.append(
+                TreeNode(file.get_path(), NodeType.FILE))
 
     def on_add_folder(self, *args):
         asyncio.create_task(self._on_add_folder())
@@ -303,9 +306,7 @@ class WorkspacePanel(Panel.Widget):
         return file_menu
 
     def create_model_func(self, item):
-        if item.node_type in [
-            NodeType.FOLDER, NodeType.ROOT
-        ]:
+        if item.node_type in [NodeType.FOLDER, NodeType.ROOT]:
             child_model = Gio.ListStore.new(TreeNode)
             for child in item.children:
                 child_model.append(child)

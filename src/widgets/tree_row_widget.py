@@ -48,7 +48,8 @@ class TreeWidget(Adw.Bin):
             ellipsize=3,
         )
 
-        self.image = Gtk.Image(icon_name="python-symbolic", margin_end=6)
+        self.image = Gtk.Image(
+            icon_name="python-symbolic", margin_end=6, visible=False)
 
         self.show_menu = True
         self.menu_model = Gio.Menu()
@@ -72,6 +73,7 @@ class TreeWidget(Adw.Bin):
         self.label.set_text(text)
 
     def set_icon_name(self, icon_name):
+        self.image.set_visible(True)
         self.image.set_from_icon_name(icon_name)
 
     def set_menu_model(self, model):
