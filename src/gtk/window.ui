@@ -273,15 +273,22 @@
                     <property name="always-show-arrow">false</property>
                     <property name="popover">
                       <object class="GtkPopover">
-                        <signal name="map" handler="on_chapter_menu_activated"/>
+                        <signal name="show" handler="on_chapter_menu_activated"/>
                         <property name="child">
-                          <object class="GtkListView" id="chapters_list_view">
-                            <property name="factory">
-                              <object class="GtkSignalListItemFactory">
-                                <signal name="setup" handler="on_chapter_factory_setup"/>
-                                <signal name="bind" handler="on_chapter_factory_bind"/>
-                              </object>
-                            </property>
+                          <object class="GtkScrolledWindow">
+                            <property name="propagate-natural-width">true</property>
+                            <property name="propagate-natural-height">true</property>
+                            <property name="max-content-height">400</property>
+                            <child>
+                              <object class="GtkListView" id="chapters_list_view">
+                                <property name="factory">
+                                  <object class="GtkSignalListItemFactory">
+                                    <signal name="setup" handler="on_chapter_factory_setup"/>
+                                    <signal name="bind" handler="on_chapter_factory_bind"/>
+                                  </object>
+                                </property>
+                                </object>
+                              </child>
                             </object>
                           </property>
                         </object>

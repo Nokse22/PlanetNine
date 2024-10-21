@@ -28,8 +28,8 @@ class ChapterRow(Gtk.Button):
             spacing=6,
             margin_start=3,
             margin_end=10,
-            margin_top=6,
-            margin_bottom=6
+            # margin_top=6,
+            # margin_bottom=6
         )
 
         self.expander = Gtk.TreeExpander.new()

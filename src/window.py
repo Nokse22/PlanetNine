@@ -1039,6 +1039,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 for match in matches:
                     chapters.append((len(match[0]), match[1].strip(), index))
 
+        print(chapters)
         chapter_model = Gio.ListStore.new(TreeNode)
 
         level_stack = []
@@ -1069,6 +1070,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         selection_model = Gtk.NoSelection(model=tree_list_model)
 
         self.chapters_list_view.set_model(selection_model)
+        print("end")
 
     def create_model_func(self, item):
         if item.children == []:
