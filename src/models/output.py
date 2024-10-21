@@ -86,9 +86,6 @@ class Output(GObject.GObject):
         return instance
 
     def parse(self, json_dict):
-
-        print("PARSING: ", self.output_type, json_dict)
-
         match self.output_type:
             case OutputType.STREAM:
                 self.name = json_dict['name']
@@ -126,6 +123,10 @@ class Output(GObject.GObject):
         elif 'image/jpeg' in json_node['data']:
             self.data_content = json_node['data']['image/jpeg']
             self.data_type = DataType.IMAGE_JPEG
+
+        elif 'image/svg+xml' in json_node['data']:
+            self.data_content = json_node['data']['image/svg+xml']
+            self.data_type = DataType.IMAGE_SVG
 
         elif 'text/plain' in json_node['data']:
             self.data_content = json_node['data']['text/plain']
