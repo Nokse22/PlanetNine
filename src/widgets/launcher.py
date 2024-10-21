@@ -27,9 +27,9 @@ class Launcher(Adw.Bin):
     __gtype_name__ = 'Launcher'
 
     notebook_listbox = Gtk.Template.Child()
-    console_listbox = Gtk.Template.Child()
+    code_listbox = Gtk.Template.Child()
     notebook_group = Gtk.Template.Child()
-    console_group = Gtk.Template.Child()
+    code_group = Gtk.Template.Child()
 
     def __init__(self, avalaible_kernels):
         super().__init__()
@@ -39,9 +39,9 @@ class Launcher(Adw.Bin):
             self.create_notebook_widgets
         )
 
-        self.console_listbox.bind_model(
+        self.code_listbox.bind_model(
             avalaible_kernels,
-            self.create_console_widgets
+            self.create_code_widgets
         )
 
     def create_notebook_widgets(self, item):
@@ -54,12 +54,12 @@ class Launcher(Adw.Bin):
         self.notebook_group.set_visible(True)
         return button_row
 
-    def create_console_widgets(self, item):
+    def create_code_widgets(self, item):
         button_row = Adw.ButtonRow(
             title=item.display_name,
             end_icon_name="right-symbolic",
-            action_name="win.new-console-name",
+            action_name="win.new-code-name",
             action_target=GLib.Variant("s", item.name)
         )
-        self.console_group.set_visible(True)
+        self.code_group.set_visible(True)
         return button_row

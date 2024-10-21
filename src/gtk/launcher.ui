@@ -59,13 +59,13 @@
           </object>
         </child>
         <child>
-          <object class="AdwPreferencesGroup" id="console_group">
+          <object class="AdwPreferencesGroup" id="code_group">
             <property name="hexpand">True</property>
             <property name="hexpand-set">True</property>
-            <property name="title">Console</property>
+            <property name="title">Code</property>
             <property name="visible">false</property>
             <child>
-              <object class="GtkListBox" id="console_listbox">
+              <object class="GtkListBox" id="code_listbox">
                 <property name="selection-mode">none</property>
                 <style>
                   <class name="boxed-list-separate"/>
