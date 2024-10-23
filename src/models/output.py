@@ -56,6 +56,8 @@ class Output(GObject.GObject):
     data_type = GObject.Property(type=int, default=0)
     data_content = GObject.Property(type=str, default="")
 
+    display_id = GObject.Property(type=str, default=None)
+
     output_type = 0
 
     def __init__(self, _output_type):
@@ -76,6 +78,7 @@ class Output(GObject.GObject):
         self.plain_content = None
 
         self.metadata = None
+        self.display_id = ""
 
     @classmethod
     def new_from_json(cls, json_string):
@@ -137,6 +140,10 @@ class Output(GObject.GObject):
 
         if 'metadata' in json_node:
             self.metadata = json_node['metadata']
+
+        if 'transient' in json_node:
+            if 'display_id' in json_node['transient']:
+                self.display_id = json_node['transient']['display_id']
 
         print(json_node['data'])
 

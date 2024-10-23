@@ -125,6 +125,7 @@ class CellUI(Gtk.Box):
         self.cell.connect(
             "execution-count-changed", self.on_execution_count_changed)
         self.cell.connect("output-added", self.on_add_output)
+        self.cell.connect("output-updated", self.on_update_output)
         self.cell.connect("output-reset", self.on_reset_output)
         self.cell.connect("notify::executing", self.on_executing_changed)
 
@@ -211,6 +212,9 @@ class CellUI(Gtk.Box):
         self.output_scrolled_window.set_visible(True)
         self.output_loader.add_output(output)
 
+    def update_output(self, output):
+        self.output_loader.update_output(output)
+
     def reset_output(self):
         self.output_scrolled_window.set_visible(False)
 
@@ -292,6 +296,9 @@ class CellUI(Gtk.Box):
 
     def on_add_output(self, cell, output):
         self.add_output(output)
+
+    def on_update_output(self, cell, output):
+        self.update_output(output)
 
     #
     #   Implement Disconnectable Interface

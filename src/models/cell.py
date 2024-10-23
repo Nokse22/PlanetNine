@@ -40,6 +40,8 @@ class Cell(GObject.GObject):
     __gsignals__ = {
         'output-added': (
             GObject.SignalFlags.RUN_FIRST, None, (GObject.GObject,)),
+        'output-updated': (
+            GObject.SignalFlags.RUN_FIRST, None, (GObject.GObject,)),
         'output-reset': (
             GObject.SignalFlags.RUN_FIRST, None, ()),
         'execution-count-changed': (
@@ -98,6 +100,16 @@ class Cell(GObject.GObject):
     def add_output(self, output):
         self._outputs.append(output)
         self.emit("output-added", output)
+
+    def update_output(self, content):
+        display_id = content['transient']['display_id']
+        for index, output in enumerate(self._outputs):
+            if output.display_id == display_id:
+                output = Output(OutputType.DISPLAY_DATA)
+                output.parse(content)
+                self._outputs.remove(index)
+                self._outputs.insert(index, output)
+                self.emit("output-updated", output)
 
     def reset_output(self):
         self._outputs.remove_all()

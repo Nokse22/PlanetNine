@@ -190,6 +190,9 @@ class NotebookPage(
             output.parse(content)
             cell.add_output(output)
 
+        elif msg_type == 'update_display_data':
+            cell.update_output(content)
+
         elif msg_type == 'execute_result':
             output = Output(OutputType.EXECUTE_RESULT)
             output.parse(content)

@@ -20,7 +20,7 @@
 from gi.repository import Adw
 from gi.repository import Gtk
 from gi.repository import GLib
-from gi.repository import Gio
+from gi.repository import Gio, Gdk
 from gi.repository import Panel, GObject
 
 import os
@@ -35,7 +35,6 @@ from .backend.jupyter_kernel import JupyterKernel, JupyterKernelInfo
 from .backend.command_line import CommandLine
 
 from .models.cell import CellType
-from .models.notebook import Notebook
 from .models.multi_list_model import MultiListModel
 
 from .pages.notebook_page import NotebookPage
@@ -82,7 +81,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     server_terminal = Gtk.Template.Child()
     kernel_terminal = Gtk.Template.Child()
-    grid = Gtk.Template.Child()
+    panel_grid = Gtk.Template.Child()
     kernel_controls = Gtk.Template.Child()
     kernel_status_menu = Gtk.Template.Child()
     select_kernel_dialog = Gtk.Template.Child()
@@ -301,7 +300,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         # Hack to get the launcher to show
 
         widget = Panel.Widget()
-        self.grid.add(widget)
+        self.panel_grid.add(widget)
         widget.close()
 
         # Load examples folder
@@ -322,6 +321,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         if self.settings.get_boolean("start-server-immediately"):
             self.jupyter_server.start()
+            self.change_kernel_action.set_enabled(True)
 
     #
     #   NEW NOTEBOOK PAGE WITH KERNEL NAME
@@ -329,7 +329,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     def on_new_notebook_action(self, action, variant):
         notebook_page = NotebookPage(None, kernel_name=variant.get_string())
-        self.grid.add(notebook_page)
+        self.panel_grid.add(notebook_page)
 
     #
     #   NEW NOTEBOOK PAGE WITH EXISTING KERNEL FROM ID
@@ -337,7 +337,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     def on_new_notebook_id_action(self, action, variant):
         notebook_page = NotebookPage(None, kernel_id=variant.get_string())
-        self.grid.add(notebook_page)
+        self.panel_grid.add(notebook_page)
 
     #
     #   NEW CONSOLE PAGE WITH KERNEL NAME
@@ -345,7 +345,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     def on_new_console_action(self, action, variant):
         console_page = ConsolePage(kernel_name=variant.get_string())
-        self.grid.add(console_page)
+        self.panel_grid.add(console_page)
 
     #
     #   NEW CONSOLE PAGE WITH EXISTING KERNEL FROM ID
@@ -353,7 +353,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     def on_new_console_id_action(self, action, variant):
         console_page = ConsolePage(kernel_id=variant.get_string())
-        self.grid.add(console_page)
+        self.panel_grid.add(console_page)
 
     #
     #   NEW CODE PAGE WITH KERNEL NAME
@@ -361,7 +361,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     def on_new_code_action(self, action, variant):
         code_page = CodePage(None, kernel_name=variant.get_string())
-        self.grid.add(code_page)
+        self.panel_grid.add(code_page)
 
     #
     #   NEW CODE PAGE WITH EXISTING KERNEL FROM ID
@@ -369,7 +369,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     def on_new_code_id_action(self, action, variant):
         code_page = CodePage(None, kernel_id=variant.get_string())
-        self.grid.add(code_page)
+        self.panel_grid.add(code_page)
 
     #
     #   SET A NEW or EXISTING KERNEL TO A PAGE
@@ -415,7 +415,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                         result = page
                         return
 
-        self.grid.foreach_frame(check_frame)
+        self.panel_grid.foreach_frame(check_frame)
 
         return result
 
@@ -520,7 +520,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     def open_browser_page(self, action, variant):
         page = BrowserPage(variant.get_string())
-        self.grid.add(page)
+        self.panel_grid.add(page)
 
     #
     #   CREATE ACTIONS WITH OR WITHOUT TARGETS
@@ -546,13 +546,13 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         asyncio.create_task(self._on_open_notebook_action())
 
     async def _on_open_notebook_action(self):
-        file_filter = Gtk.FileFilter(name="All supported formats")
+        file_filter = Gtk.FileFilter(name=_("All supported formats"))
         file_filter.add_pattern("*.ipynb")
         filter_list = Gio.ListStore.new(Gtk.FileFilter())
         filter_list.append(file_filter)
 
         dialog = Gtk.FileDialog(
-            title="Open File",
+            title=_("Open File"),
             filters=filter_list,
         )
         try:
@@ -565,13 +565,13 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         asyncio.create_task(self._on_open_code_action())
 
     async def _on_open_code_action(self):
-        file_filter = Gtk.FileFilter(name="All supported formats")
+        file_filter = Gtk.FileFilter(name=_("All supported formats"))
         file_filter.add_pattern("*.py")
         filter_list = Gio.ListStore.new(Gtk.FileFilter())
         filter_list.append(file_filter)
 
         dialog = Gtk.FileDialog(
-            title="Open File",
+            title=_("Open File"),
             filters=filter_list,
         )
 
@@ -601,15 +601,15 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         match mime_type:
             case "application/json":
-                self.grid.add(JsonViewerPage(file_path))
+                self.panel_grid.add(JsonViewerPage(file_path))
             case "text/csv":
-                self.grid.add(MatrixPage(file_path))
+                self.panel_grid.add(MatrixPage(file_path))
             case "application/x-ipynb+json":
-                self.grid.add(NotebookPage(file_path))
+                self.panel_grid.add(NotebookPage(file_path))
             case "text/x-python":
-                self.grid.add(CodePage(file_path))
+                self.panel_grid.add(CodePage(file_path))
             case mime_type if is_mime_displayable(mime_type):
-                self.grid.add(TextPage(file_path))
+                self.panel_grid.add(TextPage(file_path))
             case _:
                 try:
                     file = Gio.File.new_for_path(file_path)
@@ -627,13 +627,13 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         if self.raise_page_if_open(file_path):
             return
 
-        self.grid.add(TextPage(file_path))
+        self.panel_grid.add(TextPage(file_path))
 
     def open_notebook(self, file_path=None):
-        self.grid.add(NotebookPage(file_path))
+        self.panel_grid.add(NotebookPage(file_path))
 
     def open_code(self, file_path):
-        self.grid.add(CodePage(file_path))
+        self.panel_grid.add(CodePage(file_path))
 
     def raise_page_if_open(self, file_path):
         result = False
@@ -648,7 +648,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                         frame.set_visible_child(page)
                         return
 
-        self.grid.foreach_frame(check_frame)
+        self.panel_grid.foreach_frame(check_frame)
 
         return result
 
@@ -664,7 +664,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                     frame.set_visible_child(page)
                     return
 
-        self.grid.foreach_frame(check_frame)
+        self.panel_grid.foreach_frame(check_frame)
 
         return result
 
@@ -902,12 +902,12 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def close(self):
-        self.grid.agree_to_close_async(None, self.finish_close)
+        self.panel_grid.agree_to_close_async(None, self.finish_close)
         return True
 
     def finish_close(self, _grid, result):
         try:
-            success = self.grid.agree_to_close_finish(result)
+            success = self.panel_grid.agree_to_close_finish(result)
             print("RESULT: ", success)
             if success:
                 asyncio.create_task(self._quit())
@@ -952,7 +952,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     def get_visible_page(self):
         try:
-            return self.grid.get_most_recent_frame().get_visible_child()
+            return self.panel_grid.get_most_recent_frame().get_visible_child()
         except Exception as e:
             print(e)
             return None
@@ -975,14 +975,38 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
             self.previous_page = None
 
-        print(f"Frame closed: {widget}")
-
         if isinstance(widget, IDisconnectable):
             widget.disconnect()
+
+        if isinstance(widget, IKernel):
+            kernel = widget.get_kernel()
+            if kernel:
+                kernel_id = kernel.kernel_id
+                if not self.get_page_with_kernel(kernel_id):
+                    asyncio.create_task(self._shutdown_kernel_by_id(kernel_id))
+
+    def get_page_with_kernel(self, kernel_id):
+        result = None
+
+        def check_frame(frame):
+            nonlocal result
+            for adw_page in frame.get_pages():
+                page = adw_page.get_child()
+                if isinstance(page, IKernel):
+                    if page.get_kernel().kernel_id == kernel_id:
+                        result = page
+                        return
+
+        self.panel_grid.foreach_frame(check_frame)
+
+        return result
 
     @Gtk.Template.Callback("on_key_pressed")
     def on_key_pressed(self, controller, keyval, keycode, state):
         print(keyval, keycode, state)
+
+        if keycode == 36 and state == Gdk.ModifierType.CONTROL_MASK:
+            self.activate_action("win.run-cell")
 
     #
     #   CHAPTER VIEW for NotebookPage

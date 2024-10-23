@@ -70,6 +70,7 @@ class TerminalTextView(Gtk.TextView):
         self.set_monospace(True)
         self.set_wrap_mode(Gtk.WrapMode.CHAR)
         self.set_input_purpose(Gtk.InputPurpose.TERMINAL)
+        self.set_size_request(-1, 18)
 
         self.current_tags = {
             'foreground': None,

@@ -59,7 +59,7 @@ class PlanetnineApplication(Adw.Application):
         self.create_action(
             'preferences', self.on_preferences_action, ['<primary>comma'])
         self.create_action(
-            'run', self.on_run_action, ['<primary>Escape'])
+            'run', self.on_run_action, ['<shift>Enter'])
 
         self.create_action(
             'save', self.on_save_action, ['<primary>s'])

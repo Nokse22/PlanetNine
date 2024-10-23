@@ -35,6 +35,59 @@ import re
 import asyncio
 
 
+class OutputPicture(Gtk.Picture):
+    __gtype_name__ = "OutputPicture"
+
+    display_id = GObject.Property(type=str, default=None)
+
+
+class OutputMarkdown(MarkdownTextView):
+    __gtype_name__ = "OutputMarkdown"
+
+    display_id = GObject.Property(type=str, default=None)
+
+    def __init__(self):
+        super().__init__()
+        self.set_editable(False)
+
+
+class OutputTerminal(TerminalTextView):
+    __gtype_name__ = "OutputTerminal"
+
+    display_id = GObject.Property(type=str, default=None)
+
+
+class OutputJSON(JsonViewer):
+    __gtype_name__ = "OutputJSON"
+
+    display_id = GObject.Property(type=str, default=None)
+
+    def __init__(self):
+        super().__init__()
+        self.add_css_class("output")
+
+
+class OutputHTML(Gtk.Button):
+    __gtype_name__ = "OutputHTML"
+
+    display_id = GObject.Property(type=str, default=None)
+
+    def __init__(self, _link, _label):
+        super().__init__()
+        self.add_css_class("html-button")
+        self.set_action_name("win.new-browser-page")
+        self.set_action_target_value(GLib.Variant('s', _link))
+        box = Gtk.Box(
+            spacing=12,
+            margin_top=6,
+            margin_bottom=6,
+            halign=Gtk.Align.CENTER)
+        box.append(Gtk.Image(icon_name="earth-symbolic"))
+        box.append(Gtk.Label(label=_label))
+        box.append(Gtk.Image(icon_name="right-symbolic"))
+        self.set_child(box)
+
+
 class OutputLoader(GObject.GObject):
     __gtype_name__ = "OutputLoader"
 
@@ -71,19 +124,53 @@ class OutputLoader(GObject.GObject):
                     case DataType.MARKDOWN:
                         self.add_output_markdown(output.data_content)
                     case DataType.JSON:
-                        viewer = JsonViewer()
-                        viewer.add_css_class("output")
-                        viewer.parse_json_string(output.data_content)
-                        self.output_box.append(viewer)
+                        self.add_output_json(output.data_content)
 
             case OutputType.ERROR:
                 self.add_output_text(output.traceback)
 
+    def update_output(self, output):
+        print("UPDATING ", output)
+        child = self.get_output_with_id(output.display_id)
+        print(child)
+
+        match output.data_type:
+            case DataType.TEXT:
+                self.add_output_text(output.data_content)
+            case DataType.IMAGE_PNG:
+                asyncio.create_task(
+                    self.add_output_png_image(output.data_content))
+            case DataType.IMAGE_SVG:
+                asyncio.create_task(
+                    self.add_output_svg_image(output.data_content))
+            case DataType.HTML:
+                asyncio.create_task(
+                    self.add_output_html(
+                        output.data_content,
+                        output.plain_content))
+            case DataType.MARKDOWN:
+                self.add_output_markdown(output.data_content)
+            case DataType.JSON:
+                self.add_output_json(output.data_content)
+
+        # self.output_box.insert_child_after(child, )
+
+    def add_output_text(self, text):
+        child = self.output_box.get_last_child()
+        if not isinstance(child, OutputTerminal):
+            child = OutputTerminal()
+            self.output_box.append(child)
+        child.insert_with_escapes(text)
+
     def add_output_markdown(self, markdown_string):
-        child = MarkdownTextView()
-        child.set_editable(False)
+        child = OutputMarkdown()
         self.output_box.append(child)
         child.set_text(markdown_string)
+
+    def add_output_json(self, json):
+        child = OutputJSON()
+        child.parse_json_string(json)
+        self.output_box.append(child)
 
     async def add_output_html(self, html_string, what):
         sha256_hash = random.randint(0, 1000000)
@@ -97,20 +184,11 @@ class OutputLoader(GObject.GObject):
         else:
             html_name = _("HTML")
 
-        box = Gtk.Box(
-            spacing=12,
-            margin_top=6,
-            margin_bottom=6,
-            halign=Gtk.Align.CENTER)
-        button = Gtk.Button(
-            css_classes=["html-button"],
-            action_name="win.new-browser-page",
-            action_target=GLib.Variant('s', "file://" + html_page_path))
-        box.append(Gtk.Image(icon_name="earth-symbolic"))
-        box.append(Gtk.Label(label="Open {} in Browser".format(html_name)))
-        box.append(Gtk.Image(icon_name="right-symbolic"))
-        button.set_child(box)
-        self.output_box.append(button)
+        child = OutputHTML(
+            "file://" + html_page_path,
+            "Open {} in Browser".format(html_name))
+
+        self.output_box.append(child)
 
     async def add_output_png_image(self, image_content):
         image_data = base64.b64decode(image_content)
@@ -132,7 +210,7 @@ class OutputLoader(GObject.GObject):
 
     def add_output_image(self, image_path):
         pixbuf = GdkPixbuf.Pixbuf.new_from_file(image_path)
-        picture = Gtk.Picture.new_for_pixbuf(pixbuf)
+        picture = OutputPicture.new_for_pixbuf(pixbuf)
         if pixbuf.get_width() > 800:
             picture.set_size_request(
                 -1, pixbuf.get_height() * (700 / pixbuf.get_width()))
@@ -141,13 +219,6 @@ class OutputLoader(GObject.GObject):
                 -1, pixbuf.get_height())
 
         self.output_box.append(picture)
-
-    def add_output_text(self, text):
-        child = self.output_box.get_last_child()
-        if not isinstance(child, TerminalTextView):
-            child = TerminalTextView()
-            self.output_box.append(child)
-        child.insert_with_escapes(text)
 
     async def save_file_async(self, content: bytes, file_path: str):
         file = Gio.File.new_for_path(file_path)
@@ -168,3 +239,10 @@ class OutputLoader(GObject.GObject):
 
     async def compute_hash(self, content: str) -> str:
         return hashlib.sha256(content.encode('utf-8')).hexdigest()
+
+    def get_output_with_id(self, display_id):
+        child = self.output_box.get_last_child()
+        while child:
+            if child.display_id == display_id:
+                return child
+            child = child.get_prev_sibling()

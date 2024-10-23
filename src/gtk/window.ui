@@ -102,7 +102,7 @@
               </object>
             </child>
             <property name="content">
-              <object class="PanelGrid" id="grid">
+              <object class="PanelGrid" id="panel_grid">
                 <signal name="create-frame" handler="on_create_frame"/>
               </object>
             </property>
@@ -204,7 +204,6 @@
                     <property name="visible">false</property>
                     <property name="always-show-arrow">false</property>
                   <property name="direction">up</property>
-                  <property name="label">Cell 0, Ln 0, Col 0</property>
                   <property name="popover">
                     <object class="GtkPopover">
                       <property name="child">
@@ -223,7 +222,7 @@
                               </child>
                               <child>
                                 <object class="GtkButton">
-                                  <property name="label">Go</property>
+                                  <property name="label" translatable="yes">Go</property>
                                   <signal name="clicked" handler="on_move_cursor_activated"/>
                                   <style>
                                     <class name="suggested-action"></class>
@@ -267,7 +266,7 @@
                 </child>
                 <child type="prefix">
                   <object class="GtkMenuButton" id="notebook_navigation_menu">
-                    <property name="label">Chapters</property>
+                    <property name="label" translatable="yes">Chapters</property>
                     <property name="direction">up</property>
                     <property name="visible">false</property>
                     <property name="always-show-arrow">false</property>
@@ -306,7 +305,7 @@
                     </child>
                     <child>
                       <object class="GtkLabel" id="server_status_label">
-                        <property name="label">Server Not Connected</property>
+                        <property name="label" translatable="yes">Server Not Connected</property>
                       </object>
                     </child>
                   </object>
@@ -386,11 +385,11 @@
   <menu id="add-menu">
     <section>
       <item>
-        <attribute name="label">New Text Cell</attribute>
+        <attribute name="label" translatable="yes">New Text Cell</attribute>
         <attribute name="action">win.add-text-cell</attribute>
       </item>
       <item>
-        <attribute name="label">New Raw Cell</attribute>
+        <attribute name="label" translatable="yes">New Raw Cell</attribute>
         <attribute name="action">win.add-raw-cell</attribute>
       </item>
     </section>
@@ -398,15 +397,15 @@
   <menu id="run-menu">
     <section>
       <item>
-        <attribute name="label">Restart Kernel</attribute>
+        <attribute name="label" translatable="yes">Restart Kernel</attribute>
         <attribute name="action">win.restart-kernel-visible</attribute>
       </item>
       <item>
-        <attribute name="label">Restart Kernel and Run</attribute>
+        <attribute name="label" translatable="yes">Restart Kernel and Run</attribute>
         <attribute name="action">win.restart-kernel-and-run</attribute>
       </item>
       <item>
-        <attribute name="label">Change Kernel</attribute>
+        <attribute name="label" translatable="yes">Change Kernel</attribute>
         <attribute name="action">win.change-kernel</attribute>
         <attribute name="target"></attribute>
       </item>
