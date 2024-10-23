@@ -7,32 +7,50 @@
     <property name="title">Untitled.ipynb</property>
     <property name="icon-name">notepad-symbolic</property>
     <child>
-      <object class="GtkScrolledWindow" id="scrolled_window">
+      <object class="GtkStack" id="stack">
         <child>
-          <object class="GtkViewport">
-            <property name="scroll-to-focus">false</property>
-            <child>
-              <object class="AdwClamp">
-                <property name="maximum-size">800</property>
-                <property name="tightening-threshold">600</property>
+          <object class="GtkStackPage">
+            <property name="name">spinner</property>
+            <property name="child">
+              <object class="AdwSpinner">
+              </object>
+            </property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkStackPage">
+            <property name="name">content</property>
+            <property name="child">
+              <object class="GtkScrolledWindow" id="scrolled_window">
                 <child>
-                  <object class="GtkListBox" id="cells_list_box">
-                    <property name="margin-start">12</property>
-                    <property name="margin-end">12</property>
-                    <property name="margin-top">24</property>
-                    <property name="margin-bottom">100</property>
-                    <property name="selection-mode">single</property>
-                    <style>
-                      <class name="notebook-list"></class>
-                    </style>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkDropTarget" id="list_drop_target">
+                  <object class="GtkViewport">
+                    <property name="scroll-to-focus">false</property>
+                    <child>
+                      <object class="AdwClamp">
+                        <property name="maximum-size">800</property>
+                        <property name="tightening-threshold">600</property>
+                        <child>
+                          <object class="GtkListBox" id="cells_list_box">
+                            <property name="margin-start">12</property>
+                            <property name="margin-end">12</property>
+                            <property name="margin-top">24</property>
+                            <property name="margin-bottom">100</property>
+                            <property name="selection-mode">single</property>
+                            <style>
+                              <class name="notebook-list"></class>
+                            </style>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkDropTarget" id="list_drop_target">
+                          </object>
+                        </child>
+                      </object>
+                    </child>
                   </object>
                 </child>
               </object>
-            </child>
+            </property>
           </object>
         </child>
       </object>

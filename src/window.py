@@ -255,8 +255,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.create_action(
             'start-server', self.start_server)
-        self.create_action(
+        self.change_kernel_action = self.create_action(
             'change-kernel', self.change_kernel)
+
+        self.change_kernel_action.set_enabled(False)
 
         #   OTHER ACTIONS
 
@@ -427,6 +429,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     def start_server(self, *args):
         self.jupyter_server.start()
+        self.change_kernel_action.set_enabled(True)
 
     #
     #   SHUTDOWN KERNEL BY ID
@@ -589,9 +592,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     def on_open_file_action(self, action, variant):
         file_path = variant.get_string()
 
-        if self.raise_page_if_open(file_path):
-            return
-
         self.open_file(file_path)
 
     def open_file(self, file_path):
@@ -606,9 +606,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             case "text/csv":
                 self.grid.add(MatrixPage(file_path))
             case "application/x-ipynb+json":
-                self.open_notebook(file_path)
+                self.grid.add(NotebookPage())
             case "text/python":
-                self.open_code(file_path)
+                self.grid.add(CodePage())
             case mime_type if is_mime_displayable(mime_type):
                 self.grid.add(TextPage(file_path))
             case _:
@@ -637,52 +637,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self.grid.add(TextPage(file_path))
 
     def open_notebook(self, file_path=None):
-        asyncio.create_task(self._open_notebook(file_path))
-
-    async def _open_notebook(self, file_path):
-        if self.raise_page_if_open(file_path):
-            return
-
-        if file_path:
-            notebook = Notebook.new_from_file(file_path)
-            page = NotebookPage(notebook)
-        else:
-            page = NotebookPage()
-
-        # TODO start kernel or ask which kernel to start, now it starts the
-        #           default one
-
-        success, kernel = await self.jupyter_server.start_kernel_by_name("")
-
-        if success:
-            page.set_kernel(kernel)
-            self.update_kernel_info(page)
-
-        self.grid.add(page)
-
-        return page
+        self.grid.add(NotebookPage(file_path))
 
     def open_code(self, file_path):
-        asyncio.create_task(self._open_code(file_path))
-
-    async def _open_code(self, file_path):
-        if self.raise_page_if_open(file_path):
-            return
-
-        page = CodePage(file_path)
-
-        # TODO start kernel or ask which kernel to start, now it starts the
-        #           default one
-
-        success, kernel = await self.jupyter_server.start_kernel_by_name("")
-
-        if success:
-            page.set_kernel(kernel)
-            self.update_kernel_info(page)
-
-        self.grid.add(page)
-
-        return page
+        self.grid.add(CodePage(file_path))
 
     def raise_page_if_open(self, file_path):
         result = False
@@ -691,8 +649,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             nonlocal result
             for adw_page in frame.get_pages():
                 page = adw_page.get_child()
-                print(page, isinstance(page, ISaveable))
-                print(page.get_path(), file_path, page.get_path() == file_path)
                 if isinstance(page, ISaveable):
                     if page.get_path() == file_path:
                         result = True
@@ -794,6 +750,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.language_button.set_label(lang.title())
 
     def on_cursor_moved(self, page, buffer, index):
+        if buffer is None:
+            return
         insert_mark = buffer.get_insert()
         iter_at_cursor = buffer.get_iter_at_mark(insert_mark)
         line_n = iter_at_cursor.get_line()
@@ -1023,7 +981,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     @Gtk.Template.Callback("on_chapter_menu_activated")
     def on_chapter_menu_activated(self, *args):
-        print("Chapters activated")
         page = self.get_visible_page()
         if not isinstance(page, NotebookPage):
             return
@@ -1070,7 +1027,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         selection_model = Gtk.NoSelection(model=tree_list_model)
 
         self.chapters_list_view.set_model(selection_model)
-        print("end")
 
     def create_model_func(self, item):
         if item.children == []:

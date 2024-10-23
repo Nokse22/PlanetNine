@@ -23,10 +23,12 @@ from gi.repository import Panel
 
 import os
 import nbformat
+import asyncio
 
 from ..models.cell import Cell, CellType
 from ..widgets.cell_ui import CellUI
 from ..models.output import Output, OutputType
+from ..models.notebook import Notebook
 from ..backend.command_line import CommandLine
 # from ..completion_providers.completion_providers import LSPCompletionProvider
 from ..completion_providers.completion_providers import WordsCompletionProvider
@@ -49,42 +51,28 @@ class NotebookPage(
     cells_list_box = Gtk.Template.Child()
     list_drop_target = Gtk.Template.Child()
     scrolled_window = Gtk.Template.Child()
+    stack = Gtk.Template.Child()
 
     cache_dir = os.environ["XDG_CACHE_HOME"]
 
-    def __init__(self, _notebook_model):
+    def __init__(self, _file_path):
         super().__init__()
 
         self.bindings = []
 
         self.previous_buffer = None
 
-        self.notebook_model = _notebook_model
+        self.notebook_model = None
 
-        # self.set_title(self.notebook_model.title)
-        self.bindings.append(
-            self.notebook_model.bind_property("title", self, "title", 2))
+        asyncio.create_task(self._open_notebook(_file_path))
 
         self.words_provider = WordsCompletionProvider()
         # self.lsp_provider = LSPCompletionProvider()
-
-        self.save_delegate = GenericSaveDelegate(self)
-        self.set_save_delegate(self.save_delegate)
-
-        self.set_path(self.get_path())
-
-        self.cells_list_box.bind_model(
-            self.notebook_model,
-            self.create_widgets
-        )
 
         self.list_drop_target.set_gtypes([Cell])
         self.list_drop_target.set_actions(Gdk.DragAction.MOVE)
 
         self.command_line = CommandLine()
-
-        if self.notebook_model.get_n_items() == 0:
-            self.add_cell(CellType.CODE)
 
         self.list_drop_target.connect("drop", self.on_drop_target_drop)
         self.list_drop_target.connect("motion", self.on_drop_target_motion)
@@ -94,6 +82,34 @@ class NotebookPage(
             "selected-rows-changed", self.on_selected_cell_changed)
 
         self.set_selected_cell_index(0)
+
+    async def _open_notebook(self, file_path):
+        if file_path:
+            self.notebook_model = await asyncio.to_thread(
+                Notebook.new_from_file,
+                file_path)
+        else:
+            self.notebook_model = Notebook()
+
+        # self.set_title(self.notebook_model.title)
+        self.bindings.append(
+            self.notebook_model.bind_property("title", self, "title", 2))
+
+        self.cells_list_box.bind_model(
+            self.notebook_model,
+            self.create_widgets
+        )
+
+        if self.notebook_model.get_n_items() == 0:
+            self.add_cell(CellType.CODE)
+
+        self.save_delegate = GenericSaveDelegate(self)
+        self.set_save_delegate(self.save_delegate)
+
+        self.set_path(self.get_path())
+
+        self.stack.set_visible_child_name("content")
+        self.activate_action("win.change-kernel")
 
     def on_selected_cell_changed(self, *args):
         selected_row = self.cells_list_box.get_selected_row()
@@ -341,11 +357,14 @@ class NotebookPage(
         self.emit("cursor-moved", buffer, index + 1)
 
     def get_cursor_position(self):
-        cell_ui = self.cells_list_box.get_selected_row().get_child()
-        buffer = cell_ui.code_buffer
-        index = self.get_selected_cell_index()
+        row = self.cells_list_box.get_selected_row()
+        if row:
+            cell_ui = row.get_child()
+            buffer = cell_ui.code_buffer
+            index = self.get_selected_cell_index()
 
-        return buffer, index
+            return buffer, index
+        return None, 0
 
     def move_cursor(self, line, column, index):
         index = index - 1
@@ -394,7 +413,9 @@ class NotebookPage(
         self.emit("kernel-info-changed")
 
     def get_kernel(self):
-        return self.notebook_model.jupyter_kernel
+        if self.notebook_model:
+            return self.notebook_model.jupyter_kernel
+        return None
 
     def on_kernel_status_changed(self, kernel, status):
         self.emit("kernel-info-changed")
