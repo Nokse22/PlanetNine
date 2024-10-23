@@ -36,10 +36,8 @@ class IKernel:
         self.page_id = ''.join(random.choices(string.ascii_letters, k=10))
 
         if "kernel_id" in kwargs.keys():
-            print("Kernel ID: ", kwargs["kernel_id"])
             self.kernel_id = kwargs["kernel_id"]
         elif "kernel_name" in kwargs.keys():
-            print("Kernel Name: ", kwargs["kernel_name"])
             self.kernel_name = kwargs["kernel_name"]
 
     def start_kernel(self):

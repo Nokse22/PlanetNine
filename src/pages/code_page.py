@@ -151,11 +151,11 @@ class CodePage(
                 if language:
                     self.set_language(language.get_id())
 
+                self.start_kernel()
+                self.set_path(file_path)
+
         except Exception as e:
             print(e)
-        else:
-            self.start_kernel()
-            self.set_path(file_path)
 
     def get_selected_cell_content(self):
         cursor_iter = self.buffer.get_iter_at_mark(

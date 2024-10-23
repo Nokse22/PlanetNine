@@ -408,6 +408,7 @@
       <item>
         <attribute name="label">Change Kernel</attribute>
         <attribute name="action">win.change-kernel</attribute>
+        <attribute name="target"></attribute>
       </item>
     </section>
   </menu>

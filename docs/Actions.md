@@ -20,7 +20,7 @@ run-line
 restart-kernel-visible
 restart-kernel-and-run
 select-cell                 **target**: cell_index
-change-kernel               **target**: page_id
+change-kernel               **target**: page_id or "" for visible page
 
 ### Add cell to visible page
 add-text-cell

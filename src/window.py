@@ -377,7 +377,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     def on_request_kernel_name(self, action, variant):
         page_id, kernel_name = variant.unpack()
-        print(page_id, kernel_name)
         asyncio.create_task(self._on_request_kernel_name(page_id, kernel_name))
 
     async def _on_request_kernel_name(self, page_id, kernel_name):
@@ -392,13 +391,12 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     def on_request_kernel_id(self, action, variant):
         page_id, kernel_id = variant.unpack()
-        print(page_id, kernel_id)
         asyncio.create_task(self._on_request_kernel_id(page_id, kernel_id))
 
     async def _on_request_kernel_id(self, page_id, kernel_id):
         page = self.find_ikernel_page(page_id)
         if page:
-            success, kernel = await self.jupyter_server.start_kernel_by_id(
+            success, kernel = self.jupyter_server.get_kernel_by_id(
                 kernel_id)
 
             if success:
@@ -811,11 +809,15 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 page.move_cursor(int(parts[0]), int(parts[1]))
 
     #
-    #   CHANGE/SELECT KERNEL OF THE VISIBLE PAGE
+    #   CHANGE/SELECT KERNEL OF A PAGE BY ID OR VISIBLE
     #
 
     def on_change_kernel_action(self, action, target):
-        page = self.find_ikernel_page(target.get_string())
+        if target.get_string() == "":
+            page = self.get_visible_page()
+        else:
+            page = self.find_ikernel_page(target.get_string())
+
         if page:
             asyncio.create_task(self._change_kernel(page))
 
@@ -951,9 +953,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     def get_visible_page(self):
         try:
             return self.grid.get_most_recent_frame().get_visible_child()
-
         except Exception as e:
-            logging.Logger.debug(f"{e}")
+            print(e)
+            return None
 
     @Gtk.Template.Callback("on_create_frame")
     def on_create_frame(self, *args):
