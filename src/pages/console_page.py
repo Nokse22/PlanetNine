@@ -47,8 +47,13 @@ class ConsolePage(Panel.Widget, IDisconnectable, IKernel, ICursor):
     send_button = Gtk.Template.Child()
     run_list_box = Gtk.Template.Child()
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        if "kernel_id" in kwargs.keys():
+            print("Kernel ID: ", kwargs["kernel_id"])
+        elif "kernel_name" in kwargs.keys():
+            print("Kernel Name: ", kwargs["kernel_name"])
 
         self.jupyter_kernel = None
 

@@ -241,8 +241,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             'restart-kernel-visible', self.restart_kernel_visible)
         self.restart_kernel_and_run_action = self.create_action(
             'restart-kernel-and-run', self.restart_kernel_and_run)
-        self.change_kernel_action = self.create_action(
-            'change-kernel', self.change_kernel)
+        self.change_kernel_action = self.create_action_with_target(
+            'change-kernel',
+            GLib.VariantType.new("s"),
+            self.change_kernel)
 
         self.create_action_with_target(
             'select-cell',
@@ -278,6 +280,20 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             GLib.VariantType.new("s"),
             self.open_file_with_text)
 
+        #   Action for IKernel pages to request kernel
+
+        self.create_action_with_target(
+            'request-kernel-id',
+            GLib.VariantType.new("(ss)"),
+            self.on_request_kernel_id)
+
+        self.create_action_with_target(
+            'request-kernel-name',
+            GLib.VariantType.new("(ss)"),
+            self.on_request_kernel_name)
+
+        #
+
         self.command_line = CommandLine()
 
         self.previous_page = None
@@ -312,112 +328,98 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def on_new_notebook_action(self, action, variant):
-        asyncio.create_task(
-            self._on_new_notebook_action(variant.get_string()))
-
-    async def _on_new_notebook_action(self, kernel_name):
-        notebook_page = NotebookPage()
-
+        notebook_page = NotebookPage(None, kernel_name=variant.get_string())
         self.grid.add(notebook_page)
-
-        success, kernel = await self.jupyter_server.start_kernel_by_name(
-            kernel_name)
-
-        if success:
-            notebook_page.set_kernel(kernel)
-            self.update_kernel_info(notebook_page)
 
     #
     #   NEW NOTEBOOK PAGE WITH EXISTING KERNEL FROM ID
     #
 
     def on_new_notebook_id_action(self, action, variant):
-        asyncio.create_task(
-            self._on_new_notebook_id_action(variant.get_string()))
-
-    async def _on_new_notebook_id_action(self, kernel_id):
-        notebook_page = NotebookPage()
+        notebook_page = NotebookPage(None, kernel_id=variant.get_string())
         self.grid.add(notebook_page)
-
-        success, kernel = self.jupyter_server.get_kernel_by_id(kernel_id)
-
-        if success:
-            notebook_page.set_kernel(kernel)
-            self.update_kernel_info(notebook_page)
 
     #
     #   NEW CONSOLE PAGE WITH KERNEL NAME
     #
 
     def on_new_console_action(self, action, variant):
-        asyncio.create_task(self._on_new_console_action(variant.get_string()))
-
-    async def _on_new_console_action(self, kernel_name):
-        console_page = ConsolePage()
-
+        console_page = ConsolePage(kernel_name=variant.get_string())
         self.grid.add(console_page)
-
-        success, kernel = await self.jupyter_server.start_kernel_by_name(
-            kernel_name)
-
-        if success:
-            console_page.set_kernel(kernel)
-            self.update_kernel_info(console_page)
 
     #
     #   NEW CONSOLE PAGE WITH EXISTING KERNEL FROM ID
     #
 
     def on_new_console_id_action(self, action, variant):
-        asyncio.create_task(self._on_new_console_action(variant.get_string()))
-
-    async def _on_new_console_id_action(self, kernel_id):
-        console_page = ConsolePage()
-
+        console_page = ConsolePage(kernel_id=variant.get_string())
         self.grid.add(console_page)
-
-        success, kernel = self.jupyter_server.get_kernel_by_id(kernel_id)
-
-        if success:
-            console_page.set_kernel(kernel)
-            self.update_kernel_info(console_page)
 
     #
     #   NEW CODE PAGE WITH KERNEL NAME
     #
 
     def on_new_code_action(self, action, variant):
-        asyncio.create_task(self._on_new_code_action(variant.get_string()))
-
-    async def _on_new_code_action(self, kernel_name):
-        code_page = CodePage()
-
+        code_page = CodePage(None, kernel_name=variant.get_string())
         self.grid.add(code_page)
-
-        success, kernel = await self.jupyter_server.start_kernel_by_name(
-            kernel_name)
-
-        if success:
-            code_page.set_kernel(kernel)
-            self.update_kernel_info(code_page)
 
     #
     #   NEW CODE PAGE WITH EXISTING KERNEL FROM ID
     #
 
     def on_new_code_id_action(self, action, variant):
-        asyncio.create_task(self._on_new_code_id_action(variant.get_string()))
-
-    async def _on_new_code_id_action(self, kernel_id):
-        code_page = CodePage()
-
+        code_page = CodePage(None, kernel_id=variant.get_string())
         self.grid.add(code_page)
 
-        success, kernel = self.jupyter_server.get_kernel_by_id(kernel_id)
+    #
+    #   SET A NEW or EXISTING KERNEL TO A PAGE
+    #
 
-        if success:
-            code_page.set_kernel(kernel)
-            self.update_kernel_info(code_page)
+    def on_request_kernel_name(self, action, variant):
+        page_id, kernel_name = variant.unpack()
+        print(page_id, kernel_name)
+        asyncio.create_task(self._on_request_kernel_name(page_id, kernel_name))
+
+    async def _on_request_kernel_name(self, page_id, kernel_name):
+        page = self.find_ikernel_page(page_id)
+        if page:
+            success, kernel = await self.jupyter_server.start_kernel_by_name(
+                kernel_name)
+
+            if success:
+                page.set_kernel(kernel)
+                self.update_kernel_info(page)
+
+    def on_request_kernel_id(self, action, variant):
+        page_id, kernel_id = variant.unpack()
+        print(page_id, kernel_id)
+        asyncio.create_task(self._on_request_kernel_id(page_id, kernel_id))
+
+    async def _on_request_kernel_id(self, page_id, kernel_id):
+        page = self.find_ikernel_page(page_id)
+        if page:
+            success, kernel = await self.jupyter_server.start_kernel_by_id(
+                kernel_id)
+
+            if success:
+                page.set_kernel(kernel)
+                self.update_kernel_info(page)
+
+    def find_ikernel_page(self, page_id):
+        result = None
+
+        def check_frame(frame):
+            nonlocal result
+            for adw_page in frame.get_pages():
+                page = adw_page.get_child()
+                if isinstance(page, IKernel):
+                    if page.page_id == page_id:
+                        result = page
+                        return
+
+        self.grid.foreach_frame(check_frame)
+
+        return result
 
     #
     #   START SERVER
@@ -627,13 +629,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         if self.raise_page_if_open(file_path):
             return
 
-        # gfile = Gio.File.new_for_path(file_path)
-
-        # file_info = gfile.query_info("standard::content-type", 0, None)
-        # mime_type = file_info.get_content_type()
-
-        # if is_mime_displayable(mime_type):
-
         self.grid.add(TextPage(file_path))
 
     def open_notebook(self, file_path=None):
@@ -803,11 +798,12 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #   CHANGE/SELECT KERNEL OF THE VISIBLE PAGE
     #
 
-    def change_kernel(self, action, target):
-        notebook = self.get_visible_page()
-        asyncio.create_task(self._change_kernel(notebook))
+    def on_change_kernel_action(self, action, target):
+        page = self.find_ikernel_page(target.get_string())
+        if page:
+            asyncio.create_task(self._change_kernel(page))
 
-    async def _change_kernel(self, notebook):
+    async def _change_kernel(self, page):
         self.select_kernel_combo_row.set_selected(0)
         # 2 + len of avalab kernels + pos in kernels
 
@@ -822,13 +818,13 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                     kernel.name)
                 if succ:
                     print("kernel has restarted")
-                    notebook.set_kernel(new_ker)
-                    self.update_kernel_info(notebook)
+                    page.set_kernel(new_ker)
+                    self.update_kernel_info(page)
                 else:
                     print("kernel has NOT restarted")
             elif isinstance(kernel, JupyterKernel):
-                notebook.set_kernel(kernel)
-                self.update_kernel_info(notebook)
+                page.set_kernel(kernel)
+                self.update_kernel_info(page)
                 print("kernel changed")
 
     #

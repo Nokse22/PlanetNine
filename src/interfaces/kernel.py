@@ -18,6 +18,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from gi.repository import GObject
+import random
+import string
 
 
 # The IKernel interface is used for any page that has a kernel associated
@@ -26,6 +28,14 @@ class IKernel:
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         cls.kernel_info_changed = GObject.Signal('kernel-info-changed')
+        cls.page_id = GObject.Property(type=str)
+        cls.kernel_id = GObject.Property(type=str)
+        cls.kernel_name = GObject.Property(type=str)
+
+    def __init__(self, **kwargs):
+        # super().__init__(**kwargs)
+
+        self.page_id = ''.join(random.choices(string.ascii_letters, k=10))
 
     def get_kernel(self):
         raise NotImplementedError

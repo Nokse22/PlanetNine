@@ -53,8 +53,13 @@ class CodePage(
     command_label = Gtk.Template.Child()
     command_bar_label = Gtk.Template.Child()
 
-    def __init__(self, file_path=None):
-        super().__init__()
+    def __init__(self, file_path=None, **kwargs):
+        super().__init__(**kwargs)
+
+        if "kernel_id" in kwargs.keys():
+            print("Kernel ID: ", kwargs["kernel_id"])
+        elif "kernel_name" in kwargs.keys():
+            print("Kernel Name: ", kwargs["kernel_name"])
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 

@@ -19,7 +19,7 @@
 
 from gi.repository import Gtk
 from gi.repository import Gdk
-from gi.repository import Panel
+from gi.repository import Panel, GLib
 
 import os
 import nbformat
@@ -55,8 +55,16 @@ class NotebookPage(
 
     cache_dir = os.environ["XDG_CACHE_HOME"]
 
-    def __init__(self, _file_path=""):
-        super().__init__()
+    def __init__(self, _file_path="", **kwargs):
+        super().__init__(**kwargs)
+        IKernel.__init__(self)
+
+        if "kernel_id" in kwargs.keys():
+            print("Kernel ID: ", kwargs["kernel_id"])
+            self.kernel_id = kwargs["kernel_id"]
+        elif "kernel_name" in kwargs.keys():
+            print("Kernel Name: ", kwargs["kernel_name"])
+            self.kernel_name = kwargs["kernel_name"]
 
         self.bindings = []
 
@@ -109,7 +117,18 @@ class NotebookPage(
         self.set_path(self.get_path())
 
         self.stack.set_visible_child_name("content")
-        self.activate_action("win.change-kernel")
+        if self.kernel_name:
+            self.activate_action(
+                "win.request-kernel-name",
+                GLib.Variant('(ss)', (self.page_id, self.kernel_name)))
+        elif self.kernel_id:
+            self.activate_action(
+                "win.request-kernel-id",
+                GLib.Variant('(ss)', (self.page_id, self.kernel_id)))
+        else:
+            self.activate_action(
+                "win.change-kernel",
+                GLib.Variant('s', self.page_id))
 
         self.set_modified(False)
 
