@@ -55,7 +55,7 @@ class NotebookPage(
 
     cache_dir = os.environ["XDG_CACHE_HOME"]
 
-    def __init__(self, _file_path):
+    def __init__(self, _file_path=""):
         super().__init__()
 
         self.bindings = []
@@ -64,7 +64,7 @@ class NotebookPage(
 
         self.notebook_model = None
 
-        asyncio.create_task(self._open_notebook(_file_path))
+        asyncio.create_task(self._load_file(_file_path))
 
         self.words_provider = WordsCompletionProvider()
         # self.lsp_provider = LSPCompletionProvider()
@@ -83,7 +83,7 @@ class NotebookPage(
 
         self.set_selected_cell_index(0)
 
-    async def _open_notebook(self, file_path):
+    async def _load_file(self, file_path):
         if file_path:
             self.notebook_model = await asyncio.to_thread(
                 Notebook.new_from_file,
@@ -110,6 +110,8 @@ class NotebookPage(
 
         self.stack.set_visible_child_name("content")
         self.activate_action("win.change-kernel")
+
+        self.set_modified(False)
 
     def on_selected_cell_changed(self, *args):
         selected_row = self.cells_list_box.get_selected_row()

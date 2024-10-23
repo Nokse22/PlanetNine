@@ -35,6 +35,7 @@ from ..interfaces.language import ILanguage
 from ..interfaces.cells import ICells
 
 import os
+import asyncio
 
 GObject.type_register(GtkSource.Map)
 GObject.type_register(GtkSource.VimIMContext)
@@ -47,19 +48,19 @@ class CodePage(
     __gtype_name__ = 'CodePage'
 
     source_view = Gtk.Template.Child()
-    code_buffer = Gtk.Template.Child()
+    buffer = Gtk.Template.Child()
     event_controller_key = Gtk.Template.Child()
     command_label = Gtk.Template.Child()
     command_bar_label = Gtk.Template.Child()
 
-    def __init__(self, _path=None):
+    def __init__(self, file_path=None):
         super().__init__()
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
         self.jupyter_kernel = None
 
-        self.path = _path
+        self.path = file_path
 
         # SETUP VIM
 
@@ -97,7 +98,7 @@ class CodePage(
         # ENABLE SPELL CHECK
 
         checker = Spelling.Checker.get_default()
-        adapter = Spelling.TextBufferAdapter.new(self.code_buffer, checker)
+        adapter = Spelling.TextBufferAdapter.new(self.buffer, checker)
         extra_menu = adapter.get_menu_model()
 
         self.source_view.set_extra_menu(extra_menu)
@@ -110,20 +111,9 @@ class CodePage(
         self.save_delegate = GenericSaveDelegate(self)
         self.set_save_delegate(self.save_delegate)
 
-        if self.path:
-            self.save_delegate.set_is_draft(False)
-
         # LOAD File
 
-        if self.path:
-            with open(self.path, 'r') as file:
-                content = file.read()
-
-            self.code_buffer.set_text(content)
-
-            self.set_path(self.path)
-        else:
-            self.set_path(None)
+        asyncio.create_task(self._load_file(file_path))
 
         # VIEW SETTINGS
 
@@ -140,13 +130,34 @@ class CodePage(
             Gio.SettingsBindFlags.DEFAULT
         )
 
-        self.code_buffer.connect("changed", self.on_text_changed)
-        self.code_buffer.connect(
+        self.buffer.connect("changed", self.on_text_changed)
+        self.buffer.connect(
             "notify::cursor-position", self.on_cursor_position_changed)
 
+    async def _load_file(self, file_path):
+        print("Loading: ", file_path)
+        try:
+            file = Gio.File.new_for_path(file_path)
+
+            success, contents, _ = await file.load_contents_async(None)
+
+            if success:
+                text = contents.decode('utf-8')
+                self.buffer.set_text(text)
+
+                language = self.language_manager.guess_language(
+                    file_path, None)
+                if language:
+                    self.set_language(language.get_id())
+
+        except Exception as e:
+            print(e)
+
+        self.set_path(file_path)
+
     def get_selected_cell_content(self):
-        cursor_iter = self.code_buffer.get_iter_at_mark(
-            self.code_buffer.get_insert())
+        cursor_iter = self.buffer.get_iter_at_mark(
+            self.buffer.get_insert())
 
         delimiter = "# %%"
 
@@ -158,7 +169,7 @@ class CodePage(
             match_end.forward_line()
             start_iter = match_end
         else:
-            start_iter = self.code_buffer.get_start_iter()
+            start_iter = self.buffer.get_start_iter()
 
         result = cursor_iter.forward_search(
             delimiter, Gtk.TextSearchFlags.VISIBLE_ONLY, None)
@@ -168,9 +179,9 @@ class CodePage(
             match_start.backward_line()
             end_iter = match_start
         else:
-            end_iter = self.code_buffer.get_end_iter()
+            end_iter = self.buffer.get_end_iter()
 
-        return self.code_buffer.get_text(start_iter, end_iter, False)
+        return self.buffer.get_text(start_iter, end_iter, False)
 
     #
     #
@@ -208,7 +219,7 @@ class CodePage(
 
     def update_style_scheme(self, *args):
         scheme = self.style_manager.get_current_scheme()
-        self.code_buffer.set_style_scheme(scheme)
+        self.buffer.set_style_scheme(scheme)
 
     #
     #   Implement Language Interface
@@ -224,8 +235,8 @@ class CodePage(
 
         # TODO change the language based on the file mimetype
 
-        self.code_buffer.set_language(lang)
-        self.code_buffer.set_highlight_syntax(True)
+        self.buffer.set_language(lang)
+        self.buffer.set_highlight_syntax(True)
 
         self.emit('language-changed')
 
@@ -234,16 +245,16 @@ class CodePage(
     #
 
     def on_cursor_position_changed(self, *args):
-        self.emit("cursor-moved", self.code_buffer, 0)
+        self.emit("cursor-moved", self.buffer, 0)
 
     def get_cursor_position(self):
-        return self.code_buffer, 0
+        return self.buffer, 0
 
     def move_cursor(self, line, column, _index=0):
-        succ, cursor_iter = self.code_buffer.get_iter_at_line_offset(
+        succ, cursor_iter = self.buffer.get_iter_at_line_offset(
             line, column)
         if succ:
-            self.code_buffer.place_cursor(cursor_iter)
+            self.buffer.place_cursor(cursor_iter)
 
     #
     # Implement Kernel Interface
@@ -283,9 +294,9 @@ class CodePage(
             self.save_delegate.set_is_draft(False)
 
     def get_content(self):
-        start = self.code_buffer.get_start_iter()
-        end = self.code_buffer.get_end_iter()
-        return self.code_buffer.get_text(start, end, True)
+        start = self.buffer.get_start_iter()
+        end = self.buffer.get_end_iter()
+        return self.buffer.get_text(start, end, True)
 
     #
     #   Implement Cells Interface
@@ -306,14 +317,14 @@ class CodePage(
 
     # Only for code page
     def run_line(self):
-        start_iter = self.code_buffer.get_iter_at_mark(
-            self.code_buffer.get_insert())
+        start_iter = self.buffer.get_iter_at_mark(
+            self.buffer.get_insert())
 
         start_iter.set_line_offset(0)
         end_iter = start_iter.copy()
         end_iter.forward_to_line_end()
 
-        code_portion = self.code_buffer.get_text(start_iter, end_iter, False)
+        code_portion = self.buffer.get_text(start_iter, end_iter, False)
 
         self.jupyter_kernel.execute(
             code_portion,
@@ -321,9 +332,9 @@ class CodePage(
         )
 
     def add_cell(self, cell_type):
-        self.code_buffer.begin_user_action()
+        self.buffer.begin_user_action()
 
-        bounds = self.code_buffer.get_selection_bounds()
+        bounds = self.buffer.get_selection_bounds()
         start, end = None, None
         if bounds:
             start, end = bounds
@@ -332,24 +343,24 @@ class CodePage(
             start_line = start.get_line()
             end_line = end.get_line()
 
-            succ, iter_start = self.code_buffer.get_iter_at_line(start_line)
-            self.code_buffer.insert(iter_start, "# %%\n")
+            succ, iter_start = self.buffer.get_iter_at_line(start_line)
+            self.buffer.insert(iter_start, "# %%\n")
 
-            succ, iter_end = self.code_buffer.get_iter_at_line(end_line)
+            succ, iter_end = self.buffer.get_iter_at_line(end_line)
             iter_end.forward_to_line_end()
             iter_end.forward_line()
             iter_end.forward_line()
-            self.code_buffer.insert(iter_end, "# %%\n")
+            self.buffer.insert(iter_end, "# %%\n")
         else:
-            cursor = self.code_buffer.get_iter_at_mark(
-                self.code_buffer.get_insert())
+            cursor = self.buffer.get_iter_at_mark(
+                self.buffer.get_insert())
             line = cursor.get_line()
-            succ, iter_line = self.code_buffer.get_iter_at_line(line)
-            self.code_buffer.insert(iter_line, "# %%\n")
+            succ, iter_line = self.buffer.get_iter_at_line(line)
+            self.buffer.insert(iter_line, "# %%\n")
 
-        self.code_buffer.set_modified(True)
+        self.buffer.set_modified(True)
 
-        self.code_buffer.end_user_action()
+        self.buffer.end_user_action()
 
     #
     #   Implement Disconnectable Interface
@@ -357,8 +368,8 @@ class CodePage(
 
     def disconnect(self, *args):
         self.style_manager.disconnect_by_func(self.update_style_scheme)
-        self.code_buffer.disconnect_by_func(self.on_cursor_position_changed)
-        self.code_buffer.disconnect_by_func(self.on_text_changed)
+        self.buffer.disconnect_by_func(self.on_cursor_position_changed)
+        self.buffer.disconnect_by_func(self.on_text_changed)
 
         self.save_delegate.disconnect_all()
 

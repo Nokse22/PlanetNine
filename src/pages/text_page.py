@@ -32,6 +32,7 @@ from ..interfaces.cursor import ICursor
 from ..interfaces.language import ILanguage
 
 import os
+import asyncio
 
 GObject.type_register(GtkSource.Map)
 GObject.type_register(GtkSource.VimIMContext)
@@ -46,7 +47,7 @@ class TextPage(Panel.Widget, ISaveable, IDisconnectable, ICursor, ILanguage):
     source_view = Gtk.Template.Child()
     buffer = Gtk.Template.Child()
 
-    def __init__(self, _path=None):
+    def __init__(self, file_path=""):
         super().__init__()
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
@@ -79,18 +80,9 @@ class TextPage(Panel.Widget, ISaveable, IDisconnectable, ICursor, ILanguage):
         self.save_delegate = GenericSaveDelegate(self)
         self.set_save_delegate(self.save_delegate)
 
-        if not _path:
-            self.save_delegate.set_is_draft(True)
-
         # LOAD File
 
-        if _path:
-            with open(_path, 'r') as file:
-                content = file.read()
-
-            self.buffer.set_text(content)
-
-            self.set_path(_path)
+        asyncio.create_task(self._load_file(file_path))
 
         # CONNECT
 
@@ -98,6 +90,27 @@ class TextPage(Panel.Widget, ISaveable, IDisconnectable, ICursor, ILanguage):
             "changed", self.on_text_changed)
         self.buffer.connect(
             "notify::cursor-position", self.on_cursor_position_changed)
+
+    async def _load_file(self, file_path):
+        print("Loading: ", file_path)
+        try:
+            file = Gio.File.new_for_path(file_path)
+
+            success, contents, _ = await file.load_contents_async(None)
+
+            if success:
+                text = contents.decode('utf-8')
+                self.buffer.set_text(text)
+
+                language = self.language_manager.guess_language(
+                    file_path, None)
+                if language:
+                    self.set_language(language.get_id())
+
+        except Exception as e:
+            print(e)
+
+        self.set_path(file_path)
 
     def set_path(self, _path):
         self.path = _path

@@ -241,6 +241,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             'restart-kernel-visible', self.restart_kernel_visible)
         self.restart_kernel_and_run_action = self.create_action(
             'restart-kernel-and-run', self.restart_kernel_and_run)
+        self.change_kernel_action = self.create_action(
+            'change-kernel', self.change_kernel)
 
         self.create_action_with_target(
             'select-cell',
@@ -252,15 +254,12 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.run_selected_action.set_enabled(False)
         self.restart_kernel_and_run_action.set_enabled(False)
         self.restart_kernel_action.set_enabled(False)
-
-        self.create_action(
-            'start-server', self.start_server)
-        self.change_kernel_action = self.create_action(
-            'change-kernel', self.change_kernel)
-
         self.change_kernel_action.set_enabled(False)
 
         #   OTHER ACTIONS
+
+        self.create_action(
+            'start-server', self.start_server)
 
         self.create_action(
             'open-notebook', self.on_open_notebook_action)
@@ -317,9 +316,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self._on_new_notebook_action(variant.get_string()))
 
     async def _on_new_notebook_action(self, kernel_name):
-        notebook = Notebook()
+        notebook_page = NotebookPage()
 
-        notebook_page = NotebookPage(notebook)
         self.grid.add(notebook_page)
 
         success, kernel = await self.jupyter_server.start_kernel_by_name(
@@ -338,9 +336,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self._on_new_notebook_id_action(variant.get_string()))
 
     async def _on_new_notebook_id_action(self, kernel_id):
-        notebook = Notebook()
-
-        notebook_page = NotebookPage(notebook)
+        notebook_page = NotebookPage()
         self.grid.add(notebook_page)
 
         success, kernel = self.jupyter_server.get_kernel_by_id(kernel_id)
@@ -595,6 +591,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.open_file(file_path)
 
     def open_file(self, file_path):
+        if self.raise_page_if_open(file_path):
+            return
+
         gfile = Gio.File.new_for_path(file_path)
 
         file_info = gfile.query_info("standard::content-type", 0, None)
@@ -606,9 +605,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             case "text/csv":
                 self.grid.add(MatrixPage(file_path))
             case "application/x-ipynb+json":
-                self.grid.add(NotebookPage())
-            case "text/python":
-                self.grid.add(CodePage())
+                self.grid.add(NotebookPage(file_path))
+            case "text/x-python":
+                self.grid.add(CodePage(file_path))
             case mime_type if is_mime_displayable(mime_type):
                 self.grid.add(TextPage(file_path))
             case _:
@@ -628,13 +627,14 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         if self.raise_page_if_open(file_path):
             return
 
-        gfile = Gio.File.new_for_path(file_path)
+        # gfile = Gio.File.new_for_path(file_path)
 
-        file_info = gfile.query_info("standard::content-type", 0, None)
-        mime_type = file_info.get_content_type()
+        # file_info = gfile.query_info("standard::content-type", 0, None)
+        # mime_type = file_info.get_content_type()
 
-        if is_mime_displayable(mime_type):
-            self.grid.add(TextPage(file_path))
+        # if is_mime_displayable(mime_type):
+
+        self.grid.add(TextPage(file_path))
 
     def open_notebook(self, file_path=None):
         self.grid.add(NotebookPage(file_path))
