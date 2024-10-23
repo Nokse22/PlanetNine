@@ -244,7 +244,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.change_kernel_action = self.create_action_with_target(
             'change-kernel',
             GLib.VariantType.new("s"),
-            self.change_kernel)
+            self.on_change_kernel_action)
 
         self.create_action_with_target(
             'select-cell',
@@ -654,6 +654,22 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         return result
 
+    def raise_page(self, rise_page):
+        result = False
+
+        def check_frame(frame):
+            nonlocal result
+            for adw_page in frame.get_pages():
+                page = adw_page.get_child()
+                if page == rise_page:
+                    result = True
+                    frame.set_visible_child(page)
+                    return
+
+        self.grid.foreach_frame(check_frame)
+
+        return result
+
     #
     #   CONNECT STATIC UI TO VISIBLE PAGE PROPERTIES
     #
@@ -806,6 +822,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     async def _change_kernel(self, page):
         self.select_kernel_combo_row.set_selected(0)
         # 2 + len of avalab kernels + pos in kernels
+
+        self.raise_page(page)
 
         choice = await dialog_choose_async(self, self.select_kernel_dialog)
 

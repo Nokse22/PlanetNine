@@ -57,14 +57,7 @@ class NotebookPage(
 
     def __init__(self, _file_path="", **kwargs):
         super().__init__(**kwargs)
-        IKernel.__init__(self)
-
-        if "kernel_id" in kwargs.keys():
-            print("Kernel ID: ", kwargs["kernel_id"])
-            self.kernel_id = kwargs["kernel_id"]
-        elif "kernel_name" in kwargs.keys():
-            print("Kernel Name: ", kwargs["kernel_name"])
-            self.kernel_name = kwargs["kernel_name"]
+        IKernel.__init__(self, **kwargs)
 
         self.bindings = []
 
@@ -117,18 +110,8 @@ class NotebookPage(
         self.set_path(self.get_path())
 
         self.stack.set_visible_child_name("content")
-        if self.kernel_name:
-            self.activate_action(
-                "win.request-kernel-name",
-                GLib.Variant('(ss)', (self.page_id, self.kernel_name)))
-        elif self.kernel_id:
-            self.activate_action(
-                "win.request-kernel-id",
-                GLib.Variant('(ss)', (self.page_id, self.kernel_id)))
-        else:
-            self.activate_action(
-                "win.change-kernel",
-                GLib.Variant('s', self.page_id))
+
+        self.start_kernel()
 
         self.set_modified(False)
 

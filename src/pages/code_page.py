@@ -18,7 +18,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from gi.repository import Gtk, GObject, Adw, Gio
-from gi.repository import Panel, GtkSource
+from gi.repository import Panel, GtkSource, GLib
 from gi.repository import Spelling
 
 from ..others.save_delegate import GenericSaveDelegate
@@ -55,11 +55,7 @@ class CodePage(
 
     def __init__(self, file_path=None, **kwargs):
         super().__init__(**kwargs)
-
-        if "kernel_id" in kwargs.keys():
-            print("Kernel ID: ", kwargs["kernel_id"])
-        elif "kernel_name" in kwargs.keys():
-            print("Kernel Name: ", kwargs["kernel_name"])
+        IKernel.__init__(self, **kwargs)
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
@@ -157,8 +153,9 @@ class CodePage(
 
         except Exception as e:
             print(e)
-
-        self.set_path(file_path)
+        else:
+            self.start_kernel()
+            self.set_path(file_path)
 
     def get_selected_cell_content(self):
         cursor_iter = self.buffer.get_iter_at_mark(

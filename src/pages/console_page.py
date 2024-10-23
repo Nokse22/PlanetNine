@@ -17,10 +17,10 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gtk, GObject, Adw
+from gi.repository import Gtk, GObject, GLib
 from gi.repository import Panel, GtkSource, Spelling
 
-import sys
+import asyncio
 
 from ..widgets.console_cell import ConsoleCell
 from ..models.output import Output, OutputType
@@ -49,11 +49,7 @@ class ConsolePage(Panel.Widget, IDisconnectable, IKernel, ICursor):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
-        if "kernel_id" in kwargs.keys():
-            print("Kernel ID: ", kwargs["kernel_id"])
-        elif "kernel_name" in kwargs.keys():
-            print("Kernel Name: ", kwargs["kernel_name"])
+        IKernel.__init__(self, **kwargs)
 
         self.jupyter_kernel = None
 
@@ -96,6 +92,11 @@ class ConsolePage(Panel.Widget, IDisconnectable, IKernel, ICursor):
 
         completion.add_provider(completion_words)
         # completion.add_provider(LSPCompletionProvider())
+
+        asyncio.create_task(self._start_kernel())
+
+    async def _start_kernel(self):
+        self.start_kernel()
 
     #
     #   Implement Cursor Interface

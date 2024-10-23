@@ -17,7 +17,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import GObject
+from gi.repository import GObject, GLib
 import random
 import string
 
@@ -33,9 +33,28 @@ class IKernel:
         cls.kernel_name = GObject.Property(type=str)
 
     def __init__(self, **kwargs):
-        # super().__init__(**kwargs)
-
         self.page_id = ''.join(random.choices(string.ascii_letters, k=10))
+
+        if "kernel_id" in kwargs.keys():
+            print("Kernel ID: ", kwargs["kernel_id"])
+            self.kernel_id = kwargs["kernel_id"]
+        elif "kernel_name" in kwargs.keys():
+            print("Kernel Name: ", kwargs["kernel_name"])
+            self.kernel_name = kwargs["kernel_name"]
+
+    def start_kernel(self):
+        if self.kernel_name:
+            self.activate_action(
+                "win.request-kernel-name",
+                GLib.Variant('(ss)', (self.page_id, self.kernel_name)))
+        elif self.kernel_id:
+            self.activate_action(
+                "win.request-kernel-id",
+                GLib.Variant('(ss)', (self.page_id, self.kernel_id)))
+        else:
+            self.activate_action(
+                "win.change-kernel",
+                GLib.Variant('s', self.page_id))
 
     def get_kernel(self):
         raise NotImplementedError
