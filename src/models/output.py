@@ -39,6 +39,7 @@ class DataType(IntEnum):
     IMAGE_PNG = 5
     IMAGE_JPEG = 6
     IMAGE_SVG = 7
+    LATEX = 8
 
 
 # This represent a cell output
@@ -55,6 +56,7 @@ class Output(GObject.GObject):
 
     data_type = GObject.Property(type=int, default=0)
     data_content = GObject.Property(type=str, default="")
+    plain_content = GObject.Property(type=str, default=None)
 
     display_id = GObject.Property(type=str, default=None)
 
@@ -131,6 +133,11 @@ class Output(GObject.GObject):
             self.data_content = json_node['data']['image/svg+xml']
             self.data_type = DataType.IMAGE_SVG
 
+        elif 'text/latex' in json_node['data']:
+            self.data_content = json_node['data']['text/latex']
+            self.data_type = DataType.LATEX
+
+        # Needs to be last always
         elif 'text/plain' in json_node['data']:
             self.data_content = json_node['data']['text/plain']
             self.data_type = DataType.TEXT

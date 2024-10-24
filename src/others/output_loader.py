@@ -27,6 +27,8 @@ from ..models.output import OutputType, DataType
 
 from gettext import gettext as _
 
+import matplotlib.pyplot as plt
+
 import hashlib
 import base64
 import os
@@ -95,6 +97,7 @@ class OutputLoader(GObject.GObject):
 
     images_path = os.path.join(cache_dir, "g_images")
     html_path = os.path.join(cache_dir, "g_html")
+    latex_path = os.path.join(cache_dir, "g_latex")
 
     def __init__(self, _output_box):
         super().__init__()
@@ -122,6 +125,8 @@ class OutputLoader(GObject.GObject):
                         self.display_markdown(output)
                     case DataType.JSON:
                         self.display_json(output)
+                    case DataType.LATEX:
+                        self.display_latex(output)
 
             case OutputType.ERROR:
                 self.add_output_text(output.traceback)
@@ -142,9 +147,9 @@ class OutputLoader(GObject.GObject):
             case DataType.HTML:
                 pass  # Can you?
             case DataType.MARKDOWN:
-                pass  # Can you?
+                child.set_text(output.data_content)
             case DataType.JSON:
-                pass  # Can you?
+                child.parse_json_string(output.data_content)
 
     #
     #   OUTPUT TEXT for stream...
@@ -179,13 +184,29 @@ class OutputLoader(GObject.GObject):
         child.parse_json_string(output.data_content)
         self.output_box.append(child)
 
-    async def display_html(self, output, what):
+    def display_latex(self, output):
+        latex_image_path = os.path.join(
+            self.html_path, f"{random.randint(0, 100)}.png")
+
+        fig, ax = plt.subplots(figsize=(1, 1))
+        ax.text(
+            0.5, 0.5, f'${output.data_content}$',
+            fontsize=20, ha='center', va='center')
+        ax.axis('off')
+
+        plt.savefig(
+            latex_image_path, transparent=True,
+            bbox_inches='tight', pad_inches=0)
+
+        self.add_output_image(latex_image_path)
+
+    async def display_html(self, output):
         sha256_hash = random.randint(0, 1000000)
         html_page_path = os.path.join(self.html_path, f"{sha256_hash}.html")
 
         await self.save_file_async(output.data_content, html_page_path)
 
-        match = re.search(r'\.(\w+)(?:\s|\>)', what)
+        match = re.search(r'\.(\w+)(?:\s|\>)', output.plain_content)
         if match:
             html_name = match.group(1)
         else:
@@ -218,7 +239,8 @@ class OutputLoader(GObject.GObject):
 
     def add_output_image(self, image_path):
         pixbuf = GdkPixbuf.Pixbuf.new_from_file(image_path)
-        picture = OutputPicture.new_for_pixbuf(pixbuf)
+        picture = OutputPicture()
+        picture.set_pixbuf(pixbuf)
         if pixbuf.get_width() > 800:
             picture.set_size_request(
                 -1, pixbuf.get_height() * (700 / pixbuf.get_width()))
