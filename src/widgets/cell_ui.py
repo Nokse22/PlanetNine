@@ -30,10 +30,11 @@ from ..others.style_manager import StyleManager
 from ..others.output_loader import OutputLoader
 from ..interfaces.searchable import ISearchable
 from ..interfaces.cursor import ICursor
+from ..interfaces.style_update import IStyleUpdate
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/cell.ui')
-class CellUI(Gtk.Box, ISearchable, ICursor):
+class CellUI(Gtk.Box, ISearchable, ICursor, IStyleUpdate):
     __gtype_name__ = 'CellUI'
 
     __gsignals__ = {
@@ -64,6 +65,7 @@ class CellUI(Gtk.Box, ISearchable, ICursor):
     def __init__(self, cell, **kwargs):
         super().__init__(**kwargs)
         ISearchable.__init__(self, **kwargs)
+        IStyleUpdate.__init__(self, **kwargs)
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
@@ -84,10 +86,6 @@ class CellUI(Gtk.Box, ISearchable, ICursor):
         lang = lm.get_language("python3")
         self.buffer.set_language(lang)
         self.buffer.set_highlight_syntax(True)
-
-        self.style_manager = StyleManager()
-        self.style_manager.connect("style-changed", self.update_style_scheme)
-        self.update_style_scheme()
 
         self.output_loader = OutputLoader(self.output_box)
 
@@ -148,10 +146,6 @@ class CellUI(Gtk.Box, ISearchable, ICursor):
             has_arrow=False,
             halign=1,
         )
-
-    def update_style_scheme(self, *args):
-        scheme = self.style_manager.get_current_scheme()
-        self.buffer.set_style_scheme(scheme)
 
     @GObject.Property(type=str, default="")
     def source(self):

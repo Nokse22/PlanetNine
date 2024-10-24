@@ -1,4 +1,4 @@
-# kernel_terminal_panel.py
+# terminal_panel.py
 #
 # Copyright 2024 Nokse22
 #
@@ -19,14 +19,14 @@
 
 from gi.repository import Gtk, Panel, Gdk, Vte
 
-from ..others.style_manager import StyleManager
+from ..interfaces.style_update import IStyleUpdate
 
 
-class TerminalPanel(Panel.Widget):
+class TerminalPanel(Panel.Widget, IStyleUpdate):
     __gtype_name__ = 'TerminalPanel'
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
         self.set_icon_name("terminal-symbolic")
 
@@ -42,11 +42,7 @@ class TerminalPanel(Panel.Widget):
 
         self.set_child(scrolled_window)
 
-        # Style Manager to update when dark/light
-
-        self.style_manager = StyleManager()
-        self.style_manager.connect("style-changed", self.update_style_scheme)
-        self.update_style_scheme()
+        IStyleUpdate.__init__(self, **kwargs)
 
     def feed(self, feed_string):
         feed_string.replace("\n", "\r\n")

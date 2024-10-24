@@ -18,6 +18,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from gi.repository import GObject, GLib
+from .language import ILanguage
 import random
 import string
 
@@ -55,7 +56,20 @@ class IKernel:
                 GLib.Variant('s', self.page_id))
 
     def get_kernel(self):
-        raise NotImplementedError
+        return self.jupyter_kernel
 
-    def set_kernel(self):
-        raise NotImplementedError
+    def set_kernel(self, jupyter_kernel):
+        if isinstance(self, ILanguage):
+            self.set_language(jupyter_kernel.language)
+
+        if self.jupyter_kernel:
+            self.jupyter_kernel.disconnect_by_func(self.on_kernel_info_changed)
+
+        self.jupyter_kernel = jupyter_kernel
+        self.jupyter_kernel.connect(
+            "status-changed", self.on_kernel_info_changed)
+
+        self.emit("kernel-info-changed")
+
+    def on_kernel_info_changed(self):
+        self.emit("kernel-info-changed")

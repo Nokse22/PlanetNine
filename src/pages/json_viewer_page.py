@@ -30,6 +30,7 @@ from ..interfaces.disconnectable import IDisconnectable
 from ..interfaces.language import ILanguage
 from ..interfaces.saveable import ISaveable
 from ..interfaces.cursor import ICursor
+from ..interfaces.style_update import IStyleUpdate
 
 import os
 
@@ -37,7 +38,8 @@ import os
 @Gtk.Template(
     resource_path='/io/github/nokse22/PlanetNine/gtk/json_viewer_page.ui')
 class JsonViewerPage(
-        Panel.Widget, IDisconnectable, ILanguage, ISaveable, ICursor):
+        Panel.Widget, IDisconnectable, ILanguage, ISaveable, ICursor,
+        IStyleUpdate):
     __gtype_name__ = 'JsonViewerPage'
 
     path = GObject.Property(type=str, default="")
@@ -50,16 +52,14 @@ class JsonViewerPage(
     def __init__(self, _path=None, **kwargs):
         super().__init__(**kwargs)
         ICursor.__init__(self, **kwargs)
+        IStyleUpdate.__init__(self, **kwargs)
+        ISaveable.__init__(self, **kwargs)
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
         # SET THE LANGUAGE and STYLE SCHEME
 
         self.set_language("json")
-
-        self.style_manager = StyleManager()
-        self.style_manager.connect("style-changed", self.update_style_scheme)
-        self.update_style_scheme()
 
         # ENABLE SPELL CHECK
 
@@ -95,14 +95,11 @@ class JsonViewerPage(
         self.is_changed = True
 
         self.buffer.connect("changed", self.on_json_changed)
-        self.buffer.connect(
-            "notify::cursor-position", self.on_cursor_position_changed)
 
         self.stack.connect("notify::visible-child-name", self.on_page_changed)
 
     def on_json_changed(self, *args):
         self.is_changed = True
-        self.set_modified(True)
 
     def on_page_changed(self, *args):
         if self.is_changed:
@@ -115,41 +112,6 @@ class JsonViewerPage(
 
             self.is_changed = False
 
-    def update_style_scheme(self, *args):
-        scheme = self.style_manager.get_current_scheme()
-        self.buffer.set_style_scheme(scheme)
-
-    #
-    #   Implement Language Interface
-    #
-
-    def set_language(self, _language):
-        self.language = _language
-
-        lm = GtkSource.LanguageManager()
-        lang = lm.get_language(self.language)
-        self.buffer.set_language(lang)
-        self.buffer.set_highlight_syntax(True)
-
-        self.emit('language-changed')
-
-    #
-    #   Implement Saveable Page Interface
-    #
-
-    def set_path(self, _path):
-        self.path = _path
-        self.set_title(
-            os.path.basename(self.path) if self.path else "Untitled.json")
-
-    def get_path(self):
-        return self.path
-
-    def get_content(self):
-        start = self.buffer.get_start_iter()
-        end = self.buffer.get_end_iter()
-        return self.buffer.get_text(start, end, True)
-
     #
     #   Implement Disconnectable Interface
     #
@@ -158,6 +120,7 @@ class JsonViewerPage(
         self.style_manager.disconnect_by_func(self.update_style_scheme)
         self.stack.disconnect_by_func(self.on_page_changed)
         self.buffer.disconnect_by_func(self.on_json_changed)
+        self.buffer.disconnect_by_func(self.on_text_changed)
         self.buffer.disconnect_by_func(self.on_cursor_position_changed)
 
         self.save_delegate.disconnect_all()

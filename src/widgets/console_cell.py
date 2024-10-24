@@ -24,46 +24,36 @@ import os
 import sys
 
 from ..others.output_loader import OutputLoader
-from ..others.style_manager import StyleManager
+from ..interfaces.style_update import IStyleUpdate
+from ..interfaces.language import ILanguage
 
 
 @Gtk.Template(
     resource_path='/io/github/nokse22/PlanetNine/gtk/console_cell.ui')
-class ConsoleCell(Gtk.Box):
+class ConsoleCell(Gtk.Box, IStyleUpdate, ILanguage):
     __gtype_name__ = 'ConsoleCell'
 
     source_view = Gtk.Template.Child()
-    code_buffer = Gtk.Template.Child()
+    buffer = Gtk.Template.Child()
     output_scrolled_window = Gtk.Template.Child()
     output_box = Gtk.Template.Child()
 
     cache_dir = os.environ["XDG_CACHE_HOME"]
 
-    def __init__(self, content):
-        super().__init__()
+    def __init__(self, content, **kwargs):
+        super().__init__(**kwargs)
+        IStyleUpdate.__init__(self, **kwargs)
+        ILanguage.__init__(self, **kwargs)
 
-        self.code_buffer.set_text(content)
+        self.buffer.set_text(content)
 
-        self.code_buffer.set_highlight_syntax(True)
+        self.buffer.set_highlight_syntax(True)
 
         self.output_loader = OutputLoader(self.output_box)
-
-        self.style_manager = StyleManager()
-        self.style_manager.connect("style-changed", self.update_style_scheme)
-        self.update_style_scheme()
 
     def add_output(self, output):
         self.output_scrolled_window.set_visible(True)
         self.output_loader.add_output(output)
-
-    def update_style_scheme(self, *args):
-        scheme = self.style_manager.get_current_scheme()
-        self.code_buffer.set_style_scheme(scheme)
-
-    def set_language(self, lang_name):
-        lm = GtkSource.LanguageManager()
-        lang = lm.get_language(lang_name)
-        self.code_buffer.set_language(lang)
 
     def disconnect(self, *args):
         self.style_manager.disconnect_by_func(self.update_style_scheme)

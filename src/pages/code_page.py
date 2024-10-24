@@ -36,7 +36,6 @@ from ..interfaces.cells import ICells
 from ..interfaces.searchable import ISearchable
 from ..interfaces.style_update import IStyleUpdate
 
-import os
 import asyncio
 
 GObject.type_register(GtkSource.Map)
@@ -232,26 +231,6 @@ class CodePage(
         self.emit('language-changed')
 
     #
-    # Implement Kernel Interface
-    #
-
-    def get_kernel(self):
-        return self.jupyter_kernel
-
-    def set_kernel(self, jupyter_kernel):
-        if self.jupyter_kernel:
-            self.jupyter_kernel.disconnect_by_func(self.on_kernel_info_changed)
-
-        self.jupyter_kernel = jupyter_kernel
-        self.jupyter_kernel.connect(
-            "status-changed", self.on_kernel_info_changed)
-
-        self.emit("kernel-info-changed")
-
-    def on_kernel_info_changed(self, *args):
-        self.emit("kernel-info-changed")
-
-    #
     #   Implement Cells Interface
     #
 
@@ -318,17 +297,6 @@ class CodePage(
         self.buffer.set_modified(True)
 
         self.buffer.end_user_action()
-
-    #
-    #   Implement Searchable Interface
-    #
-
-    def search_text(self):
-        start_iter = self.buffer.get_start_iter()
-        self.search_context.forward_async(start_iter)
-
-    def set_search_text(self, text):
-        self.search_settings.set_search_text(text)
 
     #
     #   Implement Disconnectable Interface

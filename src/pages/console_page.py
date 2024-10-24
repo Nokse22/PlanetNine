@@ -24,22 +24,25 @@ import asyncio
 
 from ..widgets.console_cell import ConsoleCell
 from ..models.output import Output, OutputType
-from ..completion_providers.completion_providers import LSPCompletionProvider, WordsCompletionProvider
+from ..completion_providers.completion_providers import LSPCompletionProvider
+from ..completion_providers.completion_providers import WordsCompletionProvider
 
 from ..utils.converters import get_language_highlight_name
-
-from ..others.style_manager import StyleManager
 
 from ..interfaces.disconnectable import IDisconnectable
 from ..interfaces.kernel import IKernel
 from ..interfaces.cursor import ICursor
+from ..interfaces.style_update import IStyleUpdate
+from ..interfaces.language import ILanguage
 
 GObject.type_register(Panel.Widget)
 
 
 @Gtk.Template(
     resource_path='/io/github/nokse22/PlanetNine/gtk/console_page.ui')
-class ConsolePage(Panel.Widget, IDisconnectable, IKernel, ICursor):
+class ConsolePage(
+        Panel.Widget, IDisconnectable, IKernel, ICursor, IStyleUpdate,
+        ILanguage):
     __gtype_name__ = 'ConsolePage'
 
     source_view = Gtk.Template.Child()
@@ -51,6 +54,8 @@ class ConsolePage(Panel.Widget, IDisconnectable, IKernel, ICursor):
         super().__init__(**kwargs)
         IKernel.__init__(self, **kwargs)
         ICursor.__init__(self, **kwargs)
+        IStyleUpdate.__init__(self, **kwargs)
+        ILanguage.__init__(self, **kwargs)
 
         self.jupyter_kernel = None
 
@@ -59,19 +64,9 @@ class ConsolePage(Panel.Widget, IDisconnectable, IKernel, ICursor):
 
         self.send_button.connect("clicked", self.on_send_clicked)
 
-        self.buffer.connect(
-            "notify::cursor-position", self.on_cursor_position_changed)
+        # SET LANGUAGE
 
-        # SET HIGHLIGHT AND LANGUAGE
-
-        lm = GtkSource.LanguageManager()
-        lang = lm.get_language("python3")
-        self.buffer.set_language(lang)
-        self.buffer.set_highlight_syntax(True)
-
-        self.style_manager = StyleManager()
-        self.style_manager.connect("style-changed", self.update_style_scheme)
-        self.update_style_scheme()
+        self.set_language("python3")
 
         # ENABLE SPELL CHECK
 
@@ -100,37 +95,8 @@ class ConsolePage(Panel.Widget, IDisconnectable, IKernel, ICursor):
         self.start_kernel()
 
     #
-    # Implement Kernel Interface
-    #
-
-    def set_kernel(self, jupyter_kernel):
-        lm = GtkSource.LanguageManager()
-        lang_name = get_language_highlight_name(jupyter_kernel.language)
-        lang = lm.get_language(lang_name)
-        self.buffer.set_language(lang)
-
-        if self.jupyter_kernel:
-            self.jupyter_kernel.disconnect_by_func(self.on_kernel_info_changed)
-
-        self.jupyter_kernel = jupyter_kernel
-        self.jupyter_kernel.connect(
-            "status-changed", self.on_kernel_info_changed)
-
-        self.emit("kernel-info-changed")
-
-    def get_kernel(self):
-        return self.jupyter_kernel
-
-    def on_kernel_info_changed(self, *args):
-        self.emit("kernel-info-changed")
-
     #
     #
-    #
-
-    def update_style_scheme(self, *args):
-        scheme = self.style_manager.get_current_scheme()
-        self.buffer.set_style_scheme(scheme)
 
     def on_send_clicked(self, *args):
         self.run_code()
