@@ -36,6 +36,7 @@ class Preferences(Adw.PreferencesDialog):
     notebook_line_number_switch = Gtk.Template.Child()
 
     start_switch = Gtk.Template.Child()
+    shutdown_kernels_switch = Gtk.Template.Child()
 
     grid_view = Gtk.Template.Child()
 
@@ -80,6 +81,9 @@ class Preferences(Adw.PreferencesDialog):
 
         self.settings.bind(
             'start-server-immediately', self.start_switch,
+            'active', Gio.SettingsBindFlags.DEFAULT)
+        self.settings.bind(
+            'auto-shutdown-kernel', self.shutdown_kernels_switch,
             'active', Gio.SettingsBindFlags.DEFAULT)
 
         self.settings.bind(

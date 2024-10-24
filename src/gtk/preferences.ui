@@ -5,14 +5,25 @@
   <template class="Preferences" parent="AdwPreferencesDialog">
     <child>
       <object class="AdwPreferencesPage">
-        <property name="title">App</property>
+        <property name="title" translatable="yes">App</property>
         <property name="icon-name">processor-symbolic</property>
         <child>
           <object class="AdwPreferencesGroup">
-            <property name="title">Server</property>
+            <property name="title" translatable="yes">Server</property>
             <child>
               <object class="AdwSwitchRow" id="start_switch">
-                <property name="title">Start Server when opening the app</property>
+                <property name="title" translatable="yes">Start Server when opening the app</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwPreferencesGroup">
+            <property name="title" translatable="yes">Kernels</property>
+            <child>
+              <object class="AdwSwitchRow" id="shutdown_kernels_switch">
+                <property name="title" translatable="yes">Shutdown Kernels automatically</property>
+                <property name="subtitle" translatable="yes">When a kernel is not used by any page</property>
               </object>
             </child>
           </object>
@@ -21,19 +32,19 @@
     </child>
     <child>
       <object class="AdwPreferencesPage">
-        <property name="title">Notebook</property>
+        <property name="title" translatable="yes">Notebook</property>
         <property name="icon-name">notepad-symbolic</property>
         <child>
           <object class="AdwPreferencesGroup">
-            <property name="title">Code</property>
+            <property name="title" translatable="yes">Code</property>
             <child>
               <object class="AdwSwitchRow" id="notebook_line_number_switch">
-                <property name="title">Show Line Numbers</property>
+                <property name="title" translatable="yes">Show Line Numbers</property>
               </object>
             </child>
             <child>
               <object class="AdwSwitchRow" id="notebook_wrap_switch">
-                <property name="title">Wrap Lines</property>
+                <property name="title" translatable="yes">Wrap Lines</property>
               </object>
             </child>
           </object>
@@ -42,40 +53,40 @@
     </child>
     <child>
       <object class="AdwPreferencesPage">
-        <property name="title">Code</property>
+        <property name="title" translatable="yes">Code</property>
         <property name="icon-name">code-symbolic</property>
         <child>
           <object class="AdwPreferencesGroup">
-            <property name="title">Text</property>
+            <property name="title" translatable="yes">Text</property>
             <child>
               <object class="AdwSwitchRow" id="code_vim_switch">
-                <property name="title">Use Vim Key Bindings</property>
-                <property name="subtitle">Restart any code editor page to take effect</property>
+                <property name="title" translatable="yes">Use Vim Key Bindings</property>
+                <property name="subtitle" translatable="yes">Restart any code editor page to take effect</property>
               </object>
             </child>
             <child>
               <object class="AdwSwitchRow" id="code_line_number_switch">
-                <property name="title">Show Line Numbers</property>
+                <property name="title" translatable="yes">Show Line Numbers</property>
               </object>
             </child>
             <child>
               <object class="AdwSwitchRow" id="code_wrap_switch">
-                <property name="title">Wrap Lines</property>
+                <property name="title" translatable="yes">Wrap Lines</property>
               </object>
             </child>
           </object>
         </child>
         <child>
           <object class="AdwPreferencesGroup">
-            <property name="title">Highlight</property>
+            <property name="title" translatable="yes">Highlight</property>
             <child>
               <object class="AdwSwitchRow" id="code_highligh_brakets_switch">
-                <property name="title">Highlight Matching Brackets</property>
+                <property name="title" translatable="yes">Highlight Matching Brackets</property>
               </object>
             </child>
             <child>
               <object class="AdwSwitchRow" id="code_highlight_row_switch">
-                <property name="title">Highlight Current Row</property>
+                <property name="title" translatable="yes">Highlight Current Row</property>
               </object>
             </child>
           </object>
@@ -84,11 +95,11 @@
     </child>
     <child>
       <object class="AdwPreferencesPage">
-        <property name="title">Theme</property>
+        <property name="title" translatable="yes">Theme</property>
         <property name="icon-name">preferences-desktop-theme-symbolic</property>
         <child>
           <object class="AdwPreferencesGroup">
-            <property name="title">Code View</property>
+            <property name="title" translatable="yes">Code View</property>
             <child>
               <object class="GtkGridView" id="grid_view">
                 <property name="factory">

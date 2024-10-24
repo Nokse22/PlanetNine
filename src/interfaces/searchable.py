@@ -1,4 +1,4 @@
-# cells.py
+# searchable.py
 #
 # Copyright 2024 Nokse22
 #
@@ -16,19 +16,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
+from gi.repository import GtkSource
 
 
-# The ICells interface is used in NotebookPage and CodePage that
-#       can be divided into cells and single cells can be executed
-class ICells:
-    def run_selected_cell(self):
-        raise NotImplementedError
+# The ISearchable interface is used for any page that supports seraching
+#       it's content
+class ISearchable:
+    def __init__(self, **kwargs):
+        self.search_settings = GtkSource.SearchSettings()
+        self.search_context = GtkSource.SearchContext.new(
+            self.buffer, self.search_settings)
 
-    def run_all_cells(self):
-        raise NotImplementedError
+    def search_text(self):
+        start_iter = self.buffer.get_start_iter()
+        self.search_context.forward_async(start_iter)
 
-    def run_selected_and_advance(self):
-        raise NotImplementedError
-
-    def add_cell(self, cell_type):
-        raise NotImplementedError
+    def set_search_text(self, text):
+        self.search_settings.set_search_text(text)

@@ -33,6 +33,8 @@ from ..interfaces.kernel import IKernel
 from ..interfaces.cursor import ICursor
 from ..interfaces.language import ILanguage
 from ..interfaces.cells import ICells
+from ..interfaces.searchable import ISearchable
+from ..interfaces.style_update import IStyleUpdate
 
 import os
 import asyncio
@@ -43,8 +45,8 @@ GObject.type_register(GtkSource.VimIMContext)
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/code_page.ui')
 class CodePage(
-            Panel.Widget, ISaveable, IDisconnectable,
-            ICursor, IKernel, ILanguage, ICells):
+            Panel.Widget, ISaveable, IDisconnectable, IStyleUpdate,
+            ICursor, IKernel, ILanguage, ICells, ISearchable):
     __gtype_name__ = 'CodePage'
 
     source_view = Gtk.Template.Child()
@@ -56,6 +58,10 @@ class CodePage(
     def __init__(self, file_path=None, **kwargs):
         super().__init__(**kwargs)
         IKernel.__init__(self, **kwargs)
+        ISearchable.__init__(self, **kwargs)
+        ICursor.__init__(self, **kwargs)
+        IStyleUpdate.__init__(self, **kwargs)
+        ISaveable.__init__(self, **kwargs)
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
@@ -92,10 +98,6 @@ class CodePage(
 
         self.set_language("python3")
 
-        self.style_manager = StyleManager()
-        self.style_manager.connect("style-changed", self.update_style_scheme)
-        self.update_style_scheme()
-
         # ENABLE SPELL CHECK
 
         checker = Spelling.Checker.get_default()
@@ -106,11 +108,6 @@ class CodePage(
         self.source_view.insert_action_group('spelling', adapter)
 
         adapter.set_enabled(True)
-
-        # ADD SAVE DELEGATE
-
-        self.save_delegate = GenericSaveDelegate(self)
-        self.set_save_delegate(self.save_delegate)
 
         # LOAD File
 
@@ -130,10 +127,6 @@ class CodePage(
             'highlight-current-line',
             Gio.SettingsBindFlags.DEFAULT
         )
-
-        self.buffer.connect("changed", self.on_text_changed)
-        self.buffer.connect(
-            "notify::cursor-position", self.on_cursor_position_changed)
 
     async def _load_file(self, file_path):
         print("Loading: ", file_path)
@@ -219,10 +212,6 @@ class CodePage(
     def on_text_changed(self, *args):
         self.set_modified(True)
 
-    def update_style_scheme(self, *args):
-        scheme = self.style_manager.get_current_scheme()
-        self.buffer.set_style_scheme(scheme)
-
     #
     #   Implement Language Interface
     #
@@ -241,22 +230,6 @@ class CodePage(
         self.buffer.set_highlight_syntax(True)
 
         self.emit('language-changed')
-
-    #
-    #   Implement Cursor Interface
-    #
-
-    def on_cursor_position_changed(self, *args):
-        self.emit("cursor-moved", self.buffer, 0)
-
-    def get_cursor_position(self):
-        return self.buffer, 0
-
-    def move_cursor(self, line, column, _index=0):
-        succ, cursor_iter = self.buffer.get_iter_at_line_offset(
-            line, column)
-        if succ:
-            self.buffer.place_cursor(cursor_iter)
 
     #
     # Implement Kernel Interface
@@ -279,28 +252,6 @@ class CodePage(
         self.emit("kernel-info-changed")
 
     #
-    #   Implement Saveable Page Interface
-    #
-
-    def get_path(self):
-        return self.path
-
-    def set_path(self, _path):
-        self.path = _path
-        self.set_title(
-            os.path.basename(self.path) if self.path else "Untitled")
-        self.save_delegate.set_subtitle(_path)
-        if not _path:
-            self.save_delegate.set_is_draft(True)
-        else:
-            self.save_delegate.set_is_draft(False)
-
-    def get_content(self):
-        start = self.buffer.get_start_iter()
-        end = self.buffer.get_end_iter()
-        return self.buffer.get_text(start, end, True)
-
-    #
     #   Implement Cells Interface
     #
 
@@ -310,6 +261,10 @@ class CodePage(
             code_portion,
             self.run_code_callback
         )
+
+    def run_selected_and_advance(self):
+        self.run_selected_cell()
+        # TODO move the cursor to the start of the next cell
 
     def run_all_cells(self):
         self.jupyter_kernel.execute(
@@ -363,6 +318,17 @@ class CodePage(
         self.buffer.set_modified(True)
 
         self.buffer.end_user_action()
+
+    #
+    #   Implement Searchable Interface
+    #
+
+    def search_text(self):
+        start_iter = self.buffer.get_start_iter()
+        self.search_context.forward_async(start_iter)
+
+    def set_search_text(self, text):
+        self.search_settings.set_search_text(text)
 
     #
     #   Implement Disconnectable Interface

@@ -23,6 +23,7 @@
         <property name="vexpand">true</property>
         <child>
           <object class="AdwToolbarView" id="toolbar_view">
+            <property name="reveal-bottom-bars">false</property>
             <child type="top">
               <object class="AdwHeaderBar" id="header_bar">
                 <property name="centering-policy">loose</property>
@@ -56,8 +57,8 @@
                     </child>
                     <child>
                       <object class="GtkButton">
-                        <property name="icon-name">run-cell-and-proceed-symbolic</property>
-                        <property name="action-name">win.run-cell-and-proceed</property>
+                        <property name="icon-name">run-cell-and-advance-symbolic</property>
+                        <property name="action-name">win.run-cell-and-advance</property>
                       </object>
                     </child>
                     <child>
@@ -106,6 +107,58 @@
                 <signal name="create-frame" handler="on_create_frame"/>
               </object>
             </property>
+            <child type="bottom">
+              <object class="GtkBox">
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkSeparator"/>
+                </child>
+                <child>
+                  <object class="GtkBox">
+                    <property name="halign">center</property>
+                    <property name="spacing">6</property>
+                    <property name="margin-top">6</property>
+                    <property name="margin-bottom">6</property>
+                    <property name="valign">center</property>
+                    <child>
+                      <object class="GtkSearchEntry" id="search_entry">
+                        <signal name="search-changed" handler="on_search_changed"/>
+                        <signal name="next-match" handler="on_search_next_match"/>
+                        <signal name="previous-match" handler="on_search_previous_match"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="icon-name">go-up-symbolic</property>
+                        <signal name="clicked" handler="on_search_previous_match"/>
+                        <style>
+                          <class name="flat"/>
+                        </style>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="icon-name">go-down-symbolic</property>
+                        <signal name="clicked" handler="on_search_next_match"/>
+                        <style>
+                          <class name="flat"/>
+                        </style>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="icon-name">window-close-symbolic</property>
+                        <signal name="clicked" handler="on_search_close_clicked"/>
+                        <style>
+                          <class name="circular"/>
+                          <class name="flat"/>
+                        </style>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
           </object>
         </child>
         <child type="start">

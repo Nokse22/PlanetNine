@@ -65,7 +65,7 @@
                             <property name="wrap-mode">word-char</property>
                             <property name="tab-width">4</property>
                             <property name="buffer">
-                              <object class="GtkSourceBuffer" id="code_buffer">
+                              <object class="GtkSourceBuffer" id="buffer">
                                 <property name="enable-undo">True</property>
                                 <property name="highlight-syntax">True</property>
                                 <property name="highlight-matching-brackets">True</property>

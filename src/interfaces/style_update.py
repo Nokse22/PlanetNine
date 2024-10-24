@@ -1,4 +1,4 @@
-# cells.py
+# cursor.py
 #
 # Copyright 2024 Nokse22
 #
@@ -17,18 +17,15 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from ..others.style_manager import StyleManager
 
-# The ICells interface is used in NotebookPage and CodePage that
-#       can be divided into cells and single cells can be executed
-class ICells:
-    def run_selected_cell(self):
-        raise NotImplementedError
 
-    def run_all_cells(self):
-        raise NotImplementedError
+class IStyleUpdate:
+    def __init__(self, **kwargs):
+        self.style_manager = StyleManager()
+        self.style_manager.connect("style-changed", self.update_style_scheme)
+        self.update_style_scheme()
 
-    def run_selected_and_advance(self):
-        raise NotImplementedError
-
-    def add_cell(self, cell_type):
-        raise NotImplementedError
+    def update_style_scheme(self, *args):
+        scheme = self.style_manager.get_current_scheme()
+        self.buffer.set_style_scheme(scheme)

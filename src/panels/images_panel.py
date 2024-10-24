@@ -23,7 +23,6 @@ from gettext import gettext as _
 
 import os
 import asyncio
-import datetime
 
 
 @Gtk.Template(

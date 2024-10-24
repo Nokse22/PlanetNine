@@ -17,7 +17,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import GObject
+from gi.repository import GObject, GtkSource
 
 
 # The ILanguage interface is used for any page that has a set language to
@@ -28,11 +28,19 @@ class ILanguage:
         cls.language_changed = GObject.Signal('language-changed')
         cls.language = GObject.Property(type=str, default="")
 
+    def __init__(self, **kwargs):
+        self.language = ""
+        self.language_manager = GtkSource.LanguageManager()
+
     def get_language(self):
         return self.language
 
     def set_language(self, _language):
         self.language = _language
+        lang = self.language_manager.get_language(self.language)
+        self.buffer.set_language(lang)
+        self.buffer.set_highlight_syntax(True)
+
         self.emit('language-changed')
 
     def get_is_language_settable(self):

@@ -47,8 +47,9 @@ class JsonViewerPage(
     json_viewer_bin = Gtk.Template.Child()
     stack = Gtk.Template.Child()
 
-    def __init__(self, _path=None):
-        super().__init__()
+    def __init__(self, _path=None, **kwargs):
+        super().__init__(**kwargs)
+        ICursor.__init__(self, **kwargs)
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
@@ -117,22 +118,6 @@ class JsonViewerPage(
     def update_style_scheme(self, *args):
         scheme = self.style_manager.get_current_scheme()
         self.buffer.set_style_scheme(scheme)
-
-    #
-    #   Implement Cursor Interface
-    #
-
-    def on_cursor_position_changed(self, *args):
-        self.emit("cursor-moved", self.buffer, 0)
-
-    def get_cursor_position(self):
-        return self.buffer, 0
-
-    def move_cursor(self, line, column, _index=0):
-        succ, cursor_iter = self.buffer.get_iter_at_line_offset(
-            line, column)
-        if succ:
-            self.buffer.place_cursor(cursor_iter)
 
     #
     #   Implement Language Interface

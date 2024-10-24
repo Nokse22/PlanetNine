@@ -195,6 +195,7 @@ class Output(GObject.GObject):
             DataType.IMAGE_JPEG: "image/jpeg",
             DataType.IMAGE_SVG: "image/svg+xml",
             DataType.TEXT: "text/plain",
+            DataType.LATEX: "text/latex",
         }
 
         return mime_types.get(data_type, "text/plain")

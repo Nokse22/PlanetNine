@@ -43,13 +43,14 @@ class ConsolePage(Panel.Widget, IDisconnectable, IKernel, ICursor):
     __gtype_name__ = 'ConsolePage'
 
     source_view = Gtk.Template.Child()
-    code_buffer = Gtk.Template.Child()
+    buffer = Gtk.Template.Child()
     send_button = Gtk.Template.Child()
     run_list_box = Gtk.Template.Child()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         IKernel.__init__(self, **kwargs)
+        ICursor.__init__(self, **kwargs)
 
         self.jupyter_kernel = None
 
@@ -58,15 +59,15 @@ class ConsolePage(Panel.Widget, IDisconnectable, IKernel, ICursor):
 
         self.send_button.connect("clicked", self.on_send_clicked)
 
-        self.code_buffer.connect(
+        self.buffer.connect(
             "notify::cursor-position", self.on_cursor_position_changed)
 
         # SET HIGHLIGHT AND LANGUAGE
 
         lm = GtkSource.LanguageManager()
         lang = lm.get_language("python3")
-        self.code_buffer.set_language(lang)
-        self.code_buffer.set_highlight_syntax(True)
+        self.buffer.set_language(lang)
+        self.buffer.set_highlight_syntax(True)
 
         self.style_manager = StyleManager()
         self.style_manager.connect("style-changed", self.update_style_scheme)
@@ -75,7 +76,7 @@ class ConsolePage(Panel.Widget, IDisconnectable, IKernel, ICursor):
         # ENABLE SPELL CHECK
 
         checker = Spelling.Checker.get_default()
-        adapter = Spelling.TextBufferAdapter.new(self.code_buffer, checker)
+        adapter = Spelling.TextBufferAdapter.new(self.buffer, checker)
         extra_menu = adapter.get_menu_model()
 
         self.source_view.set_extra_menu(extra_menu)
@@ -88,7 +89,7 @@ class ConsolePage(Panel.Widget, IDisconnectable, IKernel, ICursor):
         completion = self.source_view.get_completion()
 
         completion_words = WordsCompletionProvider()
-        completion_words.register(self.code_buffer)
+        completion_words.register(self.buffer)
 
         completion.add_provider(completion_words)
         # completion.add_provider(LSPCompletionProvider())
@@ -99,22 +100,6 @@ class ConsolePage(Panel.Widget, IDisconnectable, IKernel, ICursor):
         self.start_kernel()
 
     #
-    #   Implement Cursor Interface
-    #
-
-    def on_cursor_position_changed(self, *args):
-        self.emit("cursor-moved", self.code_buffer, 0)
-
-    def get_cursor_position(self):
-        return self.code_buffer, 0
-
-    def move_cursor(self, line, column, _index=0):
-        succ, cursor_iter = self.code_buffer.get_iter_at_line_offset(
-            line, column)
-        if succ:
-            self.code_buffer.place_cursor(cursor_iter)
-
-    #
     # Implement Kernel Interface
     #
 
@@ -122,7 +107,7 @@ class ConsolePage(Panel.Widget, IDisconnectable, IKernel, ICursor):
         lm = GtkSource.LanguageManager()
         lang_name = get_language_highlight_name(jupyter_kernel.language)
         lang = lm.get_language(lang_name)
-        self.code_buffer.set_language(lang)
+        self.buffer.set_language(lang)
 
         if self.jupyter_kernel:
             self.jupyter_kernel.disconnect_by_func(self.on_kernel_info_changed)
@@ -145,7 +130,7 @@ class ConsolePage(Panel.Widget, IDisconnectable, IKernel, ICursor):
 
     def update_style_scheme(self, *args):
         scheme = self.style_manager.get_current_scheme()
-        self.code_buffer.set_style_scheme(scheme)
+        self.buffer.set_style_scheme(scheme)
 
     def on_send_clicked(self, *args):
         self.run_code()
@@ -166,7 +151,7 @@ class ConsolePage(Panel.Widget, IDisconnectable, IKernel, ICursor):
             # pass
         if self.jupyter_kernel:
             cell = self.add_run_cell(content)
-            self.code_buffer.set_text("")
+            self.buffer.set_text("")
             self.jupyter_kernel.execute(
                 content,
                 self.run_code_callback,
@@ -211,14 +196,14 @@ class ConsolePage(Panel.Widget, IDisconnectable, IKernel, ICursor):
         return cell
 
     def get_content(self):
-        start = self.code_buffer.get_start_iter()
-        end = self.code_buffer.get_end_iter()
-        return self.code_buffer.get_text(start, end, True)
+        start = self.buffer.get_start_iter()
+        end = self.buffer.get_end_iter()
+        return self.buffer.get_text(start, end, True)
 
     def disconnect(self, *args):
         self.style_manager.disconnect_by_func(self.update_style_scheme)
         self.send_button.disconnect_by_func(self.on_send_clicked)
-        self.code_buffer.disconnect_by_func(self.on_cursor_position_changed)
+        self.buffer.disconnect_by_func(self.on_cursor_position_changed)
 
         if self.jupyter_kernel:
             self.jupyter_kernel.disconnect_by_func(self.on_kernel_info_changed)

@@ -30,8 +30,18 @@ class ICursor:
             arg_types=([Gtk.TextBuffer, int])
         )
 
-    def move_cursor(self, line, column, index=0):
-        raise NotImplementedError
+    def __init__(self, **kwargs):
+        self.buffer.connect(
+            "notify::cursor-position", self.on_cursor_position_changed)
+
+    def on_cursor_position_changed(self, *args):
+        self.emit("cursor-moved", self.buffer, 0)
 
     def get_cursor_position(self):
-        raise NotImplementedError
+        return self.buffer, 0
+
+    def move_cursor(self, line, column, _index=0):
+        succ, cursor_iter = self.buffer.get_iter_at_line_offset(
+            line, column)
+        if succ:
+            self.buffer.place_cursor(cursor_iter)

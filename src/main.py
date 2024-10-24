@@ -60,6 +60,8 @@ class PlanetnineApplication(Adw.Application):
             'preferences', self.on_preferences_action, ['<primary>comma'])
         self.create_action(
             'run', self.on_run_action)
+        self.create_action(
+            'search', self.on_search_action, ['<primary>f'])
 
         self.create_action(
             'save', self.on_save_action, ['<primary>s'])
@@ -81,13 +83,13 @@ class PlanetnineApplication(Adw.Application):
         self.win.connect("close-request", self.on_shutdown)
 
     def on_run_action(self, *args):
-        self.props.active_window.run_selected_cell()
+        self.win.run_selected_cell()
 
     def on_save_action(self, *args):
-        self.props.active_window.save_viewed()
+        self.win.save_viewed()
 
     def on_save_all_action(self, *args):
-        self.props.active_window.save_viewed()
+        self.win.save_viewed()
 
     def on_about_action(self, *args):
         about = Adw.AboutDialog(
@@ -99,18 +101,21 @@ class PlanetnineApplication(Adw.Application):
             copyright='© 2024 Nokse')
         # Translators: Replace "translator-credits" with your name/username, and optionally an email or URL.
         about.set_translator_credits(_('translator-credits'))
-        about.present(self.props.active_window)
+        about.present(self.win)
 
     def on_preferences_action(self, widget, _):
         print('app.preferences action activated')
 
         if self.preferences:
-            self.preferences.present(self.props.active_window)
+            self.preferences.present(self.win)
             return
 
         self.preferences = Preferences()
 
-        self.preferences.present(self.props.active_window)
+        self.preferences.present(self.win)
+
+    def on_search_action(self, *args):
+        self.win.search_visible_page()
 
     def on_shutdown(self, *args):
         return self.win.close()

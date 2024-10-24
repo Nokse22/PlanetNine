@@ -58,6 +58,7 @@ from .interfaces.saveable import ISaveable
 from .interfaces.disconnectable import IDisconnectable
 from .interfaces.cursor import ICursor
 from .interfaces.language import ILanguage
+from .interfaces.searchable import ISearchable
 
 from .widgets.launcher import Launcher
 from .widgets.chapter_row import ChapterRow
@@ -99,6 +100,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     move_cursor_entry_buffer = Gtk.Template.Child()
     notebook_navigation_menu = Gtk.Template.Child()
     chapters_list_view = Gtk.Template.Child()
+    toolbar_view = Gtk.Template.Child()
+    search_entry = Gtk.Template.Child()
 
     cache_dir = os.environ["XDG_CACHE_HOME"]
     files_cache_dir = os.path.join(cache_dir, "files")
@@ -232,8 +235,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.run_selected_action = self.create_action(
             'run-cell', self.on_run)
-        self.run_cell_and_proceed_action = self.create_action(
-            'run-cell-and-proceed', self.on_run_line)
+        self.run_cell_and_advance_action = self.create_action(
+            'run-cell-and-advance', self.on_run_and_advance)
         self.run_line_action = self.create_action(
             'run-line', self.on_run_line)
         self.restart_kernel_action = self.create_action(
@@ -250,7 +253,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             GLib.VariantType.new("u"),
             self.on_select_cell_action)
 
-        self.run_cell_and_proceed_action.set_enabled(False)
+        self.run_cell_and_advance_action.set_enabled(False)
         self.run_line_action.set_enabled(False)
         self.run_selected_action.set_enabled(False)
         self.restart_kernel_and_run_action.set_enabled(False)
@@ -259,7 +262,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         #   OTHER ACTIONS
 
-        self.create_action(
+        self.start_server_action = self.create_action(
             'start-server', self.start_server)
 
         self.create_action(
@@ -322,6 +325,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         if self.settings.get_boolean("start-server-immediately"):
             self.jupyter_server.start()
             self.change_kernel_action.set_enabled(True)
+            self.start_server_action.set_enabled(False)
 
     #
     #   NEW NOTEBOOK PAGE WITH KERNEL NAME
@@ -426,6 +430,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     def start_server(self, *args):
         self.jupyter_server.start()
         self.change_kernel_action.set_enabled(True)
+        self.start_server_action.set_enabled(False)
 
     #
     #   SHUTDOWN KERNEL BY ID
@@ -733,7 +738,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 self.variables_panel.set_model(kernel.get_variables())
                 self.kernel_terminal.set_kernel(kernel)
 
-                self.run_cell_and_proceed_action.set_enabled(True)
+                self.run_cell_and_advance_action.set_enabled(True)
                 self.run_line_action.set_enabled(True)
                 self.run_selected_action.set_enabled(True)
                 self.restart_kernel_and_run_action.set_enabled(True)
@@ -745,7 +750,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self.variables_panel.set_model(None)
             self.kernel_terminal.set_kernel(None)
 
-            self.run_cell_and_proceed_action.set_enabled(False)
+            self.run_cell_and_advance_action.set_enabled(False)
             self.run_line_action.set_enabled(False)
             self.run_selected_action.set_enabled(False)
             self.restart_kernel_and_run_action.set_enabled(False)
@@ -898,6 +903,42 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         label.set_label(item.display_name)
 
     #
+    #   SEARCH VISIBLE PAGE
+    #
+
+    def search_visible_page(self):
+        page = self.get_visible_page()
+
+        if isinstance(page, ISearchable):
+            self.toolbar_view.set_reveal_bottom_bars(True)
+            page.set_search_text(self.search_entry.get_text())
+            page.search_text()
+
+    @Gtk.Template.Callback("on_search_changed")
+    def on_search_changed(self, *args):
+        print("search changed")
+        page = self.get_visible_page()
+        if isinstance(page, ISearchable):
+            page.set_search_text(self.search_entry.get_text())
+            page.search_text()
+
+    @Gtk.Template.Callback("on_search_next_match")
+    def on_search_next_match(self, *args):
+        pass
+
+    @Gtk.Template.Callback("on_search_previous_match")
+    def on_search_previous_match(self, *args):
+        pass
+
+    @Gtk.Template.Callback("on_search_close_clicked")
+    def on_search_close_clicked(self, *args):
+        self.toolbar_view.set_reveal_bottom_bars(False)
+
+        page = self.get_visible_page()
+        if isinstance(page, ISearchable):
+            page.set_search_text("")
+
+    #
     #   CLOSE
     #
 
@@ -938,6 +979,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         page = self.get_visible_page()
         if isinstance(page, ICells):
             page.run_selected_cell()
+
+    def on_run_and_advance(self, *args):
+        page = self.get_visible_page()
+        if isinstance(page, ICells):
+            page.run_selected_and_advance()
 
     def on_run_line(self, *args):
         page = self.get_visible_page()
@@ -983,7 +1029,12 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             if kernel:
                 kernel_id = kernel.kernel_id
                 if not self.get_page_with_kernel(kernel_id):
-                    asyncio.create_task(self._shutdown_kernel_by_id(kernel_id))
+                    if self.settings.get_boolean("auto-shutdown-kernel"):
+                        asyncio.create_task(
+                            self.jupyter_server.shutdown_kernel(kernel_id))
+                    else:
+                        asyncio.create_task(
+                            self._shutdown_kernel_by_id(kernel_id))
 
     def get_page_with_kernel(self, kernel_id):
         result = None

@@ -28,10 +28,12 @@ import os
 from ..models.cell import Cell, CellType
 from ..others.style_manager import StyleManager
 from ..others.output_loader import OutputLoader
+from ..interfaces.searchable import ISearchable
+from ..interfaces.cursor import ICursor
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/cell.ui')
-class CellUI(Gtk.Box):
+class CellUI(Gtk.Box, ISearchable, ICursor):
     __gtype_name__ = 'CellUI'
 
     __gsignals__ = {
@@ -39,7 +41,7 @@ class CellUI(Gtk.Box):
     }
 
     source_view = Gtk.Template.Child()
-    code_buffer = Gtk.Template.Child()
+    buffer = Gtk.Template.Child()
     output_scrolled_window = Gtk.Template.Child()
     count_label = Gtk.Template.Child()
     markdown_text_view = Gtk.Template.Child()
@@ -59,8 +61,9 @@ class CellUI(Gtk.Box):
     images_path = os.path.join(cache_dir, "g_images")
     html_path = os.path.join(cache_dir, "g_html")
 
-    def __init__(self, cell):
-        super().__init__()
+    def __init__(self, cell, **kwargs):
+        super().__init__(**kwargs)
+        ISearchable.__init__(self, **kwargs)
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
@@ -68,7 +71,7 @@ class CellUI(Gtk.Box):
         self.bindings = []
         self.providers = []
 
-        self.code_buffer.connect("changed", self.on_source_changed)
+        self.buffer.connect("changed", self.on_source_changed)
         self.drag_source.connect("prepare", self.on_drag_source_prepare)
         self.drag_source.connect("drag-begin", self.on_drag_source_begin)
         self.drag_source.connect("drag-end", self.delete_cell)
@@ -79,8 +82,8 @@ class CellUI(Gtk.Box):
 
         lm = GtkSource.LanguageManager()
         lang = lm.get_language("python3")
-        self.code_buffer.set_language(lang)
-        self.code_buffer.set_highlight_syntax(True)
+        self.buffer.set_language(lang)
+        self.buffer.set_highlight_syntax(True)
 
         self.style_manager = StyleManager()
         self.style_manager.connect("style-changed", self.update_style_scheme)
@@ -91,7 +94,7 @@ class CellUI(Gtk.Box):
         # ENABLE SPELL CHECK
 
         checker = Spelling.Checker.get_default()
-        adapter = Spelling.TextBufferAdapter.new(self.code_buffer, checker)
+        adapter = Spelling.TextBufferAdapter.new(self.buffer, checker)
         extra_menu = adapter.get_menu_model()
 
         self.source_view.set_extra_menu(extra_menu)
@@ -106,7 +109,10 @@ class CellUI(Gtk.Box):
         self.cell_type = self.cell.cell_type
         self.set_content(self.cell.source)
         for output in self.cell.outputs:
-            self.add_output(output)
+            try:
+                self.add_output(output)
+            except Exception as e:
+                print(e)
         self.set_execution_count(self.cell.execution_count)
 
         self.action_group = Gio.SimpleActionGroup()
@@ -145,7 +151,7 @@ class CellUI(Gtk.Box):
 
     def update_style_scheme(self, *args):
         scheme = self.style_manager.get_current_scheme()
-        self.code_buffer.set_style_scheme(scheme)
+        self.buffer.set_style_scheme(scheme)
 
     @GObject.Property(type=str, default="")
     def source(self):
@@ -176,7 +182,7 @@ class CellUI(Gtk.Box):
         self.set_content(content)
 
     def add_provider(self, provider):
-        provider.register(self.code_buffer)
+        provider.register(self.buffer)
         self.source_view.get_completion().add_provider(provider)
 
         self.providers.append(provider)
@@ -186,7 +192,7 @@ class CellUI(Gtk.Box):
             self.text_buffer.set_text(value)
 
         elif self._cell_type == CellType.CODE:
-            self.code_buffer.set_text(value)
+            self.buffer.set_text(value)
 
     def get_content(self):
         if self.cell.cell_type == CellType.TEXT:
@@ -195,9 +201,9 @@ class CellUI(Gtk.Box):
             return self.text_buffer.get_text(start, end, True)
 
         elif self.cell.cell_type == CellType.CODE:
-            start = self.code_buffer.get_start_iter()
-            end = self.code_buffer.get_end_iter()
-            return self.code_buffer.get_text(start, end, True)
+            start = self.buffer.get_start_iter()
+            end = self.buffer.get_end_iter()
+            return self.buffer.get_text(start, end, True)
 
     def set_execution_count(self, value):
         self.count_label.set_label(str(value or 0))
@@ -310,7 +316,7 @@ class CellUI(Gtk.Box):
         self.cell.disconnect_by_func(self.on_add_output)
         self.cell.disconnect_by_func(self.on_reset_output)
         self.cell.disconnect_by_func(self.on_executing_changed)
-        self.code_buffer.disconnect_by_func(self.on_source_changed)
+        self.buffer.disconnect_by_func(self.on_source_changed)
         self.drag_source.disconnect_by_func(self.on_drag_source_prepare)
         self.drag_source.disconnect_by_func(self.on_drag_source_begin)
         self.drag_source.disconnect_by_func(self.delete_cell)
@@ -326,7 +332,7 @@ class CellUI(Gtk.Box):
         del self.bindings
 
         for provider in self.providers:
-            provider.unregister(self.code_buffer)
+            provider.unregister(self.buffer)
             self.source_view.get_completion().remove_provider(provider)
 
         print(f"Disconnected:  {self}")

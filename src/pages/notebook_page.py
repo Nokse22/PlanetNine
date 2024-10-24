@@ -39,13 +39,14 @@ from ..interfaces.cursor import ICursor
 from ..interfaces.kernel import IKernel
 from ..interfaces.language import ILanguage
 from ..interfaces.cells import ICells
+from ..interfaces.searchable import ISearchable
 
 
 @Gtk.Template(
     resource_path='/io/github/nokse22/PlanetNine/gtk/notebook_page.ui')
 class NotebookPage(
             Panel.Widget, ISaveable, IDisconnectable,
-            IKernel, ICursor, ILanguage, ICells):
+            IKernel, ICursor, ILanguage, ICells, ISearchable):
     __gtype_name__ = 'NotebookPage'
 
     cells_list_box = Gtk.Template.Child()
@@ -118,7 +119,7 @@ class NotebookPage(
     def on_selected_cell_changed(self, *args):
         selected_row = self.cells_list_box.get_selected_row()
         if selected_row:
-            buffer = selected_row.get_child().code_buffer
+            buffer = selected_row.get_child().buffer
 
             if self.previous_buffer:
                 self.previous_buffer.disconnect_by_func(
@@ -135,7 +136,6 @@ class NotebookPage(
 
     def run_cell(self, cell):
         if cell.cell_type != CellType.CODE:
-            self.select_next_cell()
             return
 
         found, position = self.notebook_model.find(cell)
@@ -348,8 +348,8 @@ class NotebookPage(
         # self.get_kernel().language = _language
         # self.language = _language
         # lang = self.language_manager.get_language(self.language)
-        # self.code_buffer.set_language(lang)
-        # self.code_buffer.set_highlight_syntax(True)
+        # self.buffer.set_language(lang)
+        # self.buffer.set_highlight_syntax(True)
 
         # TODO Need to ask the kernel to change the language if it make sense
         #           or set as fixed
@@ -367,7 +367,7 @@ class NotebookPage(
         row = self.cells_list_box.get_selected_row()
         if row:
             cell_ui = row.get_child()
-            buffer = cell_ui.code_buffer
+            buffer = cell_ui.buffer
             index = self.get_selected_cell_index()
 
             return buffer, index
@@ -377,7 +377,7 @@ class NotebookPage(
         index = index - 1
         if index < self.notebook_model.get_n_items():
             row = self.cells_list_box.get_row_at_index(index)
-            buffer = row.get_child().code_buffer
+            buffer = row.get_child().buffer
 
             succ, cursor_iter = buffer.get_iter_at_line_offset(
                 line, column)
@@ -439,10 +439,28 @@ class NotebookPage(
         cell = self.get_selected_cell()
         self.run_cell(cell)
 
+    def run_selected_and_advance(self):
+        self.run_selected_cell()
+        self.select_next_cell()
+
     def run_all_cells(self):
         for index, cell in enumerate(self.notebook_model):
             if cell.cell_type == CellType.CODE:
                 self.run_cell(cell)
+
+    #
+    #   Implement Searchable Interface
+    #
+
+    def search_text(self):
+        for index in range(0, self.notebook_model.get_n_items()):
+            cell = self.cells_list_box.get_row_at_index(index).get_child()
+            cell.search_text()
+
+    def set_search_text(self, text):
+        for index in range(0, self.notebook_model.get_n_items()):
+            cell = self.cells_list_box.get_row_at_index(index).get_child()
+            cell.set_search_text()
 
     #
     #   Implement Disconnectable Interface

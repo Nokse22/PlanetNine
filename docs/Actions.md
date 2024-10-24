@@ -15,7 +15,7 @@ restart-kernel-id           **target**: kernel_id
 
 ## Action for the visible page
 run-cell
-run-cell-and-proceed
+run-cell-and-advance
 run-line
 restart-kernel-visible
 restart-kernel-and-run

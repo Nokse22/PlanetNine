@@ -27,8 +27,6 @@ from ..models.output import OutputType, DataType
 
 from gettext import gettext as _
 
-import matplotlib.pyplot as plt
-
 import hashlib
 import base64
 import os
@@ -185,12 +183,20 @@ class OutputLoader(GObject.GObject):
         self.output_box.append(child)
 
     def display_latex(self, output):
+        import matplotlib.pyplot as plt
+
         latex_image_path = os.path.join(
             self.html_path, f"{random.randint(0, 100)}.png")
 
+        raw_string = output.data_content
+        if raw_string.startswith('$') and raw_string.endswith('$'):
+            latex_string = f'{raw_string.replace("\\", "\\\\")}'
+        else:
+            latex_string = f'${raw_string}$'
+
         fig, ax = plt.subplots(figsize=(1, 1))
         ax.text(
-            0.5, 0.5, f'${output.data_content}$',
+            0.5, 0.5, latex_string,
             fontsize=20, ha='center', va='center')
         ax.axis('off')
 
@@ -219,8 +225,8 @@ class OutputLoader(GObject.GObject):
 
         self.output_box.append(child)
 
-    async def display_png_image(self, image_content):
-        image_data = base64.b64decode(image_content)
+    async def display_png_image(self, output):
+        image_data = base64.b64decode(output.data_content)
         sha256_hash = hashlib.sha256(image_data).hexdigest()
 
         image_path = os.path.join(self.images_path, f"{sha256_hash}.png")
@@ -228,12 +234,12 @@ class OutputLoader(GObject.GObject):
 
         self.add_output_image(image_path)
 
-    async def display_svg_image(self, svg_string):
-        sha256_hash = await self.compute_hash(svg_string)
+    async def display_svg_image(self, output):
+        sha256_hash = await self.compute_hash(output.data_content)
 
         svg_path = os.path.join(self.images_path, f"{sha256_hash}.svg")
 
-        await self.save_file_async(svg_string, svg_path)
+        await self.save_file_async(output.data_content, svg_path)
 
         self.add_output_image(svg_path)
 
