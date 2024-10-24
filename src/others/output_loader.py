@@ -109,51 +109,46 @@ class OutputLoader(GObject.GObject):
             case OutputType.DISPLAY_DATA | OutputType.EXECUTE_RESULT:
                 match output.data_type:
                     case DataType.TEXT:
-                        self.add_output_text(output.data_content)
+                        self.display_text(output)
                     case DataType.IMAGE_PNG:
                         asyncio.create_task(
-                            self.add_output_png_image(output.data_content))
+                            self.display_png_image(output))
                     case DataType.IMAGE_SVG:
                         asyncio.create_task(
-                            self.add_output_svg_image(output.data_content))
+                            self.display_svg_image(output))
                     case DataType.HTML:
-                        asyncio.create_task(
-                            self.add_output_html(
-                                output.data_content,
-                                output.plain_content))
+                        asyncio.create_task(self.display_html(output))
                     case DataType.MARKDOWN:
-                        self.add_output_markdown(output.data_content)
+                        self.display_markdown(output)
                     case DataType.JSON:
-                        self.add_output_json(output.data_content)
+                        self.display_json(output)
 
             case OutputType.ERROR:
                 self.add_output_text(output.traceback)
 
     def update_output(self, output):
-        print("UPDATING ", output)
+        print("UPDATING ", output, output.display_id)
         child = self.get_output_with_id(output.display_id)
         print(child)
 
         match output.data_type:
             case DataType.TEXT:
-                self.add_output_text(output.data_content)
+                child.reset()
+                child.insert_with_escapes(output.data_content)
             case DataType.IMAGE_PNG:
-                asyncio.create_task(
-                    self.add_output_png_image(output.data_content))
+                pass  # Can you?
             case DataType.IMAGE_SVG:
-                asyncio.create_task(
-                    self.add_output_svg_image(output.data_content))
+                pass  # Can you?
             case DataType.HTML:
-                asyncio.create_task(
-                    self.add_output_html(
-                        output.data_content,
-                        output.plain_content))
+                pass  # Can you?
             case DataType.MARKDOWN:
-                self.add_output_markdown(output.data_content)
+                pass  # Can you?
             case DataType.JSON:
-                self.add_output_json(output.data_content)
+                pass  # Can you?
 
-        # self.output_box.insert_child_after(child, )
+    #
+    #   OUTPUT TEXT for stream...
+    #
 
     def add_output_text(self, text):
         child = self.output_box.get_last_child()
@@ -162,21 +157,33 @@ class OutputLoader(GObject.GObject):
             self.output_box.append(child)
         child.insert_with_escapes(text)
 
-    def add_output_markdown(self, markdown_string):
+    #
+    #   DISPLAY OUTPUTS
+    #
+
+    def display_text(self, output):
+        child = OutputTerminal()
+        child.display_id = output.display_id
+        self.output_box.append(child)
+        child.insert_with_escapes(output.data_content)
+
+    def display_markdown(self, output):
         child = OutputMarkdown()
+        child.display_id = output.display_id
         self.output_box.append(child)
-        child.set_text(markdown_string)
+        child.set_text(output.data_content)
 
-    def add_output_json(self, json):
+    def display_json(self, output):
         child = OutputJSON()
-        child.parse_json_string(json)
+        child.display_id = output.display_id
+        child.parse_json_string(output.data_content)
         self.output_box.append(child)
 
-    async def add_output_html(self, html_string, what):
+    async def display_html(self, output, what):
         sha256_hash = random.randint(0, 1000000)
         html_page_path = os.path.join(self.html_path, f"{sha256_hash}.html")
 
-        await self.save_file_async(html_string, html_page_path)
+        await self.save_file_async(output.data_content, html_page_path)
 
         match = re.search(r'\.(\w+)(?:\s|\>)', what)
         if match:
@@ -187,10 +194,11 @@ class OutputLoader(GObject.GObject):
         child = OutputHTML(
             "file://" + html_page_path,
             "Open {} in Browser".format(html_name))
+        child.display_id = output.display_id
 
         self.output_box.append(child)
 
-    async def add_output_png_image(self, image_content):
+    async def display_png_image(self, image_content):
         image_data = base64.b64decode(image_content)
         sha256_hash = hashlib.sha256(image_data).hexdigest()
 
@@ -199,7 +207,7 @@ class OutputLoader(GObject.GObject):
 
         self.add_output_image(image_path)
 
-    async def add_output_svg_image(self, svg_string):
+    async def display_svg_image(self, svg_string):
         sha256_hash = await self.compute_hash(svg_string)
 
         svg_path = os.path.join(self.images_path, f"{sha256_hash}.svg")
@@ -219,6 +227,10 @@ class OutputLoader(GObject.GObject):
                 -1, pixbuf.get_height())
 
         self.output_box.append(picture)
+
+    #
+    #
+    #
 
     async def save_file_async(self, content: bytes, file_path: str):
         file = Gio.File.new_for_path(file_path)
@@ -243,6 +255,9 @@ class OutputLoader(GObject.GObject):
     def get_output_with_id(self, display_id):
         child = self.output_box.get_last_child()
         while child:
+            print(child.display_id)
             if child.display_id == display_id:
                 return child
             child = child.get_prev_sibling()
+
+        return None

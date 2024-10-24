@@ -28,7 +28,9 @@ class TerminalTextView(Gtk.TextView):
     ESCAPE_SEQUENCE_RE = re.compile(r'\033\[(\d+(;\d+)*)m')
 
     STYLE_MAP = {
-        '0': {'foreground': None, 'background': None, 'weight': Pango.Weight.NORMAL, 'style': Pango.Style.NORMAL, 'underline': Pango.Underline.NONE},  # Reset
+        '0': {'foreground': None, 'background': None,
+              'weight': Pango.Weight.NORMAL, 'style': Pango.Style.NORMAL,
+              'underline': Pango.Underline.NONE},  # Reset
         '1': {'weight': Pango.Weight.BOLD},  # Bold
         '3': {'style': Pango.Style.ITALIC},  # Italic
         '4': {'underline': Pango.Underline.SINGLE},  # Underline
@@ -90,7 +92,8 @@ class TerminalTextView(Gtk.TextView):
         for match in self.ESCAPE_SEQUENCE_RE.finditer(text):
             start, end = match.span()
             if start > last_end:
-                buffer.insert_with_tags(iter, text[last_end:start], *self.get_current_tags(buffer))
+                buffer.insert_with_tags(
+                    iter, text[last_end:start], *self.get_current_tags(buffer))
 
             codes = match.group(1).split(';')
             for code in codes:
@@ -108,26 +111,37 @@ class TerminalTextView(Gtk.TextView):
                 if 'inverse' in style:
                     self.inverse = style['inverse']
                     if self.inverse:
-                        self.current_tags['foreground'], self.current_tags['background'] = (
-                            self.current_tags['background'],
-                            self.current_tags['foreground'],
-                        )
+                        bg = self.current_tags['background']
+                        fg = self.current_tags['foreground']
+                        self.current_tags['background'] = fg
+                        self.current_tags['foreground'] = bg
 
             last_end = end
 
         if last_end < len(text):
-            buffer.insert_with_tags(iter, text[last_end:], *self.get_current_tags(buffer))
+            buffer.insert_with_tags(
+                iter, text[last_end:], *self.get_current_tags(buffer))
+
+    def reset(self):
+        buffer = self.get_buffer()
+        buffer.set_text("")
+        # buffer.remove_all_tags()
 
     def get_current_tags(self, buffer):
         tags = []
         if self.current_tags['foreground']:
-            tags.append(buffer.create_tag(foreground=self.current_tags['foreground']))
+            tags.append(buffer.create_tag(
+                foreground=self.current_tags['foreground']))
         if self.current_tags['background']:
-            tags.append(buffer.create_tag(background=self.current_tags['background']))
+            tags.append(buffer.create_tag(
+                background=self.current_tags['background']))
         if self.current_tags['weight']:
-            tags.append(buffer.create_tag(weight=self.current_tags['weight']))
+            tags.append(buffer.create_tag(
+                weight=self.current_tags['weight']))
         if self.current_tags['style']:
-            tags.append(buffer.create_tag(style=self.current_tags['style']))
+            tags.append(buffer.create_tag(
+                style=self.current_tags['style']))
         if self.current_tags['underline'] is not None:
-            tags.append(buffer.create_tag(underline=self.current_tags['underline']))
+            tags.append(buffer.create_tag(
+                underline=self.current_tags['underline']))
         return tags
