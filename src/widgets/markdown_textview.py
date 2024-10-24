@@ -38,6 +38,8 @@ class MarkdownTextView(Gtk.TextView):
         self.set_wrap_mode(Gtk.WrapMode.WORD)
         self.set_monospace(True)
 
+        self.set_size_request(-1, 18)
+
         self.buffer = self.get_buffer()
 
         self.buffer.create_tag(
