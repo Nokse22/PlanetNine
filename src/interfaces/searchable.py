@@ -25,7 +25,8 @@ class ISearchable:
     def __init__(self, **kwargs):
         self.search_settings = GtkSource.SearchSettings()
         self.search_context = GtkSource.SearchContext.new(
-            self.buffer, self.search_settings)
+            self.buffer, self.search_settings
+        )
 
     def search_text(self):
         start_iter = self.buffer.get_start_iter()

@@ -28,13 +28,13 @@ import string
 class IKernel:
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        cls.kernel_info_changed = GObject.Signal('kernel-info-changed')
+        cls.kernel_info_changed = GObject.Signal("kernel-info-changed")
         cls.page_id = GObject.Property(type=str)
         cls.kernel_id = GObject.Property(type=str)
         cls.kernel_name = GObject.Property(type=str)
 
     def __init__(self, **kwargs):
-        self.page_id = ''.join(random.choices(string.ascii_letters, k=10))
+        self.page_id = "".join(random.choices(string.ascii_letters, k=10))
 
         if "kernel_id" in kwargs.keys():
             self.kernel_id = kwargs["kernel_id"]
@@ -45,15 +45,19 @@ class IKernel:
         if self.kernel_name:
             self.activate_action(
                 "win.request-kernel-name",
-                GLib.Variant('(ss)', (self.page_id, self.kernel_name)))
+                GLib.Variant("(ss)", (self.page_id, self.kernel_name)),
+            )
         elif self.kernel_id:
             self.activate_action(
                 "win.request-kernel-id",
-                GLib.Variant('(ss)', (self.page_id, self.kernel_id)))
+                GLib.Variant("(ss)", (self.page_id, self.kernel_id)),
+            )
         else:
             self.activate_action(
                 "win.change-kernel",
-                GLib.Variant('s', self.page_id))
+                GLib.Variant(
+                    "s",
+                    self.page_id))
 
     def get_kernel(self):
         return self.jupyter_kernel
@@ -67,7 +71,8 @@ class IKernel:
 
         self.jupyter_kernel = jupyter_kernel
         self.jupyter_kernel.connect(
-            "status-changed", self.on_kernel_info_changed)
+            "status-changed",
+            self.on_kernel_info_changed)
 
         self.emit("kernel-info-changed")
 

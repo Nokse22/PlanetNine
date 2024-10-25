@@ -44,8 +44,8 @@ GObject.type_register(GtkSource.VimIMContext)
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/code_page.ui')
 class CodePage(
-            Panel.Widget, ISaveable, IDisconnectable, IStyleUpdate,
-            ICursor, IKernel, ILanguage, ICells, ISearchable):
+        Panel.Widget, ISaveable, IDisconnectable, IStyleUpdate,
+        ICursor, IKernel, ILanguage, ICells, ISearchable):
     __gtype_name__ = 'CodePage'
 
     source_view = Gtk.Template.Child()

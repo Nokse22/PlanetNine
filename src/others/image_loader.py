@@ -22,7 +22,6 @@ from gi.repository import Gtk, Panel, GLib, Gio, Gdk, GObject, GdkPixbuf
 from gettext import gettext as _
 
 import os
-import asyncio
 import base64
 import hashlib
 
@@ -36,10 +35,12 @@ class ImageLoader(GObject.GObject):
         super().__init__()
 
     def load_from_base64(self, mime, image_content):
-        image_data = base64.b64decode(image_content['data']['image/png'])
+        image_data = base64.b64decode(image_content["data"]["image/png"])
         sha256_hash = hashlib.sha256(image_data).hexdigest()
 
         image_path = os.path.join(
-            self.cache_dir, "g_images", f"{sha256_hash}.png")
-        with open(image_path, 'wb') as f:
+            self.cache_dir,
+            "g_images",
+            f"{sha256_hash}.png")
+        with open(image_path, "wb") as f:
             f.write(image_data)

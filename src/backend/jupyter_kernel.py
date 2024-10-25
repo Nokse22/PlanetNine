@@ -119,7 +119,9 @@ class JupyterKernel(GObject.GObject):
         # asyncio.create_task(self.__get_shell_msg())
 
     def __connect(self):
-        connection_file_path = f"{self.data_dir}/jupyter/runtime/kernel-{self.kernel_id}.json"
+        connection_file_path = f"{
+            self.data_dir}/jupyter/runtime/kernel-{
+            self.kernel_id}.json"
 
         print(connection_file_path)
 
@@ -258,7 +260,7 @@ class JupyterKernel(GObject.GObject):
         msg['content']['text'] = empty_pattern.sub('', msg['content']['text'])
 
         whos_pattern = re.compile(
-           r'Variable\s+Type\s+Data\/Info\n[-]+\n((?:\S+ +\S+ +[^\n]+\n?)+)\Z')
+            r'Variable\s+Type\s+Data\/Info\n[-]+\n((?:\S+ +\S+ +[^\n]+\n?)+)\Z')
         whos_match = whos_pattern.search(msg['content']['text'])
         if whos_match:
             variable_pattern = re.compile(r'(\S+ +\S+ +[^\n]+)\n')

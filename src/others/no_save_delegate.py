@@ -18,13 +18,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from gi.repository import Panel, Gtk, GObject, Gio, GLib
-import asyncio
 
 from gettext import gettext as _
 
 
 class NoSaveDelegate(Panel.SaveDelegate):
-    __gtype_name__ = 'NoSaveDelegate'
+    __gtype_name__ = "NoSaveDelegate"
 
     def __init__(self):
         super().__init__()

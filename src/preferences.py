@@ -91,7 +91,8 @@ class Preferences(Adw.PreferencesDialog):
             'selected', Gio.SettingsBindFlags.DEFAULT)
 
         self.style_manager.selected = self.settings.get_int('selected-theme-n')
-        self.selection_model.set_selected(self.settings.get_int('selected-theme-n'))
+        self.selection_model.set_selected(
+            self.settings.get_int('selected-theme-n'))
 
     def on_selected_style_changed(self, *args):
         self.style_manager.selected = self.selection_model.get_selected()

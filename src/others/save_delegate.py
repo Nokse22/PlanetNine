@@ -24,7 +24,7 @@ from gettext import gettext as _
 
 
 class GenericSaveDelegate(Panel.SaveDelegate):
-    __gtype_name__ = 'GenericSaveDelegate'
+    __gtype_name__ = "GenericSaveDelegate"
 
     def __init__(self, page):
         super().__init__()
@@ -32,10 +32,12 @@ class GenericSaveDelegate(Panel.SaveDelegate):
 
         self.page = page
 
+        self.bindings.append(self.bind_property("title", self.page, "title"))
         self.bindings.append(
-            self.bind_property("title", self.page, "title"))
-        self.bindings.append(
-            self.bind_property("icon-name", self.page, "icon-name"))
+            self.bind_property(
+                "icon-name",
+                self.page,
+                "icon-name"))
 
         self.set_title("")
 
@@ -62,21 +64,15 @@ class GenericSaveDelegate(Panel.SaveDelegate):
     def do_save_async(self, cancellable, callback, user_data):
         print("DRAFT: ", self.get_is_draft())
         if self.get_is_draft():
-            asyncio.create_task(
-                self._do_save_async()
-            )
+            asyncio.create_task(self._do_save_async())
         else:
             asyncio.create_task(
                 self._save_content(
                     self.page.get_path(),
-                    self.page.get_content()
-                )
-            )
+                    self.page.get_content()))
 
     async def _do_save_async(self):
-        dialog = Gtk.FileDialog(
-            title=_("Save")
-        )
+        dialog = Gtk.FileDialog(title=_("Save"))
 
         try:
             file = await dialog.save(self.page.get_root())
@@ -106,25 +102,24 @@ class GenericSaveDelegate(Panel.SaveDelegate):
 
         try:
             if isinstance(content, str):
-                content = content.encode('utf-8')
+                content = content.encode("utf-8")
 
             output_stream = await file.replace_async(
                 etag=None,
                 make_backup=True,
                 flags=Gio.FileCreateFlags.NONE,
                 io_priority=GLib.PRIORITY_DEFAULT,
-                cancellable=None
+                cancellable=None,
             )
 
             bytes_written = await output_stream.write_bytes_async(
                 GLib.Bytes.new(content),
                 io_priority=GLib.PRIORITY_DEFAULT,
-                cancellable=None
+                cancellable=None,
             )
 
             await output_stream.close_async(
-                io_priority=GLib.PRIORITY_DEFAULT,
-                cancellable=None
+                io_priority=GLib.PRIORITY_DEFAULT, cancellable=None
             )
 
             print(f"File written successfully: {file_path}")
@@ -135,4 +130,3 @@ class GenericSaveDelegate(Panel.SaveDelegate):
         except Exception as e:
             print(f"Error writing file: {e}")
             return None
-

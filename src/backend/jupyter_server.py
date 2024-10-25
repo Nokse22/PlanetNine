@@ -84,7 +84,7 @@ class JupyterServer(GObject.GObject):
 
     async def __start(self):
         self.jupyter_process = Gio.Subprocess.new(
-            ['jupyter-server'] if self.sandboxed  else ['flatpak-spawn', '--host', 'jupyter-server'],
+            ['jupyter-server'] if self.sandboxed else ['flatpak-spawn', '--host', 'jupyter-server'],
             Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_MERGE
         )
 

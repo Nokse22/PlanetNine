@@ -25,7 +25,7 @@ from gi.repository import GObject, GtkSource
 class ILanguage:
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        cls.language_changed = GObject.Signal('language-changed')
+        cls.language_changed = GObject.Signal("language-changed")
         cls.language = GObject.Property(type=str, default="")
 
     def __init__(self, **kwargs):
@@ -41,7 +41,7 @@ class ILanguage:
         self.buffer.set_language(lang)
         self.buffer.set_highlight_syntax(True)
 
-        self.emit('language-changed')
+        self.emit("language-changed")
 
     def get_is_language_settable(self):
         return False  # By default the language is not settable

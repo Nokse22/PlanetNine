@@ -51,11 +51,13 @@ class LSPCompletionProvider(GObject.Object, GtkSource.CompletionProvider):
                             headers = header.split('\r\n')
                             for h in headers:
                                 if h.startswith('Content-Length: '):
-                                    content_length = int(h.split('Content-Length: ')[1])
+                                    content_length = int(
+                                        h.split('Content-Length: ')[1])
                                     break
                         else:
                             break
-                    if content_length is not None and len(buffer) >= content_length:
+                    if content_length is not None and len(
+                            buffer) >= content_length:
                         message = buffer[:content_length]
                         buffer = buffer[content_length:]
                         content_length = None
@@ -111,7 +113,10 @@ class LSPCompletionProvider(GObject.Object, GtkSource.CompletionProvider):
             print(f"Unexpected format for bounds: {bounds}")
 
         buffer = context.get_buffer()
-        text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), True)
+        text = buffer.get_text(
+            buffer.get_start_iter(),
+            buffer.get_end_iter(),
+            True)
         line = end.get_line()
         character = end.get_line_offset()
 

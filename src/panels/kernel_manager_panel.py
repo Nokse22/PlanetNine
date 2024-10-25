@@ -64,18 +64,22 @@ class KernelManagerPanel(Panel.Widget):
         self.avalaible_kernels_model = _avalaible_kernels_model
         self.running_kernels_model = _running_kernels_model
 
-        self.avalaible_kernels_root = TreeNode("Available Kernels", NodeType.ROOT, [])
-        self.running_kernels_root = TreeNode("Running Kernels", NodeType.ROOT, [])
+        self.avalaible_kernels_root = TreeNode(
+            "Available Kernels", NodeType.ROOT, [])
+        self.running_kernels_root = TreeNode(
+            "Running Kernels", NodeType.ROOT, [])
 
         root_model = Gio.ListStore()
         root_model.append(self.avalaible_kernels_root)
-        tree_list_model = Gtk.TreeListModel.new(root_model, False, True, self.create_avalaible_kernels_sub_model)
+        tree_list_model = Gtk.TreeListModel.new(
+            root_model, False, True, self.create_avalaible_kernels_sub_model)
         selection_model = Gtk.NoSelection(model=tree_list_model)
         self.avalaible_kernels_list_view.set_model(selection_model)
 
         root_model = Gio.ListStore()
         root_model.append(self.running_kernels_root)
-        tree_list_model = Gtk.TreeListModel.new(root_model, False, True, self.create_running_kernels_sub_model)
+        tree_list_model = Gtk.TreeListModel.new(
+            root_model, False, True, self.create_running_kernels_sub_model)
         selection_model = Gtk.NoSelection(model=tree_list_model)
         self.running_kernels_list_view.set_model(selection_model)
 
@@ -91,7 +95,11 @@ class KernelManagerPanel(Panel.Widget):
             return self.running_kernels_model
 
         elif isinstance(item, Session):
-            return Gtk.TreeListModel.new(item.notebook_store, False, True, self.create_running_kernels_sub_model)
+            return Gtk.TreeListModel.new(
+                item.notebook_store,
+                False,
+                True,
+                self.create_running_kernels_sub_model)
 
         elif isinstance(item, Notebook):
             return None
@@ -121,17 +129,20 @@ class KernelManagerPanel(Panel.Widget):
 
             menu_item = Gio.MenuItem()
             menu_item.set_label("New Notebook from Kernel")
-            menu_item.set_action_and_target_value("win.new-notebook-name", GLib.Variant("s", item.name))
+            menu_item.set_action_and_target_value(
+                "win.new-notebook-name", GLib.Variant("s", item.name))
             menu_model.append_item(menu_item)
 
             menu_item = Gio.MenuItem()
             menu_item.set_label("New Console from Kernel")
-            menu_item.set_action_and_target_value("win.new-console-name", GLib.Variant("s", item.name))
+            menu_item.set_action_and_target_value(
+                "win.new-console-name", GLib.Variant("s", item.name))
             menu_model.append_item(menu_item)
 
             menu_item = Gio.MenuItem()
             menu_item.set_label("New Code from Kernel")
-            menu_item.set_action_and_target_value("win.new-code-name", GLib.Variant("s", item.name))
+            menu_item.set_action_and_target_value(
+                "win.new-code-name", GLib.Variant("s", item.name))
             menu_model.append_item(menu_item)
 
             widget.set_menu_model(menu_model)
@@ -143,22 +154,26 @@ class KernelManagerPanel(Panel.Widget):
             menu_model = Gio.Menu()
             menu_item = Gio.MenuItem()
             menu_item.set_label("New Notebook from Kernel")
-            menu_item.set_action_and_target_value("win.new-notebook-id", GLib.Variant("s", item.kernel_id))
+            menu_item.set_action_and_target_value(
+                "win.new-notebook-id", GLib.Variant("s", item.kernel_id))
             menu_model.append_item(menu_item)
 
             menu_item = Gio.MenuItem()
             menu_item.set_label("New Console from Kernel")
-            menu_item.set_action_and_target_value("win.new-console-id", GLib.Variant("s", item.kernel_id))
+            menu_item.set_action_and_target_value(
+                "win.new-console-id", GLib.Variant("s", item.kernel_id))
             menu_model.append_item(menu_item)
 
             menu_item = Gio.MenuItem()
             menu_item.set_label("Restart")
-            menu_item.set_action_and_target_value("win.restart-kernel-id", GLib.Variant("s", item.kernel_id))
+            menu_item.set_action_and_target_value(
+                "win.restart-kernel-id", GLib.Variant("s", item.kernel_id))
             menu_model.append_item(menu_item)
 
             menu_item = Gio.MenuItem()
             menu_item.set_label("Shutdown")
-            menu_item.set_action_and_target_value("win.shutdown-kernel-id", GLib.Variant("s", item.kernel_id))
+            menu_item.set_action_and_target_value(
+                "win.shutdown-kernel-id", GLib.Variant("s", item.kernel_id))
             menu_model.append_item(menu_item)
 
             widget.set_menu_model(menu_model)

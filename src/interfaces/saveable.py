@@ -39,8 +39,8 @@ class ISaveable:
 
     def set_path(self, _path):
         self.path = _path
-        self.set_title(
-            os.path.basename(self.path) if self.path else "Untitled")
+        self.set_title(os.path.basename(self.path)
+                       if self.path else "Untitled")
         self.save_delegate.set_subtitle(_path)
         if not _path:
             self.save_delegate.set_is_draft(True)

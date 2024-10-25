@@ -45,13 +45,15 @@ class Palette(GObject.GObject):
         self.name = palette.attrib
         self.display_name = palette.attrib
 
-        self.dark_source_name = palette.find('source').get('dark')
-        self.light_source_name = palette.find('source').get('light')
+        self.dark_source_name = palette.find("source").get("dark")
+        self.light_source_name = palette.find("source").get("light")
 
-        color_file = palette.find('colors').get('name')
-        palettes_data = Gio.resources_lookup_data(
-            f"/io/github/nokse22/PlanetNine/styles/palettes/{color_file}.palette",
-            Gio.ResourceLookupFlags.NONE).get_data().decode('utf-8')
+        color_file = palette.find("colors").get("name")
+        palettes_data = (
+            Gio.resources_lookup_data(
+                f"/io/github/nokse22/PlanetNine/styles/palettes/{color_file}.palette",
+                Gio.ResourceLookupFlags.NONE,
+            ) .get_data() .decode("utf-8"))
 
         self.config_parser.read_string(palettes_data)
 
@@ -59,7 +61,8 @@ class Palette(GObject.GObject):
         self.dark_palette = {}
 
         self.use_system_accent = self.config_parser.getboolean(
-            "Palette", "UseSystemAccent", fallback=False)
+            "Palette", "UseSystemAccent", fallback=False
+        )
 
         if self.config_parser.has_section("Light"):
             self.light_palette = self._load_palette("Light")
@@ -73,9 +76,11 @@ class Palette(GObject.GObject):
             palette[key] = value
 
         palette["titlebarbackground"] = palette.get(
-            "titlebarbackground", palette.get("Background"))
+            "titlebarbackground", palette.get("Background")
+        )
         palette["titlebarforeground"] = palette.get(
-            "titlebarforeground", palette.get("Foreground"))
+            "titlebarforeground", palette.get("Foreground")
+        )
 
         return palette
 
@@ -84,7 +89,7 @@ class StyleManager(GObject.GObject):
     __gtype_name__ = "StyleManager"
 
     __gsignals__ = {
-        'style-changed': (GObject.SignalFlags.RUN_FIRST, None, ()),
+        "style-changed": (GObject.SignalFlags.RUN_FIRST, None, ()),
     }
 
     _instance = None
@@ -109,11 +114,17 @@ class StyleManager(GObject.GObject):
 
         self.style_scheme_manager = GtkSource.StyleSchemeManager()
         self.style_scheme_manager.append_search_path(
-            "resource:///io/github/nokse22/PlanetNine/styles/schemes/")
+            "resource:///io/github/nokse22/PlanetNine/styles/schemes/"
+        )
 
-        palettes_data = Gio.resources_lookup_data(
-            "/io/github/nokse22/PlanetNine/styles/palettes.xml",
-            Gio.ResourceLookupFlags.NONE).get_data().decode('utf-8')
+        palettes_data = (
+            Gio.resources_lookup_data(
+                "/io/github/nokse22/PlanetNine/styles/palettes.xml",
+                Gio.ResourceLookupFlags.NONE,
+            )
+            .get_data()
+            .decode("utf-8")
+        )
 
         palettes = ET.fromstring(palettes_data)
 
@@ -170,8 +181,7 @@ class StyleManager(GObject.GObject):
 
     def update_style_scheme(self, *args):
         Gtk.StyleContext.remove_provider_for_display(
-            Gdk.Display.get_default(),
-            self.css_provider
+            Gdk.Display.get_default(), self.css_provider
         )
 
         if "Adwaita" in self.palette.name:
@@ -184,7 +194,8 @@ class StyleManager(GObject.GObject):
         titlebar_fg = colors["titlebarforeground"]
         titlebar_bg = colors["titlebarbackground"]
 
-        self.css_provider.load_from_string(f"""
+        self.css_provider.load_from_string(
+            f"""
         :root {{
             --primary-bg-color: {primary};
             --primary-fg-color: {secondary};
@@ -211,10 +222,11 @@ class StyleManager(GObject.GObject):
             --card-bg-color: {'alpha(white, .08)' if self.get_dark() else 'alpha(white, .8)'};
             --card-fg-color: var(--window-fg-color);
         }}
-        """)
+        """
+        )
 
         Gtk.StyleContext.add_provider_for_display(
             Gdk.Display.get_default(),
             self.css_provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
         )

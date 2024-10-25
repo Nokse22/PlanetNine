@@ -26,13 +26,13 @@ class ICursor:
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         cls.cursor_moved = GObject.Signal(
-            'cursor-moved',
-            arg_types=([Gtk.TextBuffer, int])
+            "cursor-moved", arg_types=([Gtk.TextBuffer, int])
         )
 
     def __init__(self, **kwargs):
         self.buffer.connect(
-            "notify::cursor-position", self.on_cursor_position_changed)
+            "notify::cursor-position",
+            self.on_cursor_position_changed)
 
     def on_cursor_position_changed(self, *args):
         self.emit("cursor-moved", self.buffer, 0)
@@ -41,7 +41,6 @@ class ICursor:
         return self.buffer, 0
 
     def move_cursor(self, line, column, _index=0):
-        succ, cursor_iter = self.buffer.get_iter_at_line_offset(
-            line, column)
+        succ, cursor_iter = self.buffer.get_iter_at_line_offset(line, column)
         if succ:
             self.buffer.place_cursor(cursor_iter)

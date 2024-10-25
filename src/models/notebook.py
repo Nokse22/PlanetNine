@@ -66,7 +66,8 @@ class Notebook(Gio.ListStore):
     def set_path(self, _path):
         print("SETTING PATH: ", _path)
         self.path = _path
-        self.title = os.path.basename(self.path) if self.path else "Notebook.ipynb"
+        self.title = os.path.basename(
+            self.path) if self.path else "Notebook.ipynb"
 
     def get_path(self):
         return self.path

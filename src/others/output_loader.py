@@ -21,7 +21,7 @@ from gi.repository import GObject, Gtk, GLib, GdkPixbuf, Gio
 
 from ..widgets.json_viewer import JsonViewer
 from ..widgets.terminal_textview import TerminalTextView
-from ..widgets. markdown_textview import MarkdownTextView
+from ..widgets.markdown_textview import MarkdownTextView
 
 from ..models.output import OutputType, DataType
 
@@ -76,12 +76,10 @@ class OutputHTML(Gtk.Button):
         super().__init__()
         self.add_css_class("html-button")
         self.set_action_name("win.new-browser-page")
-        self.set_action_target_value(GLib.Variant('s', _link))
+        self.set_action_target_value(GLib.Variant("s", _link))
         box = Gtk.Box(
-            spacing=12,
-            margin_top=6,
-            margin_bottom=6,
-            halign=Gtk.Align.CENTER)
+            spacing=12, margin_top=6, margin_bottom=6, halign=Gtk.Align.CENTER
+        )
         box.append(Gtk.Image(icon_name="earth-symbolic"))
         box.append(Gtk.Label(label=_label))
         box.append(Gtk.Image(icon_name="right-symbolic"))
@@ -112,11 +110,9 @@ class OutputLoader(GObject.GObject):
                     case DataType.TEXT:
                         self.display_text(output)
                     case DataType.IMAGE_PNG:
-                        asyncio.create_task(
-                            self.display_png_image(output))
+                        asyncio.create_task(self.display_png_image(output))
                     case DataType.IMAGE_SVG:
-                        asyncio.create_task(
-                            self.display_svg_image(output))
+                        asyncio.create_task(self.display_svg_image(output))
                     case DataType.HTML:
                         asyncio.create_task(self.display_html(output))
                     case DataType.MARKDOWN:
@@ -186,23 +182,25 @@ class OutputLoader(GObject.GObject):
         import matplotlib.pyplot as plt
 
         latex_image_path = os.path.join(
-            self.html_path, f"{random.randint(0, 100)}.png")
+            self.html_path, f"{
+                random.randint(
+                    0, 100)}.png")
 
         raw_string = output.data_content
-        if raw_string.startswith('$') and raw_string.endswith('$'):
+        if raw_string.startswith("$") and raw_string.endswith("$"):
             latex_string = f'{raw_string.replace("\\", "\\\\")}'
         else:
-            latex_string = f'${raw_string}$'
+            latex_string = f"${raw_string}$"
 
         fig, ax = plt.subplots(figsize=(1, 1))
-        ax.text(
-            0.5, 0.5, latex_string,
-            fontsize=20, ha='center', va='center')
-        ax.axis('off')
+        ax.text(0.5, 0.5, latex_string, fontsize=20, ha="center", va="center")
+        ax.axis("off")
 
         plt.savefig(
-            latex_image_path, transparent=True,
-            bbox_inches='tight', pad_inches=0)
+            latex_image_path,
+            transparent=True,
+            bbox_inches="tight",
+            pad_inches=0)
 
         self.add_output_image(latex_image_path)
 
@@ -212,15 +210,15 @@ class OutputLoader(GObject.GObject):
 
         await self.save_file_async(output.data_content, html_page_path)
 
-        match = re.search(r'\.(\w+)(?:\s|\>)', output.plain_content)
+        match = re.search(r"\.(\w+)(?:\s|\>)", output.plain_content)
         if match:
             html_name = match.group(1)
         else:
             html_name = _("HTML")
 
         child = OutputHTML(
-            "file://" + html_page_path,
-            "Open {} in Browser".format(html_name))
+            "file://" + html_page_path, "Open {} in Browser".format(html_name)
+        )
         child.display_id = output.display_id
 
         self.output_box.append(child)
@@ -249,10 +247,10 @@ class OutputLoader(GObject.GObject):
         picture.set_pixbuf(pixbuf)
         if pixbuf.get_width() > 800:
             picture.set_size_request(
-                -1, pixbuf.get_height() * (700 / pixbuf.get_width()))
+                -1, pixbuf.get_height() * (700 / pixbuf.get_width())
+            )
         else:
-            picture.set_size_request(
-                -1, pixbuf.get_height())
+            picture.set_size_request(-1, pixbuf.get_height())
 
         self.output_box.append(picture)
 
@@ -266,19 +264,16 @@ class OutputLoader(GObject.GObject):
             None, False, Gio.FileCreateFlags.NONE, GLib.PRIORITY_DEFAULT, None
         )
         if isinstance(content, str):
-            content = content.encode('utf-8')
+            content = content.encode("utf-8")
         await output_stream.write_bytes_async(
-            GLib.Bytes.new(content),
-            io_priority=GLib.PRIORITY_DEFAULT,
-            cancellable=None
+            GLib.Bytes.new(content), io_priority=GLib.PRIORITY_DEFAULT, cancellable=None
         )
         await output_stream.close_async(
-            io_priority=GLib.PRIORITY_DEFAULT,
-            cancellable=None
+            io_priority=GLib.PRIORITY_DEFAULT, cancellable=None
         )
 
     async def compute_hash(self, content: str) -> str:
-        return hashlib.sha256(content.encode('utf-8')).hexdigest()
+        return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
     def get_output_with_id(self, display_id):
         child = self.output_box.get_last_child()

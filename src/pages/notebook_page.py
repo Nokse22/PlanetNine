@@ -45,8 +45,8 @@ from ..interfaces.searchable import ISearchable
 @Gtk.Template(
     resource_path='/io/github/nokse22/PlanetNine/gtk/notebook_page.ui')
 class NotebookPage(
-            Panel.Widget, ISaveable, IDisconnectable,
-            IKernel, ICursor, ILanguage, ICells, ISearchable):
+        Panel.Widget, ISaveable, IDisconnectable,
+        IKernel, ICursor, ILanguage, ICells, ISearchable):
     __gtype_name__ = 'NotebookPage'
 
     cells_list_box = Gtk.Template.Child()
@@ -324,7 +324,8 @@ class NotebookPage(
         elif relative_y > visible_height - margin:
             delta = (relative_y - (visible_height - margin)) / margin * 20
             new_value = min(
-              current_scroll_position + delta, content_height - visible_height)
+                current_scroll_position + delta,
+                content_height - visible_height)
             vadjustment.set_value(new_value)
 
         return Gdk.DragAction.MOVE
