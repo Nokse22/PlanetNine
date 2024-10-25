@@ -3,7 +3,6 @@
 <style-scheme id="vs-code-dark" name="VS Code Dark" version="1.0">
 
   <color name="Foreground" value="#cccccc"/>
-  <color name="Background" value="#1e1e1e"/>
   <color name="Cursor" value="#cccccc"/>
   <color name="Gutter" value="#494949"/>
   <color name="CurrentLine" value="#262626"/>
@@ -23,6 +22,7 @@
   <color name="Color13" value="#ff578f"/>
   <color name="Color14" value="#5fffff"/>
   <color name="Color15" value="#d9fbff"/>
+  <color name="Background" value="#181818" />
 
   <style name="text" background="Background" foreground="Foreground"/>
   <style name="cursor" foreground="Cursor"/>

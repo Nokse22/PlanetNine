@@ -3,7 +3,6 @@
 <style-scheme id="dracula-light" name="Dracula Light" version="1.0">
 
   <color name="Foreground" value="#282a36"/>
-  <color name="Background" value="#ffffff"/>
   <color name="Cursor" value="#282a36"/>
   <color name="Gutter" value="#c9c9cc"/>
   <color name="CurrentLine" value="#f4f4f4"/>
@@ -23,6 +22,7 @@
   <color name="Color13" value="#962f7c"/>
   <color name="Color14" value="#006465"/>
   <color name="Color15" value="#595959"/>
+  <color name="Background" value="#ffffff" />
 
   <style name="text" background="Background" foreground="Foreground"/>
   <style name="cursor" foreground="Cursor"/>

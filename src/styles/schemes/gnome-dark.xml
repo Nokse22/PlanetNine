@@ -3,7 +3,6 @@
 <style-scheme id="gnome-dark" name="GNOME Dark" version="1.0">
 
   <color name="Foreground" value="#c0bfbc"/>
-  <color name="Background" value="#1e1e1e"/>
   <color name="Cursor" value="#c0bfbc"/>
   <color name="Gutter" value="#464645"/>
   <color name="CurrentLine" value="#262625"/>
@@ -23,6 +22,7 @@
   <color name="Color13" value="#c061cb"/>
   <color name="Color14" value="#33c7de"/>
   <color name="Color15" value="#ffffff"/>
+  <color name="Background" value="#181818" />
 
   <style name="text" background="Background" foreground="Foreground"/>
   <style name="cursor" foreground="Cursor"/>

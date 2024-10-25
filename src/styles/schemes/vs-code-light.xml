@@ -3,7 +3,6 @@
 <style-scheme id="vs-code-light" name="VS Code Light" version="1.0">
 
   <color name="Foreground" value="#020202"/>
-  <color name="Background" value="#f9f9f9"/>
   <color name="Cursor" value="#020202"/>
   <color name="Gutter" value="#bbbbbb"/>
   <color name="CurrentLine" value="#ececec"/>
@@ -23,6 +22,7 @@
   <color name="Color13" value="#c451ce"/>
   <color name="Color14" value="#52a8c7"/>
   <color name="Color15" value="#a6a3a6"/>
+  <color name="Background" value="#ffffff" />
 
   <style name="text" background="Background" foreground="Foreground"/>
   <style name="cursor" foreground="Cursor"/>

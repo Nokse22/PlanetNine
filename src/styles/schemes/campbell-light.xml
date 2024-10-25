@@ -3,7 +3,6 @@
 <style-scheme id="campbell-light" name="Campbell Light" version="1.0">
 
   <color name="Foreground" value="#777777"/>
-  <color name="Background" value="#f3f3f3"/>
   <color name="Cursor" value="#777777"/>
   <color name="Gutter" value="#d4d4d4"/>
   <color name="CurrentLine" value="#ececec"/>
@@ -23,6 +22,7 @@
   <color name="Color13" value="#b4009e"/>
   <color name="Color14" value="#61d6d6"/>
   <color name="Color15" value="#0d0d0d"/>
+  <color name="Background" value="#ffffff" />
 
   <style name="text" background="Background" foreground="Foreground"/>
   <style name="cursor" foreground="Cursor"/>

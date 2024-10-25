@@ -3,7 +3,6 @@
 <style-scheme id="catppuccin-light" name="Catppuccin Light" version="1.0">
 
   <color name="Foreground" value="#4c4f69"/>
-  <color name="Background" value="#eff1f5"/>
   <color name="Cursor" value="#4c4f69"/>
   <color name="Gutter" value="#c6c8d2"/>
   <color name="CurrentLine" value="#e6e8ee"/>
@@ -23,6 +22,7 @@
   <color name="Color13" value="#ea76cb"/>
   <color name="Color14" value="#179299"/>
   <color name="Color15" value="#bcc0cc"/>
+  <color name="Background" value="#f8faff" />
 
   <style name="text" background="Background" foreground="Foreground"/>
   <style name="cursor" foreground="Cursor"/>

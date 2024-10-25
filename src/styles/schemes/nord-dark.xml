@@ -3,7 +3,6 @@
 <style-scheme id="nord-dark" name="Nord Dark" version="1.0">
 
   <color name="Foreground" value="#d8dee9"/>
-  <color name="Background" value="#2e3440"/>
   <color name="Cursor" value="#d8dee9"/>
   <color name="Gutter" value="#585e6a"/>
   <color name="CurrentLine" value="#363c48"/>
@@ -23,6 +22,7 @@
   <color name="Color13" value="#b48ead"/>
   <color name="Color14" value="#8fbcbb"/>
   <color name="Color15" value="#eceff4"/>
+  <color name="Background" value="#1d2128" />
 
   <style name="text" background="Background" foreground="Foreground"/>
   <style name="cursor" foreground="Cursor"/>
