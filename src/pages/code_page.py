@@ -208,7 +208,7 @@ class CodePage(
         elif msg_type == 'error':
             print("ERROR: \n", content)
 
-    def on_text_changed(self, *args):
+    def on_text_changed(self, *_args):
         self.set_modified(True)
 
     #
@@ -302,7 +302,7 @@ class CodePage(
     #   Implement Disconnectable Interface
     #
 
-    def disconnect(self, *args):
+    def disconnect(self, *_args):
         self.style_manager.disconnect_by_func(self.update_style_scheme)
         self.buffer.disconnect_by_func(self.on_cursor_position_changed)
         self.buffer.disconnect_by_func(self.on_text_changed)

@@ -427,7 +427,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #   START SERVER
     #
 
-    def start_server(self, *args):
+    def start_server(self, *_args):
         self.jupyter_server.start()
         self.change_kernel_action.set_enabled(True)
         self.start_server_action.set_enabled(False)
@@ -486,7 +486,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #   RESTART VISIBLE KERNEL
     #
 
-    def restart_kernel_visible(self, *args):
+    def restart_kernel_visible(self, *_args):
         kernel_id = self.get_visible_page().get_kernel().kernel_id
         self.activate_action(
             "win.restart-kernel-id", GLib.Variant('s', kernel_id))
@@ -495,7 +495,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #   RESTART VISIBLE KERNEL AND RUN ALL CELLS
     #
 
-    def restart_kernel_and_run(self, *args):
+    def restart_kernel_and_run(self, *_args):
         asyncio.create_task(self._restart_kernel_and_run())
 
     async def _restart_kernel_and_run(self):
@@ -547,7 +547,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #   OPEN FILES OR NOTEBOOKS
     #
 
-    def on_open_notebook_action(self, *args):
+    def on_open_notebook_action(self, *_args):
         asyncio.create_task(self._on_open_notebook_action())
 
     async def _on_open_notebook_action(self):
@@ -566,7 +566,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         except Exception as e:
             print(e)
 
-    def on_open_code_action(self, *args):
+    def on_open_code_action(self, *_args):
         asyncio.create_task(self._on_open_code_action())
 
     async def _on_open_code_action(self):
@@ -677,7 +677,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #   CONNECT STATIC UI TO VISIBLE PAGE PROPERTIES
     #
 
-    def on_focus_changed(self, *args):
+    def on_focus_changed(self, *_args):
         page = self.get_visible_page()
 
         self.disconnect_page_funcs(self.previous_page)
@@ -802,7 +802,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     @Gtk.Template.Callback("on_move_cursor_activated")
-    def on_move_cursor_activated(self, *args):
+    def on_move_cursor_activated(self, *_args):
         page = self.get_visible_page()
         if isinstance(page, ICursor):
             text = self.move_cursor_entry_buffer.get_text()
@@ -915,7 +915,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             page.search_text()
 
     @Gtk.Template.Callback("on_search_changed")
-    def on_search_changed(self, *args):
+    def on_search_changed(self, *_args):
         print("search changed")
         page = self.get_visible_page()
         if isinstance(page, ISearchable):
@@ -923,15 +923,15 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             page.search_text()
 
     @Gtk.Template.Callback("on_search_next_match")
-    def on_search_next_match(self, *args):
+    def on_search_next_match(self, *_args):
         pass
 
     @Gtk.Template.Callback("on_search_previous_match")
-    def on_search_previous_match(self, *args):
+    def on_search_previous_match(self, *_args):
         pass
 
     @Gtk.Template.Callback("on_search_close_clicked")
-    def on_search_close_clicked(self, *args):
+    def on_search_close_clicked(self, *_args):
         self.toolbar_view.set_reveal_bottom_bars(False)
 
         page = self.get_visible_page()
@@ -975,17 +975,17 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         if isinstance(page, ICells):
             page.add_cell(cell_type)
 
-    def on_run(self, *args):
+    def on_run(self, *_args):
         page = self.get_visible_page()
         if isinstance(page, ICells):
             page.run_selected_cell()
 
-    def on_run_and_advance(self, *args):
+    def on_run_and_advance(self, *_args):
         page = self.get_visible_page()
         if isinstance(page, ICells):
             page.run_selected_and_advance()
 
-    def on_run_line(self, *args):
+    def on_run_line(self, *_args):
         page = self.get_visible_page()
         if isinstance(page, CodePage):
             page.run_line()
@@ -1004,7 +1004,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             return None
 
     @Gtk.Template.Callback("on_create_frame")
-    def on_create_frame(self, *args):
+    def on_create_frame(self, *_args):
         new_frame = Panel.Frame()
         new_frame.set_placeholder(
             Launcher(self.jupyter_server.avalaible_kernels))
@@ -1071,7 +1071,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         notebook.set_selected_cell_index(variant.get_uint32())
 
     @Gtk.Template.Callback("on_chapter_menu_activated")
-    def on_chapter_menu_activated(self, *args):
+    def on_chapter_menu_activated(self, *_args):
         page = self.get_visible_page()
         if not isinstance(page, NotebookPage):
             return

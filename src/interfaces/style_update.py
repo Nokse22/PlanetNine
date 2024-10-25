@@ -26,6 +26,6 @@ class IStyleUpdate:
         self.style_manager.connect("style-changed", self.update_style_scheme)
         self.update_style_scheme()
 
-    def update_style_scheme(self, *args):
+    def update_style_scheme(self, *_args):
         scheme = self.style_manager.get_current_scheme()
         self.buffer.set_style_scheme(scheme)

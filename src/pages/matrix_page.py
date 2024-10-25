@@ -67,7 +67,7 @@ class MatrixPage(Panel.Widget, ISaveable, ILanguage):
 
         asyncio.create_task(self._load_file(_path))
 
-    def on_text_changed(self, *args):
+    def on_text_changed(self, *_args):
         self.set_modified(True)
 
     async def _load_file(self, file_path):
@@ -149,11 +149,11 @@ class MatrixPage(Panel.Widget, ISaveable, ILanguage):
     #   Implement Disconnectable Interface
     #
 
-    def disconnect(self, *args):
+    def disconnect(self, *_args):
         self.save_delegate.disconnect_all()
         self.matrix_viewer.disconnect()
 
         print(f"Disconnected:  {self}")
 
-    def __del__(self, *args):
+    def __del__(self, *_args):
         print(f"DELETING {self}")

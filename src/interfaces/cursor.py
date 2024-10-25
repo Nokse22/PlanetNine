@@ -34,7 +34,7 @@ class ICursor:
             "notify::cursor-position",
             self.on_cursor_position_changed)
 
-    def on_cursor_position_changed(self, *args):
+    def on_cursor_position_changed(self, *_args):
         self.emit("cursor-moved", self.buffer, 0)
 
     def get_cursor_position(self):

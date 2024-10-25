@@ -82,16 +82,16 @@ class PlanetnineApplication(Adw.Application):
 
         self.win.connect("close-request", self.on_shutdown)
 
-    def on_run_action(self, *args):
+    def on_run_action(self, *_args):
         self.win.run_selected_cell()
 
-    def on_save_action(self, *args):
+    def on_save_action(self, *_args):
         self.win.save_viewed()
 
-    def on_save_all_action(self, *args):
+    def on_save_all_action(self, *_args):
         self.win.save_viewed()
 
-    def on_about_action(self, *args):
+    def on_about_action(self, *_args):
         about = Adw.AboutDialog(
             application_name='Planet Nine',
             application_icon='io.github.nokse22.PlanetNine',
@@ -114,10 +114,10 @@ class PlanetnineApplication(Adw.Application):
 
         self.preferences.present(self.win)
 
-    def on_search_action(self, *args):
+    def on_search_action(self, *_args):
         self.win.search_visible_page()
 
-    def on_shutdown(self, *args):
+    def on_shutdown(self, *_args):
         return self.win.close()
 
     def create_action(self, name, callback, shortcuts=None):

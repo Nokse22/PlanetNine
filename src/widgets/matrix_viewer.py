@@ -118,7 +118,7 @@ class MatrixViewer(Gtk.ColumnView):
         else:
             widget.set_label(str(row.get_cell(index)))
 
-    def disconnect(self, *args):
+    def disconnect(self, *_args):
         for column in self.get_columns():
             factory = column.get_factory()
             factory.disconnect_by_func(self.on_factory_setup)
@@ -128,5 +128,5 @@ class MatrixViewer(Gtk.ColumnView):
 
         print(f"Disconnected:  {self}")
 
-    def __del__(self, *args):
+    def __del__(self, *_args):
         print(f"DELETING {self}")

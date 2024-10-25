@@ -106,7 +106,7 @@ class ImagesPanel(Panel.Widget):
 
         picture.set_file(image)
 
-    def on_image_selected(self, *args):
+    def on_image_selected(self, *_args):
         self.main_picture.set_file(self.selection_model.get_selected_item())
 
     @Gtk.Template.Callback("on_click_released")
@@ -119,7 +119,7 @@ class ImagesPanel(Panel.Widget):
         # elif n_clicks == 1:
 
     @Gtk.Template.Callback("on_save_clicked")
-    def on_save_clicked(self, *args):
+    def on_save_clicked(self, *_args):
         asyncio.create_task(self._save_file())
 
     async def _save_file(self):
@@ -166,7 +166,7 @@ class ImagesPanel(Panel.Widget):
             await destination_stream.close_async()
 
     @Gtk.Template.Callback("on_copy_clicked")
-    def on_copy_clicked(self, *args):
+    def on_copy_clicked(self, *_args):
         asyncio.create_task(self._copy_file())
 
     async def _copy_file(self):
@@ -192,7 +192,7 @@ class ImagesPanel(Panel.Widget):
         clipboard.set_content(content_provider)
 
     @Gtk.Template.Callback("on_delete_clicked")
-    def on_delete_clicked(self, *args):
+    def on_delete_clicked(self, *_args):
         asyncio.create_task(self._delete_file())
 
     async def _delete_file(self):
@@ -210,7 +210,7 @@ class ImagesPanel(Panel.Widget):
             self.images.remove(position)
 
     @Gtk.Template.Callback("on_open_external_window_clicked")
-    def on_open_external_window_clicked(self, *args):
+    def on_open_external_window_clicked(self, *_args):
         asyncio.create_task(self._open_file())
 
     async def _open_file(self):

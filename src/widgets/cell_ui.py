@@ -202,7 +202,7 @@ class CellUI(Gtk.Box, ISearchable, ICursor, IStyleUpdate):
     def set_execution_count(self, value):
         self.count_label.set_label(str(value or 0))
 
-    def on_executing_changed(self, *args):
+    def on_executing_changed(self, *_args):
         if self.cell.executing:
             self.count_stack.set_visible_child_name("spinner")
         else:
@@ -238,7 +238,7 @@ class CellUI(Gtk.Box, ISearchable, ICursor, IStyleUpdate):
 
         return True
 
-    def on_toggle_output_expand(self, *args):
+    def on_toggle_output_expand(self, *_args):
         _, vscrollbar_policy = self.output_scrolled_window.get_policy()
 
         if vscrollbar_policy == Gtk.PolicyType.AUTOMATIC:
@@ -248,7 +248,7 @@ class CellUI(Gtk.Box, ISearchable, ICursor, IStyleUpdate):
             self.output_scrolled_window.set_policy(
                 Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
 
-    def on_change_type(self, *args):
+    def on_change_type(self, *_args):
         if self.cell_type == CellType.TEXT:
             self.cell_type = CellType.CODE
         elif self.cell_type == CellType.CODE:
@@ -261,7 +261,7 @@ class CellUI(Gtk.Box, ISearchable, ICursor, IStyleUpdate):
         self.actions_signals.append((action, callback))
         return action
 
-    def on_source_changed(self, buffer, *args):
+    def on_source_changed(self, buffer, *_args):
         self.notify("source")
 
     def on_drag_source_prepare(self, source, x, y):
@@ -284,7 +284,7 @@ class CellUI(Gtk.Box, ISearchable, ICursor, IStyleUpdate):
 
         drag.set_hotspot(0, 0)
 
-    def delete_cell(self, *args):
+    def delete_cell(self, *_args):
         self.popover.popdown()
         self.emit("request-delete")
 
@@ -304,7 +304,7 @@ class CellUI(Gtk.Box, ISearchable, ICursor, IStyleUpdate):
     #   Implement Disconnectable Interface
     #
 
-    def disconnect(self, *args):
+    def disconnect(self, *_args):
         self.style_manager.disconnect_by_func(self.update_style_scheme)
         self.cell.disconnect_by_func(self.on_execution_count_changed)
         self.cell.disconnect_by_func(self.on_add_output)

@@ -95,7 +95,7 @@ class TextPage(
     #   Implement Disconnectable Interface
     #
 
-    def disconnect(self, *args):
+    def disconnect(self, *_args):
         self.style_manager.disconnect_by_func(self.update_style_scheme)
         self.buffer.disconnect_by_func(self.on_text_changed)
         self.buffer.disconnect_by_func(self.on_cursor_position_changed)
@@ -104,5 +104,5 @@ class TextPage(
 
         print(f"Disconnected:  {self}")
 
-    def __del__(self, *args):
+    def __del__(self, *_args):
         print(f"DELETING {self}")

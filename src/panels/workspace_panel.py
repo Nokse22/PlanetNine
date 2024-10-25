@@ -112,7 +112,7 @@ class WorkspacePanel(Panel.Widget):
     #   SET THE WORKSPACE
     #
 
-    def set_workspace_folder(self, *args):
+    def set_workspace_folder(self, *_args):
         asyncio.create_task(self._on_set_workspace_folder())
 
     async def _on_set_workspace_folder(self):
@@ -143,7 +143,7 @@ class WorkspacePanel(Panel.Widget):
     #   ADD FILES/FOLDERS (only in other files)
     #
 
-    def on_add_file(self, *args):
+    def on_add_file(self, *_args):
         asyncio.create_task(self._on_add_file())
 
     async def _on_add_file(self):
@@ -162,7 +162,7 @@ class WorkspacePanel(Panel.Widget):
             self.files_root.children.append(
                 TreeNode(file.get_path(), NodeType.FILE))
 
-    def on_add_folder(self, *args):
+    def on_add_folder(self, *_args):
         asyncio.create_task(self._on_add_folder())
 
     async def _on_add_folder(self):
@@ -184,7 +184,7 @@ class WorkspacePanel(Panel.Widget):
     # IMPORT FILES/FOLDERS (in the workspace)
     #
 
-    def on_import_file(self, *args):
+    def on_import_file(self, *_args):
         asyncio.create_task(self._on_import_file())
 
     async def _on_import_file(self):
@@ -204,7 +204,7 @@ class WorkspacePanel(Panel.Widget):
                 TreeNode(file.get_path(), NodeType.FILE))
             # TODO Actually import the files in the workspace folder
 
-    def on_import_folder(self, *args):
+    def on_import_folder(self, *_args):
         asyncio.create_task(self._on_import_folder())
 
     async def _on_import_folder(self):

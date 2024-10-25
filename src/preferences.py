@@ -94,7 +94,7 @@ class Preferences(Adw.PreferencesDialog):
         self.selection_model.set_selected(
             self.settings.get_int('selected-theme-n'))
 
-    def on_selected_style_changed(self, *args):
+    def on_selected_style_changed(self, *_args):
         self.style_manager.selected = self.selection_model.get_selected()
 
     @Gtk.Template.Callback("on_grid_view_setup")

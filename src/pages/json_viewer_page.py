@@ -98,10 +98,10 @@ class JsonViewerPage(
 
         self.stack.connect("notify::visible-child-name", self.on_page_changed)
 
-    def on_json_changed(self, *args):
+    def on_json_changed(self, *_args):
         self.is_changed = True
 
-    def on_page_changed(self, *args):
+    def on_page_changed(self, *_args):
         if self.is_changed:
             start = self.buffer.get_start_iter()
             end = self.buffer.get_end_iter()
@@ -116,7 +116,7 @@ class JsonViewerPage(
     #   Implement Disconnectable Interface
     #
 
-    def disconnect(self, *args):
+    def disconnect(self, *_args):
         self.style_manager.disconnect_by_func(self.update_style_scheme)
         self.stack.disconnect_by_func(self.on_page_changed)
         self.buffer.disconnect_by_func(self.on_json_changed)
@@ -127,5 +127,5 @@ class JsonViewerPage(
 
         print(f"Disconnected:  {self}")
 
-    def __del__(self, *args):
+    def __del__(self, *_args):
         print(f"DELETING {self}")

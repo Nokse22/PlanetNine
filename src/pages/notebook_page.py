@@ -116,7 +116,7 @@ class NotebookPage(
 
         self.set_modified(False)
 
-    def on_selected_cell_changed(self, *args):
+    def on_selected_cell_changed(self, *_args):
         selected_row = self.cells_list_box.get_selected_row()
         if selected_row:
             buffer = selected_row.get_child().buffer
@@ -216,7 +216,7 @@ class NotebookPage(
         # cell.add_provider(self.lsp_provider)
         return cell
 
-    def on_cell_source_changed(self, *args):
+    def on_cell_source_changed(self, *_args):
         self.set_modified(True)
 
     def on_cell_request_delete(self, cell_ui):
@@ -467,7 +467,7 @@ class NotebookPage(
     #   Implement Disconnectable Interface
     #
 
-    def disconnect(self, *args):
+    def disconnect(self, *_args):
         self.list_drop_target.disconnect_by_func(self.on_drop_target_drop)
         self.list_drop_target.disconnect_by_func(self.on_drop_target_motion)
         self.list_drop_target.disconnect_by_func(self.on_drop_target_leave)

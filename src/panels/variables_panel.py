@@ -69,7 +69,7 @@ class VariablesPanel(Panel.Widget):
 
         widget.set_label(value)
 
-    def disconnect(self, *args):
+    def disconnect(self, *_args):
         for column in self.column_view.get_columns():
             factory = column.get_factory()
             factory.disconnect_by_func(self.on_factory_setup)
@@ -77,5 +77,5 @@ class VariablesPanel(Panel.Widget):
 
         print(f"Unrealize {self}")
 
-    def __del__(self, *args):
+    def __del__(self, *_args):
         print(f"DELETING {self}")

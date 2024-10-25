@@ -55,10 +55,10 @@ class ConsoleCell(Gtk.Box, IStyleUpdate, ILanguage):
         self.output_scrolled_window.set_visible(True)
         self.output_loader.add_output(output)
 
-    def disconnect(self, *args):
+    def disconnect(self, *_args):
         self.style_manager.disconnect_by_func(self.update_style_scheme)
 
         print("unrealize: ", sys.getrefcount(self))
 
-    def __del__(self, *args):
+    def __del__(self, *_args):
         print(f"DELETING {self}")

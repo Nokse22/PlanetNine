@@ -48,7 +48,7 @@ class TerminalPanel(Panel.Widget, IStyleUpdate):
         feed_string.replace("\n", "\r\n")
         self.vte_terminal.feed([ord(char) for char in feed_string + "\r\n"])
 
-    def update_style_scheme(self, *args):
+    def update_style_scheme(self, *_args):
         colors = self.style_manager.get_current_colors()
         background = Gdk.RGBA()
         foreground = Gdk.RGBA()

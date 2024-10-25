@@ -255,12 +255,12 @@ class MarkdownTextView(Gtk.TextView):
                     else:
                         buffer.insert(loc, new_order_bullet, -1)
 
-    def disconnect(self, *args):
+    def disconnect(self, *_args):
         self.buffer.disconnect_by_func(self.on_text_changed)
         self.buffer.disconnect_by_func(self.on_text_inserted)
         self.buffer.disconnect_by_func(self.on_text_deleted)
 
         print("unrealize:", sys.getrefcount(self))
 
-    def __del__(self, *args):
+    def __del__(self, *_args):
         print(f"DELETING {self}")

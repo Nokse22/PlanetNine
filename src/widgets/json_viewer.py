@@ -102,12 +102,12 @@ class TreeWidget(Adw.Bin):
         else:
             self.value_label.set_text(f"{value}")
 
-    def disconnect(self, *args):
+    def disconnect(self, *_args):
         self.click_controller.disconnect_by_func(self.on_click_released)
 
         print(f"Unrealize {self}")
 
-    def __del__(self, *args):
+    def __del__(self, *_args):
         print(f"DELETING {self}")
 
 
@@ -198,7 +198,7 @@ class JsonViewer(Gtk.Box):
         widget.set_key(tree_node.node_type, tree_node.key)
         widget.set_value(tree_node.node_type, tree_node.content)
 
-    def disconnect(self, *args):
+    def disconnect(self, *_args):
         list_view = self.get_first_child()
 
         while list_view:
@@ -211,5 +211,5 @@ class JsonViewer(Gtk.Box):
 
         print(f"Unrealize {self}")
 
-    def __del__(self, *args):
+    def __del__(self, *_args):
         print(f"DELETING {self}")

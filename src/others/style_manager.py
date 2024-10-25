@@ -158,7 +158,7 @@ class StyleManager(GObject.GObject):
     def get_avalaible_palettes(self):
         return self._palettes
 
-    def on_dark_changed(self, *args):
+    def on_dark_changed(self, *_args):
         self.emit("style-changed")
         self.update_style_scheme()
 
@@ -179,7 +179,7 @@ class StyleManager(GObject.GObject):
         else:
             return self.palette.light_palette
 
-    def update_style_scheme(self, *args):
+    def update_style_scheme(self, *_args):
         Gtk.StyleContext.remove_provider_for_display(
             Gdk.Display.get_default(), self.css_provider
         )

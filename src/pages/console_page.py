@@ -98,7 +98,7 @@ class ConsolePage(
     #
     #
 
-    def on_send_clicked(self, *args):
+    def on_send_clicked(self, *_args):
         self.run_code()
 
     def run_code(self):
@@ -166,7 +166,7 @@ class ConsolePage(
         end = self.buffer.get_end_iter()
         return self.buffer.get_text(start, end, True)
 
-    def disconnect(self, *args):
+    def disconnect(self, *_args):
         self.style_manager.disconnect_by_func(self.update_style_scheme)
         self.send_button.disconnect_by_func(self.on_send_clicked)
         self.buffer.disconnect_by_func(self.on_cursor_position_changed)
@@ -184,5 +184,5 @@ class ConsolePage(
 
         print(f"Disconnected:  {self}")
 
-    def __del__(self, *args):
+    def __del__(self, *_args):
         print(f"DELETING {self}")

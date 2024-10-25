@@ -43,7 +43,7 @@ class TabCompletionProvider(GObject.Object, GtkSource.CompletionProvider):
     def do_get_name(self):
         return "Jupyter Tab Completion"
 
-    def do_get_priority(self, *args):
+    def do_get_priority(self, *_args):
         return 200
 
     def do_match(self, context):

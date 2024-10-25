@@ -107,24 +107,24 @@ class BrowserPage(Panel.Widget, IDisconnectable):
 
         self.web_view.load_uri(uri)
 
-    def on_uri_changed(self, web_view, *args):
+    def on_uri_changed(self, web_view, *_args):
         uri = web_view.get_uri()
         self.search_entry.get_buffer().set_text(uri, len(uri))
         self.toolbar_view.set_reveal_top_bars(True)
 
-    def on_title_changed(self, web_view, *args):
+    def on_title_changed(self, web_view, *_args):
         self.set_title(web_view.get_title() or "Browser")
 
-    def on_back_clicked(self, *args):
+    def on_back_clicked(self, *_args):
         self.web_view.go_back()
 
-    def on_forward_clicked(self, *args):
+    def on_forward_clicked(self, *_args):
         self.web_view.go_forward()
 
-    def on_reload_clicked(self, *args):
+    def on_reload_clicked(self, *_args):
         self.web_view.reload()
 
-    def on_cancel_reload_clicked(self, *args):
+    def on_cancel_reload_clicked(self, *_args):
         self.web_view.stop_loading()
 
     def on_open_url(self, action, variant):
@@ -153,7 +153,7 @@ class BrowserPage(Panel.Widget, IDisconnectable):
     #   Implement Disconnectable Interface
     #
 
-    def disconnect(self, *args):
+    def disconnect(self, *_args):
         self.back_button.disconnect_by_func(self.on_back_clicked)
         self.forward_button.disconnect_by_func(self.on_forward_clicked)
         self.reload_button.disconnect_by_func(self.on_reload_clicked)

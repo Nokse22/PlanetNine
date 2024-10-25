@@ -34,7 +34,7 @@ class ISaveable:
 
         self.buffer.connect("changed", self.on_text_changed)
 
-    def on_text_changed(self, *args):
+    def on_text_changed(self, *_args):
         self.set_modified(True)
 
     def set_path(self, _path):
