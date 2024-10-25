@@ -35,9 +35,14 @@ class ISaveable:
         self.buffer.connect("changed", self.on_text_changed)
 
     def on_text_changed(self, *_args):
+        """Used to set the page to modified when the buffer changes"""
         self.set_modified(True)
 
     def set_path(self, _path):
+        """Sets the page file path
+
+        :param str path: the page file path
+        """
         self.path = _path
         self.set_title(os.path.basename(self.path)
                        if self.path else "Untitled")
@@ -48,9 +53,19 @@ class ISaveable:
             self.save_delegate.set_is_draft(False)
 
     def get_path(self):
+        """Get the page path
+
+        :returns: the page path
+        :rtype: str
+        """
         return self.path
 
     def get_content(self):
+        """Get the page content
+
+        :returns: the page content
+        :rtype: str
+        """
         start = self.buffer.get_start_iter()
         end = self.buffer.get_end_iter()
         return self.buffer.get_text(start, end, True)

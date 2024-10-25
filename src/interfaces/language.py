@@ -33,10 +33,19 @@ class ILanguage:
         self.language_manager = GtkSource.LanguageManager()
 
     def get_language(self):
+        """Get the page language
+
+        :returns: the page language
+        :rtype: str
+        """
         return self.language
 
-    def set_language(self, _language):
-        self.language = _language
+    def set_language(self, language):
+        """Sets the page language
+
+        :param str language: the new page language
+        """
+        self.language = language
         lang = self.language_manager.get_language(self.language)
         self.buffer.set_language(lang)
         self.buffer.set_highlight_syntax(True)
@@ -44,4 +53,9 @@ class ILanguage:
         self.emit("language-changed")
 
     def get_is_language_settable(self):
+        """Get if the page language is changeable
+
+        :returns: if the page language is changeable
+        :rtype: bool
+        """
         return False  # By default the language is not settable

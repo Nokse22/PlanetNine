@@ -29,8 +29,13 @@ class ISearchable:
         )
 
     def search_text(self):
+        """Search the string in the page"""
         start_iter = self.buffer.get_start_iter()
         self.search_context.forward_async(start_iter)
 
     def set_search_text(self, text):
+        """Sets the string to be searched
+
+        :param str text: The text to search
+        """
         self.search_settings.set_search_text(text)

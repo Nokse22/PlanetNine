@@ -22,4 +22,5 @@
 #       disconnect signal to be able to free the memory
 class IDisconnectable:
     def disconnect(self):
+        """Disconnects all signals so that the class can be deleted"""
         raise NotImplementedError

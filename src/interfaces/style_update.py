@@ -27,5 +27,9 @@ class IStyleUpdate:
         self.update_style_scheme()
 
     def update_style_scheme(self, *_args):
+        """Updates self.buffer with the new stile scheme
+
+        Overridden when something else needs to be updated
+        """
         scheme = self.style_manager.get_current_scheme()
         self.buffer.set_style_scheme(scheme)

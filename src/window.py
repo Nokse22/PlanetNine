@@ -24,7 +24,6 @@ from gi.repository import Gio, Gdk
 from gi.repository import Panel, GObject
 
 import os
-import logging
 import asyncio
 import re
 
@@ -66,6 +65,9 @@ from .widgets.chapter_row import ChapterRow
 from .utils.converters import is_mime_displayable
 
 from gettext import gettext as _
+
+GObject.type_register(TerminalPanel)
+GObject.type_register(KernelTerminalPanel)
 
 
 class TreeNode(GObject.Object):

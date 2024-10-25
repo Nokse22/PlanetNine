@@ -28,8 +28,6 @@ from gi.repository import Panel
 from .window import PlanetnineWindow
 from .preferences import Preferences
 
-from .others.style_manager import StyleManager
-
 from gettext import gettext as _
 
 GObject.type_register(Vte.Terminal)
@@ -99,7 +97,8 @@ class PlanetnineApplication(Adw.Application):
             version='0.1.0',
             developers=['Nokse'],
             copyright='© 2024 Nokse')
-        # Translators: Replace "translator-credits" with your name/username, and optionally an email or URL.
+        # Translators: Replace "translator-credits" with your name/username,
+        # and optionally an email or URL.
         about.set_translator_credits(_('translator-credits'))
         about.present(self.win)
 

@@ -42,6 +42,11 @@ class IKernel:
             self.kernel_name = kwargs["kernel_name"]
 
     def start_kernel(self):
+        """Starts a kernel for this page
+
+        To be run when the page has been initalized so that a kernel can be
+        started.
+        """
         if self.kernel_name:
             self.activate_action(
                 "win.request-kernel-name",
@@ -60,9 +65,18 @@ class IKernel:
                     self.page_id))
 
     def get_kernel(self):
+        """Get the page kernel
+
+        :returns: the page kernel
+        :rtype: JupyterKernel
+        """
         return self.jupyter_kernel
 
     def set_kernel(self, jupyter_kernel):
+        """Sets the page kernel
+
+        :param JupyterKernel jupyter_kernel: the new page kernel
+        """
         if isinstance(self, ILanguage):
             self.set_language(jupyter_kernel.language)
 
@@ -77,4 +91,8 @@ class IKernel:
         self.emit("kernel-info-changed")
 
     def on_kernel_info_changed(self):
+        """Emits the signal kernel-info-changed
+
+        Run whenever the status or the kernel itself changes
+        """
         self.emit("kernel-info-changed")
