@@ -59,16 +59,16 @@ class BrowserPage(Panel.Widget, IDisconnectable):
 
         self.search_entry.connect("activate", self.on_entry_activated)
 
-        self.back_button.connect("clicked", self.on_back_clicked)
-        self.forward_button.connect("clicked", self.on_forward_clicked)
-        self.reload_button.connect("clicked", self.on_reload_clicked)
+        self.back_button.connect("clicked", self.on_back_clicked_cb)
+        self.forward_button.connect("clicked", self.on_forward_clicked_cb)
+        self.reload_button.connect("clicked", self.on_reload_clicked_cb)
         self.cancel_reload_button.connect(
-            "clicked", self.on_cancel_reload_clicked)
+            "clicked", self.on_cancel_reload_clicked_cb)
 
-        self.web_view.connect("notify::uri", self.on_uri_changed)
-        self.web_view.connect("notify::title", self.on_title_changed)
+        self.web_view.connect("notify::uri", self.on_uri_changed_cb)
+        self.web_view.connect("notify::title", self.on_title_changed_cb)
 
-        self.web_view.connect("create", self.on_open_new_browser)
+        self.web_view.connect("create", self.on_open_new_browser_cb)
 
         if _initial_uri:
             self.web_view.load_uri(_initial_uri)
@@ -91,58 +91,58 @@ class BrowserPage(Panel.Widget, IDisconnectable):
         for name, url in self.bookmarks:
             self.add_bookmark(name, url)
 
-    @classmethod
-    def new_from_html(cls, html_string):
-        instance = cls()
-
-        instance.web_view.load_html(html_string)
-        instance.toolbar_view.set_reveal_top_bars(False)
-
-        return instance
-
     def on_entry_activated(self, entry):
-        buffer = entry.get_buffer()
-
-        uri = buffer.get_text()
+        """Handles the activation of the entry and loads the new uri"""
+        uri = entry.get_buffer().get_text()
 
         self.web_view.load_uri(uri)
 
-    def on_uri_changed(self, web_view, *_args):
+    def on_uri_changed_cb(self, web_view, *_args):
+        """Updates the uri entry with the new web_view uri"""
         uri = web_view.get_uri()
         self.search_entry.get_buffer().set_text(uri, len(uri))
         self.toolbar_view.set_reveal_top_bars(True)
 
-    def on_title_changed(self, web_view, *_args):
+    def on_title_changed_cb(self, web_view, *_args):
+        """Updates the page title with the new web_view title"""
         self.set_title(web_view.get_title() or "Browser")
 
-    def on_back_clicked(self, *_args):
+    def on_back_clicked_cb(self, *_args):
+        """When the back button has been clicked"""
         self.web_view.go_back()
 
-    def on_forward_clicked(self, *_args):
+    def on_forward_clicked_cb(self, *_args):
+        """When the forward button has been clicked"""
         self.web_view.go_forward()
 
-    def on_reload_clicked(self, *_args):
+    def on_reload_clicked_cb(self, *_args):
+        """When the reload button has been clicked"""
         self.web_view.reload()
 
-    def on_cancel_reload_clicked(self, *_args):
+    def on_cancel_reload_clicked_cb(self, *_args):
+        """When the cancel reload button has been clicked"""
         self.web_view.stop_loading()
 
     def on_open_url(self, action, variant):
+        """Handles opening a new url"""
         self.web_view.load_uri(variant.get_string())
 
     def add_bookmark(self, bookmark_name, bookmark_url):
+        """Handles adding a new bookmark to the bookmark menu"""
         menu_item = Gio.MenuItem()
         menu_item.set_label(bookmark_name)
         menu_item.set_action_and_target_value(
             "browser.open", GLib.Variant('s', bookmark_url))
         self.bookmark_menu.append_item(menu_item)
 
-    def on_open_new_browser(self, web_view, navigation_action):
+    def on_open_new_browser_cb(self, web_view, navigation_action):
+        """Handles opening an url in a new separate page"""
         uri = navigation_action.get_request().get_uri()
         self.activate_action(
             "win.new-browser-page", GLib.Variant('s', uri))
 
     def create_action_with_target(self, name, target_type, callback):
+        """Used to create an action with target"""
         action = Gio.SimpleAction.new(name, target_type)
         action.connect("activate", callback)
         self.action_group.add_action(action)
@@ -154,15 +154,16 @@ class BrowserPage(Panel.Widget, IDisconnectable):
     #
 
     def disconnect(self, *_args):
-        self.back_button.disconnect_by_func(self.on_back_clicked)
-        self.forward_button.disconnect_by_func(self.on_forward_clicked)
-        self.reload_button.disconnect_by_func(self.on_reload_clicked)
-        self.web_view.disconnect_by_func(self.on_title_changed)
-        self.web_view.disconnect_by_func(self.on_uri_changed)
-        self.web_view.disconnect_by_func(self.on_open_new_browser)
+        """Disconnect all signals"""
+        self.back_button.disconnect_by_func(self.on_back_clicked_cb)
+        self.forward_button.disconnect_by_func(self.on_forward_clicked_cb)
+        self.reload_button.disconnect_by_func(self.on_reload_clicked_cb)
+        self.web_view.disconnect_by_func(self.on_title_changed_cb)
+        self.web_view.disconnect_by_func(self.on_uri_changed_cb)
+        self.web_view.disconnect_by_func(self.on_open_new_browser_cb)
         self.search_entry.disconnect_by_func(self.on_entry_activated)
         self.cancel_reload_button.disconnect_by_func(
-            self.on_cancel_reload_clicked)
+            self.on_cancel_reload_clicked_cb)
 
         for action, callback in self.actions_signals:
             action.disconnect_by_func(callback)

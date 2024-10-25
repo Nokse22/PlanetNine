@@ -99,9 +99,12 @@ class JsonViewerPage(
         self.stack.connect("notify::visible-child-name", self.on_page_changed)
 
     def on_json_changed(self, *_args):
+        """Sets a flag to store that the json viewer must be updated"""
         self.is_changed = True
 
     def on_page_changed(self, *_args):
+        """When the view switches to the json viewer, updates the json viewer
+        if the buffer content have been changed"""
         if self.is_changed:
             start = self.buffer.get_start_iter()
             end = self.buffer.get_end_iter()
@@ -117,6 +120,7 @@ class JsonViewerPage(
     #
 
     def disconnect(self, *_args):
+        """Disconnect all signals"""
         self.style_manager.disconnect_by_func(self.update_style_scheme)
         self.stack.disconnect_by_func(self.on_page_changed)
         self.buffer.disconnect_by_func(self.on_json_changed)

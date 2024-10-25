@@ -150,6 +150,7 @@ class CodePage(
         self.set_path(file_path)
 
     def get_selected_cell_content(self):
+        """Returns the selected cell content"""
         cursor_iter = self.buffer.get_iter_at_mark(
             self.buffer.get_insert())
 
@@ -182,6 +183,7 @@ class CodePage(
     #
 
     def run_code_callback(self, msg):
+        """Callback to receive messages from the kernel"""
         if msg is None or msg['header'] is None:
             print("No message")
             return
@@ -208,14 +210,13 @@ class CodePage(
         elif msg_type == 'error':
             print("ERROR: \n", content)
 
-    def on_text_changed(self, *_args):
-        self.set_modified(True)
-
     #
     #   Implement Language Interface
     #
 
     def set_language(self, _language):
+        """Overrides the ILanguage interface set_language method to use
+        custom language definition that supports highlighting cells"""
         self.language = _language
 
         if self.language + "cells" in self.language_manager.get_language_ids():
@@ -235,6 +236,7 @@ class CodePage(
     #
 
     def run_selected_cell(self):
+        """Runs the currently selected cell"""
         code_portion = self.get_selected_cell_content()
         self.jupyter_kernel.execute(
             code_portion,
@@ -242,10 +244,12 @@ class CodePage(
         )
 
     def run_selected_and_advance(self):
+        """Runs current cell and moves the cursor to the next cell"""
         self.run_selected_cell()
         # TODO move the cursor to the start of the next cell
 
     def run_all_cells(self):
+        """Runs the entire script"""
         self.jupyter_kernel.execute(
             self.get_content(),
             self.run_code_callback
@@ -253,6 +257,7 @@ class CodePage(
 
     # Only for code page
     def run_line(self):
+        """Runs the current line where is the cursor"""
         start_iter = self.buffer.get_iter_at_mark(
             self.buffer.get_insert())
 
@@ -268,6 +273,10 @@ class CodePage(
         )
 
     def add_cell(self, cell_type):
+        """Add a cell to the page
+
+        :param CellType cell_type: the type of cell to add
+        """
         self.buffer.begin_user_action()
 
         bounds = self.buffer.get_selection_bounds()
@@ -303,6 +312,7 @@ class CodePage(
     #
 
     def disconnect(self, *_args):
+        """Disconnect all signals"""
         self.style_manager.disconnect_by_func(self.update_style_scheme)
         self.buffer.disconnect_by_func(self.on_cursor_position_changed)
         self.buffer.disconnect_by_func(self.on_text_changed)

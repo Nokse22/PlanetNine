@@ -45,6 +45,10 @@ class Notebook(Gio.ListStore):
 
     @classmethod
     def new_from_file(cls, notebook_path):
+        """Initialize a new Notebook from a file
+
+        :param str notebook_path: The path to the .ipynb file
+        """
         instance = cls(notebook_path)
 
         with open(notebook_path, 'r') as file:
@@ -64,7 +68,10 @@ class Notebook(Gio.ListStore):
         return self._variables
 
     def set_path(self, _path):
-        print("SETTING PATH: ", _path)
+        """Set the path where the notebook is saved
+
+        :param str _path: The path to the file
+        """
         self.path = _path
         self.title = os.path.basename(
             self.path) if self.path else "Notebook.ipynb"
@@ -73,6 +80,10 @@ class Notebook(Gio.ListStore):
         return self.path
 
     def parse(self, notebook_node):
+        """Parses the notebook from its json representation
+
+        :param: The notebook node to parse
+        """
         for json_cell in notebook_node['cells']:
             cell = Cell.new_from_json(json_cell)
 
@@ -81,6 +92,10 @@ class Notebook(Gio.ListStore):
         self.metadata = notebook_node.metadata
 
     def get_notebook_node(self):
+        """Gets the notebook as a json
+
+        :returns: The notebook node
+        """
         notebook_node = nbformat.v4.new_notebook()
 
         for cell in self.cells:

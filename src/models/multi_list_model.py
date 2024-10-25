@@ -31,6 +31,11 @@ class MultiListModel(GObject.GObject, Gio.ListModel, Gtk.SectionModel):
         self.section_names = []
 
     def add_section(self, list_store, section_name):
+        """Add a new section to the model
+
+        :param Gio.ListStore list_store: A new list section
+        :param str section_name: The name of the section
+        """
         if not isinstance(list_store, Gio.ListStore):
             raise ValueError("list_store must be a Gio.ListStore")
         prev_size = self.get_n_items()
@@ -38,7 +43,7 @@ class MultiListModel(GObject.GObject, Gio.ListModel, Gtk.SectionModel):
         self.section_names.append(section_name)
         list_store.connect("items-changed", self._on_section_items_changed)
         self.items_changed(prev_size, 0, list_store.get_n_items())
-        self.notify_sections_changed(len(self.sections) - 1, 1)
+        self._notify_sections_changed(len(self.sections) - 1, 1)
 
     def _on_section_items_changed(self, list_store, position, removed, added):
         section_index = self.sections.index(list_store)
@@ -46,10 +51,11 @@ class MultiListModel(GObject.GObject, Gio.ListModel, Gtk.SectionModel):
             store.get_n_items() for store in self.sections[:section_index])
         self.items_changed(start_position + position, removed, added)
 
-    def notify_sections_changed(self, start, count):
+    def _notify_sections_changed(self, start, count):
         self.emit("sections-changed", start, count)
 
     def do_get_section(self, position):
+        """Override the get_section method of Gtk.SectionModel"""
         if position >= self.get_n_items():
             return (self.get_n_items(), 0xFFFFFFFF)
 
@@ -70,14 +76,17 @@ class MultiListModel(GObject.GObject, Gio.ListModel, Gtk.SectionModel):
         return None
 
     def do_get_item(self, position):
+        """Override the get_item method of Gio.ListModel"""
         for store in self.sections:
             if position < store.get_n_items():
                 return store.get_item(position)
             position -= store.get_n_items()
 
     def do_get_item_type(self):
+        """Override the get_item_type method of Gio.ListModel"""
         return GObject.Object
 
     def do_get_n_items(self):
+        """Override the get_section method of Gio.ListModel"""
         n_items = sum(store.get_n_items() for store in self.sections)
         return n_items

@@ -84,6 +84,10 @@ class Output(GObject.GObject):
 
     @classmethod
     def new_from_json(cls, json_string):
+        """Initialize an output class from a json string representation
+
+        :param str json_string: The json representation of the output
+        """
         instance = cls()
 
         instance.parse(json_string)
@@ -91,6 +95,10 @@ class Output(GObject.GObject):
         return instance
 
     def parse(self, json_dict):
+        """Parses the output from a json representation
+
+        :param json_dict: The json representation of the output
+        """
         match self.output_type:
             case OutputType.STREAM:
                 self.name = json_dict['name']
@@ -109,6 +117,10 @@ class Output(GObject.GObject):
                 self.traceback = "\n".join(json_dict['traceback'])
 
     def parse_display_data(self, json_node):
+        """Parses the display data from the json_node
+
+        :param json_node: The json representation of the display data
+        """
         if 'application/json' in json_node['data']:
             self.data_content = json_node['data']['application/json']
             self.data_type = DataType.JSON
@@ -155,6 +167,10 @@ class Output(GObject.GObject):
         print(json_node['data'])
 
     def get_output_node(self):
+        """Get the output as a json node
+
+        :returns: The json representation of the output
+        """
         match self.output_type:
             case OutputType.STREAM:
                 output_node = nbformat.v4.new_output('stream')
@@ -162,14 +178,14 @@ class Output(GObject.GObject):
 
             case OutputType.DISPLAY_DATA:
                 output_node = nbformat.v4.new_output('display_data')
-                type_name = self.get_type_name(self.data_type)
+                type_name = self._get_type_name(self.data_type)
                 output_node.data[type_name] = self.data_content
                 if self.plain_content:
                     output_node.data['text/plain'] = self.plain_content
 
             case OutputType.EXECUTE_RESULT:
                 output_node = nbformat.v4.new_output('execute_result')
-                type_name = self.get_type_name(self.data_type)
+                type_name = self._get_type_name(self.data_type)
                 output_node.data[type_name] = self.data_content
                 output_node.execution_count = self.execution_count
                 if self.plain_content:
@@ -186,7 +202,7 @@ class Output(GObject.GObject):
 
         return output_node
 
-    def get_type_name(self, data_type):
+    def _get_type_name(self, data_type):
         mime_types = {
             DataType.JSON: "application/json",
             DataType.MARKDOWN: "text/markdown",

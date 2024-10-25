@@ -99,9 +99,11 @@ class ConsolePage(
     #
 
     def on_send_clicked(self, *_args):
+        """Callback for the send button clicked signal"""
         self.run_code()
 
     def run_code(self):
+        """Handles running code"""
         content = self.get_content()
 
         if content == "":
@@ -130,6 +132,7 @@ class ConsolePage(
     #     cell.add_output(output)
 
     def run_code_callback(self, msg, cell):
+        """Callback to handle adding outputs to the cell"""
         msg_type = msg['header']['msg_type']
         content = msg['content']
 
@@ -155,6 +158,7 @@ class ConsolePage(
             cell.add_output(output)
 
     def add_run_cell(self, content):
+        """Add a cell of code to the view"""
         cell = ConsoleCell(content)
         lang_name = get_language_highlight_name(self.jupyter_kernel.language)
         cell.set_language(lang_name)
@@ -162,11 +166,13 @@ class ConsolePage(
         return cell
 
     def get_content(self):
+        """Returns the content of the console text buffer"""
         start = self.buffer.get_start_iter()
         end = self.buffer.get_end_iter()
         return self.buffer.get_text(start, end, True)
 
     def disconnect(self, *_args):
+        """Disconnect all signals"""
         self.style_manager.disconnect_by_func(self.update_style_scheme)
         self.send_button.disconnect_by_func(self.on_send_clicked)
         self.buffer.disconnect_by_func(self.on_cursor_position_changed)

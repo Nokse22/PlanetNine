@@ -67,6 +67,7 @@ class Cell(GObject.GObject):
 
     @classmethod
     def new_from_json(cls, json_cell):
+        """Initialize a new Cell from a json representation of the cell"""
         instance = cls()
 
         instance.parse(json_cell)
@@ -92,16 +93,33 @@ class Cell(GObject.GObject):
         self.emit("execution-count-changed", value)
 
     def set_source(self, value):
+        """Sets the source (content) of the cell
+
+        :param str value: The new content
+        """
         self.source = value
 
-    def get_source(self,):
+    def get_source(self):
+        """Gets the source (content) of the cell
+
+        :returns: The content of the cell
+        :rtypes: str
+        """
         return self.source
 
     def add_output(self, output):
+        """Adds an output to the cell
+
+        :param Output output: A new output
+        """
         self._outputs.append(output)
         self.emit("output-added", output)
 
     def update_output(self, content):
+        """Updates an output
+
+        :param str content:
+        """
         display_id = content['transient']['display_id']
         for index, output in enumerate(self._outputs):
             if output.display_id == display_id:
@@ -112,11 +130,17 @@ class Cell(GObject.GObject):
                 self.emit("output-updated", output)
 
     def reset_output(self):
+        """Resets all the outputs"""
         self._outputs.remove_all()
         self.execution_count = 0
         self.emit("output-reset")
 
     def get_cell_node(self):
+        """Get the type of cell
+
+        :returns: The type of cell
+        :rtypes: CellType
+        """
         if self.cell_type == CellType.TEXT:
             cell_node = nbformat.v4.new_markdown_cell()
             cell_node.source = self.source
@@ -135,6 +159,10 @@ class Cell(GObject.GObject):
         return cell_node
 
     def parse(self, json_cell):
+        """Sets its content from a json string containing the data
+
+        :param str json_cell: The json representation of the cell
+        """
         if json_cell['cell_type'] == "code":
             self.cell_type = CellType.CODE
         else:
@@ -162,5 +190,10 @@ class Cell(GObject.GObject):
                 self.add_output(output)
 
     def copy(self):
+        """Copies the cell
+
+        :returns: A new cell copy
+        :rtypes: Cell
+        """
         cell_node = self.get_cell_node()
         return Cell.new_from_json(cell_node)

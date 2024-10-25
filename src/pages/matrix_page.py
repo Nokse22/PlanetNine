@@ -34,7 +34,7 @@ import asyncio
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/matrix_page.ui')
-class MatrixPage(Panel.Widget, ISaveable, ILanguage):
+class MatrixPage(Panel.Widget, ILanguage):
     __gtype_name__ = 'MatrixPage'
 
     matrix_viewer = Gtk.Template.Child()
@@ -53,24 +53,14 @@ class MatrixPage(Panel.Widget, ISaveable, ILanguage):
 
         self.matrix = Matrix()
 
-        # ADD SAVE DELEGATE
-
-        self.save_delegate = GenericSaveDelegate(self)
-        self.set_save_delegate(self.save_delegate)
-
-        if not _path:
-            self.save_delegate.set_is_draft(True)
-
         # LOAD File
 
         self.set_path(_path)
 
         asyncio.create_task(self._load_file(_path))
 
-    def on_text_changed(self, *_args):
-        self.set_modified(True)
-
     async def _load_file(self, file_path):
+        """Load a file"""
         if file_path:
             gfile = Gio.File.new_for_path(file_path)
 
@@ -85,6 +75,7 @@ class MatrixPage(Panel.Widget, ISaveable, ILanguage):
             self.stack.set_visible_child_name("matrix")
 
     async def _matrix_from_csv(self, file):
+        """Populates the matrix with rows and columns from a csv file"""
         file_input_stream = file.read()
         data_input_stream = Gio.DataInputStream.new(file_input_stream)
 
@@ -126,30 +117,17 @@ class MatrixPage(Panel.Widget, ISaveable, ILanguage):
     #
 
     def set_language(self, _language):
+        """Override the ILanguage interface set_language"""
         self.language = _language
 
         self.emit('language-changed')
-
-    #
-    #   Implement Saveable Page Interface
-    #
-
-    def get_path(self):
-        return self.path
-
-    def set_path(self, _path):
-        self.path = _path
-        self.set_title(
-            os.path.basename(self.path) if self.path else "Untitled")
-
-    def get_content(self):
-        return ""
 
     #
     #   Implement Disconnectable Interface
     #
 
     def disconnect(self, *_args):
+        """Disconnect all signals"""
         self.save_delegate.disconnect_all()
         self.matrix_viewer.disconnect()
 
