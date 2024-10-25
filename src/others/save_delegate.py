@@ -44,6 +44,7 @@ class GenericSaveDelegate(Panel.SaveDelegate):
         self.update_draft_status()
 
     def disconnect_all(self):
+        """Disconnect all bindings so the page can be deleted"""
         for binding in self.bindings:
             binding.unbind()
         del self.bindings
@@ -51,17 +52,20 @@ class GenericSaveDelegate(Panel.SaveDelegate):
         del self.page
 
     def update_draft_status(self):
+        """Update the page draft status"""
         self.set_is_draft(bool(self.page.get_path()))
 
     def do_close(self):
         print("do close")
 
     def do_discard(self):
+        """Discard any changes without saving"""
         print("do discard")
         self.page.force_close()
         self.emit("close")
 
     def do_save_async(self, cancellable, callback, user_data):
+        """Save the page content"""
         print("DRAFT: ", self.get_is_draft())
         if self.get_is_draft():
             asyncio.create_task(self._do_save_async())
@@ -72,6 +76,7 @@ class GenericSaveDelegate(Panel.SaveDelegate):
                     self.page.get_content()))
 
     async def _do_save_async(self):
+        """Save the page content asyncronously"""
         dialog = Gtk.FileDialog(title=_("Save"))
 
         try:
@@ -91,13 +96,15 @@ class GenericSaveDelegate(Panel.SaveDelegate):
         return result.propagate_boolean()
 
     async def _show_save_dialog(self):
+        """Shows the save dialog to choose where to save the file"""
         dialog = Gtk.FileDialog(title="Save")
         try:
             return await dialog.save(self.page.get_root())
         except GObject.GError:
             return None
 
-    async def _save_content(self, file_path, content):
+    async def _save_content(self, file_path: str, content: str):
+        """Save the content asyncronously"""
         file = Gio.File.new_for_path(file_path)
 
         try:

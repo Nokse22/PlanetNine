@@ -71,6 +71,7 @@ class TextPage(
         asyncio.create_task(self._load_file(file_path))
 
     async def _load_file(self, file_path):
+        """Handles loading the file in the buffer"""
         print("Loading: ", file_path)
         try:
             file = Gio.File.new_for_path(file_path)
@@ -96,6 +97,7 @@ class TextPage(
     #
 
     def disconnect(self, *_args):
+        """Disconnect all signals"""
         self.style_manager.disconnect_by_func(self.update_style_scheme)
         self.buffer.disconnect_by_func(self.on_text_changed)
         self.buffer.disconnect_by_func(self.on_cursor_position_changed)

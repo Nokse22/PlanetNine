@@ -155,17 +155,21 @@ class StyleManager(GObject.GObject):
     def palettes(self):
         return self._palettes
 
-    def get_avalaible_palettes(self):
+    def get_avalaible_palettes(self) -> Gio.ListStore:
+        """Returns the list of avalaible palettes"""
         return self._palettes
 
     def on_dark_changed(self, *_args):
+        """Run when the theme changes"""
         self.emit("style-changed")
         self.update_style_scheme()
 
     def get_dark(self):
+        """Returns true if the current theme is dark"""
         return self.adw_style_manager.get_dark()
 
     def get_current_scheme(self):
+        """Returns the current GtkSource style scheme"""
         if self.adw_style_manager.get_dark():
             scheme = self.palette.dark_source_name
             return self.style_scheme_manager.get_scheme(scheme)
@@ -174,12 +178,14 @@ class StyleManager(GObject.GObject):
             return self.style_scheme_manager.get_scheme(scheme)
 
     def get_current_colors(self):
+        """Returns the current list of colors"""
         if self.adw_style_manager.get_dark():
             return self.palette.dark_palette
         else:
             return self.palette.light_palette
 
     def update_style_scheme(self, *_args):
+        """Updates the libadwaita colors"""
         Gtk.StyleContext.remove_provider_for_display(
             Gdk.Display.get_default(), self.css_provider
         )

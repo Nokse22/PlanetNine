@@ -54,6 +54,7 @@ class ImagesPanel(Panel.Widget):
         GLib.timeout_add(500, self.check_for_new_images)
 
     def check_for_new_images(self):
+        """Run every half second to check if new images are added"""
         if not os.path.exists(self.images_path):
             return True
 
@@ -92,6 +93,7 @@ class ImagesPanel(Panel.Widget):
 
     @Gtk.Template.Callback("factory_setup")
     def factory_setup(self, _factory, list_item):
+        """Setup the widget to display an image"""
         picture = Gtk.Picture(
             margin_top=6,
             margin_bottom=6,
@@ -101,12 +103,15 @@ class ImagesPanel(Panel.Widget):
 
     @Gtk.Template.Callback("factory_bind")
     def factory_bind(self, _factory, list_item):
+        """Binds the widget to an image"""
         picture = list_item.get_child()
         image = list_item.get_item()
 
         picture.set_file(image)
 
     def on_image_selected(self, *_args):
+        """When the selection changes sets the main_picture to be the same as
+        the selected image"""
         self.main_picture.set_file(self.selection_model.get_selected_item())
 
     @Gtk.Template.Callback("on_click_released")
@@ -120,9 +125,11 @@ class ImagesPanel(Panel.Widget):
 
     @Gtk.Template.Callback("on_save_clicked")
     def on_save_clicked(self, *_args):
+        """Handles the save button clicked signal"""
         asyncio.create_task(self._save_file())
 
     async def _save_file(self):
+        """Saves an image to another file asyncronously"""
         source_file = self.selection_model.get_selected_item()
 
         file_dialog = Gtk.FileDialog(
@@ -167,9 +174,11 @@ class ImagesPanel(Panel.Widget):
 
     @Gtk.Template.Callback("on_copy_clicked")
     def on_copy_clicked(self, *_args):
+        """Handles the copy button clicked signal"""
         asyncio.create_task(self._copy_file())
 
     async def _copy_file(self):
+        """Copies the currently selected image"""
         source_file = self.selection_model.get_selected_item()
 
         try:
@@ -193,9 +202,11 @@ class ImagesPanel(Panel.Widget):
 
     @Gtk.Template.Callback("on_delete_clicked")
     def on_delete_clicked(self, *_args):
+        """Handles the delete button clicked signal"""
         asyncio.create_task(self._delete_file())
 
     async def _delete_file(self):
+        """Delete the currently selected image"""
         source_file = self.selection_model.get_selected_item()
 
         try:
@@ -211,9 +222,11 @@ class ImagesPanel(Panel.Widget):
 
     @Gtk.Template.Callback("on_open_external_window_clicked")
     def on_open_external_window_clicked(self, *_args):
+        """Handles the open in external window button clicked signal"""
         asyncio.create_task(self._open_file())
 
     async def _open_file(self):
+        """Opens the image in the sistem preferred image viewer"""
         source_file = self.selection_model.get_selected_item()
 
         launcher = Gtk.FileLauncher.new(source_file)

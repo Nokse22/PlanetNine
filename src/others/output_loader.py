@@ -23,7 +23,7 @@ from ..widgets.json_viewer import JsonViewer
 from ..widgets.terminal_textview import TerminalTextView
 from ..widgets.markdown_textview import MarkdownTextView
 
-from ..models.output import OutputType, DataType
+from ..models.output import OutputType, DataType, Output
 
 from gettext import gettext as _
 
@@ -100,7 +100,8 @@ class OutputLoader(GObject.GObject):
 
         self.output_box = _output_box
 
-    def add_output(self, output):
+    def add_output(self, output: Output):
+        """Adds an output to the output_box"""
         match output.output_type:
             case OutputType.STREAM:
                 self.add_output_text(output.text)
@@ -125,10 +126,9 @@ class OutputLoader(GObject.GObject):
             case OutputType.ERROR:
                 self.add_output_text(output.traceback)
 
-    def update_output(self, output):
-        print("UPDATING ", output, output.display_id)
+    def update_output(self, output: Output):
+        """Handles updating an output using display handle"""
         child = self.get_output_with_id(output.display_id)
-        print(child)
 
         match output.data_type:
             case DataType.TEXT:
@@ -150,6 +150,7 @@ class OutputLoader(GObject.GObject):
     #
 
     def add_output_text(self, text):
+        """Adds an output in an OutputTerminal used for any text output"""
         child = self.output_box.get_last_child()
         if not isinstance(child, OutputTerminal):
             child = OutputTerminal()
@@ -160,25 +161,29 @@ class OutputLoader(GObject.GObject):
     #   DISPLAY OUTPUTS
     #
 
-    def display_text(self, output):
+    def display_text(self, output: Output):
+        """Adds an output in an OutputTerminal used for any text display"""
         child = OutputTerminal()
         child.display_id = output.display_id
         self.output_box.append(child)
         child.insert_with_escapes(output.data_content)
 
-    def display_markdown(self, output):
+    def display_markdown(self, output: Output):
+        """Adds an markdown output"""
         child = OutputMarkdown()
         child.display_id = output.display_id
         self.output_box.append(child)
         child.set_text(output.data_content)
 
-    def display_json(self, output):
+    def display_json(self, output: Output):
+        """Adds an json output"""
         child = OutputJSON()
         child.display_id = output.display_id
         child.parse_json_string(output.data_content)
         self.output_box.append(child)
 
-    def display_latex(self, output):
+    def display_latex(self, output: Output):
+        """Renders and displays a latex string"""
         import matplotlib.pyplot as plt
 
         latex_image_path = os.path.join(
@@ -204,7 +209,8 @@ class OutputLoader(GObject.GObject):
 
         self.add_output_image(latex_image_path)
 
-    async def display_html(self, output):
+    async def display_html(self, output: Output):
+        """Adds a button to open an HTML file in the browser"""
         sha256_hash = random.randint(0, 1000000)
         html_page_path = os.path.join(self.html_path, f"{sha256_hash}.html")
 
@@ -223,7 +229,8 @@ class OutputLoader(GObject.GObject):
 
         self.output_box.append(child)
 
-    async def display_png_image(self, output):
+    async def display_png_image(self, output: Output):
+        """Adds an PNG image output"""
         image_data = base64.b64decode(output.data_content)
         sha256_hash = hashlib.sha256(image_data).hexdigest()
 
@@ -232,7 +239,8 @@ class OutputLoader(GObject.GObject):
 
         self.add_output_image(image_path)
 
-    async def display_svg_image(self, output):
+    async def display_svg_image(self, output: Output):
+        """Adds an SVG image output"""
         sha256_hash = await self.compute_hash(output.data_content)
 
         svg_path = os.path.join(self.images_path, f"{sha256_hash}.svg")
@@ -241,7 +249,8 @@ class OutputLoader(GObject.GObject):
 
         self.add_output_image(svg_path)
 
-    def add_output_image(self, image_path):
+    def add_output_image(self, image_path: str):
+        """Adds any image output from a image_path"""
         pixbuf = GdkPixbuf.Pixbuf.new_from_file(image_path)
         picture = OutputPicture()
         picture.set_pixbuf(pixbuf)
@@ -259,6 +268,7 @@ class OutputLoader(GObject.GObject):
     #
 
     async def save_file_async(self, content: bytes, file_path: str):
+        """Saves an image asyncronously"""
         file = Gio.File.new_for_path(file_path)
         output_stream = await file.replace_async(
             None, False, Gio.FileCreateFlags.NONE, GLib.PRIORITY_DEFAULT, None
@@ -273,9 +283,11 @@ class OutputLoader(GObject.GObject):
         )
 
     async def compute_hash(self, content: str) -> str:
+        """Computes the hash of a string"""
         return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
-    def get_output_with_id(self, display_id):
+    def get_output_with_id(self, display_id: str):
+        """Returns the widget with display_id to be updated"""
         child = self.output_box.get_last_child()
         while child:
             print(child.display_id)

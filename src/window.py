@@ -334,6 +334,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def on_new_notebook_action(self, action, variant):
+        """Creates a new notebook page with a requested kernel by name"""
         notebook_page = NotebookPage(None, kernel_name=variant.get_string())
         self.panel_grid.add(notebook_page)
 
@@ -342,6 +343,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def on_new_notebook_id_action(self, action, variant):
+        """Creates a new notebook page with an existing kernel by id"""
         notebook_page = NotebookPage(None, kernel_id=variant.get_string())
         self.panel_grid.add(notebook_page)
 
@@ -350,6 +352,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def on_new_console_action(self, action, variant):
+        """Creates a new console page with a requested kernel by name"""
         console_page = ConsolePage(kernel_name=variant.get_string())
         self.panel_grid.add(console_page)
 
@@ -358,6 +361,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def on_new_console_id_action(self, action, variant):
+        """Creates a new console page with an existing kernel by id"""
         console_page = ConsolePage(kernel_id=variant.get_string())
         self.panel_grid.add(console_page)
 
@@ -366,6 +370,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def on_new_code_action(self, action, variant):
+        """Creates a new code page with a requested kernel by name"""
         code_page = CodePage(None, kernel_name=variant.get_string())
         self.panel_grid.add(code_page)
 
@@ -374,6 +379,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def on_new_code_id_action(self, action, variant):
+        """Creates a new code page with an existing kernel by id"""
         code_page = CodePage(None, kernel_id=variant.get_string())
         self.panel_grid.add(code_page)
 
@@ -382,10 +388,16 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def on_request_kernel_name(self, action, variant):
+        """Handles the request-kernel-name action"""
+
         page_id, kernel_name = variant.unpack()
         asyncio.create_task(self._on_request_kernel_name(page_id, kernel_name))
 
     async def _on_request_kernel_name(self, page_id, kernel_name):
+        """Handles the request-kernel-name action asynchronously
+        and starts the new kernel and adds it to the page with
+        the corresponding page_id"""
+
         page = self.find_ikernel_page(page_id)
         if page:
             success, kernel = await self.jupyter_server.start_kernel_by_name(
@@ -396,10 +408,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 self.update_kernel_info(page)
 
     def on_request_kernel_id(self, action, variant):
-        page_id, kernel_id = variant.unpack()
-        asyncio.create_task(self._on_request_kernel_id(page_id, kernel_id))
+        """Handles the request-kernel-id action by retriving the requested
+        kernel and adding it to the page with the corresponding page_id"""
 
-    async def _on_request_kernel_id(self, page_id, kernel_id):
+        page_id, kernel_id = variant.unpack()
         page = self.find_ikernel_page(page_id)
         if page:
             success, kernel = self.jupyter_server.get_kernel_by_id(
@@ -410,6 +422,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 self.update_kernel_info(page)
 
     def find_ikernel_page(self, page_id):
+        """Finds the page with the corresponding page_id"""
+
         result = None
 
         def check_frame(frame):
@@ -430,6 +444,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def start_server(self, *_args):
+        """Starts the Jupyter Kernel"""
+
         self.jupyter_server.start()
         self.change_kernel_action.set_enabled(True)
         self.start_server_action.set_enabled(False)
@@ -439,11 +455,14 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def shutdown_kernel_by_id(self, action, variant):
+        """Shutsdown a kernel given an id"""
+
         asyncio.create_task(self._shutdown_kernel_by_id(variant.get_string()))
 
     async def _shutdown_kernel_by_id(self, kernel_id):
-        choice = await dialog_choose_async(self, self.shutdown_kernel_dialog)
+        """Shutsdown a kernel given an id asynchronously"""
 
+        choice = await dialog_choose_async(self, self.shutdown_kernel_dialog)
         if choice == 'shutdown':
             success = await self.jupyter_server.shutdown_kernel(kernel_id)
             if success:
@@ -456,11 +475,14 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def restart_kernel_by_id(self, action, variant):
+        """Restart a kernel given an id"""
+
         asyncio.create_task(self._restart_kernel_by_id(variant.get_string()))
 
     async def _restart_kernel_by_id(self, kernel_id):
-        choice = await dialog_choose_async(self, self.restart_kernel_dialog)
+        """Restart a kernel given an id asynchronously"""
 
+        choice = await dialog_choose_async(self, self.restart_kernel_dialog)
         if choice == 'restart':
             success = await self.jupyter_server.restart_kernel(kernel_id)
             if success:
@@ -475,10 +497,14 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def interrupt_kernel_by_id(self, action, variant):
+        """Interrupt a kernel given an id"""
+
         asyncio.create_task(self._interrupt_kernel_by_id(variant.get_string()))
 
     def _interrupt_kernel_by_id(self, kernel_id):
-        success = self.jupyter_server.interrupt_kernel(kernel_id)
+        """Interrupt a kernel given an id asynchronously"""
+
+        success = await self.jupyter_server.interrupt_kernel(kernel_id)
         if success:
             print("kernel has been interrupted")
         else:
@@ -489,6 +515,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def restart_kernel_visible(self, *_args):
+        """Restart the visible page kernel"""
+
         kernel_id = self.get_visible_page().get_kernel().kernel_id
         self.activate_action(
             "win.restart-kernel-id", GLib.Variant('s', kernel_id))
@@ -498,9 +526,13 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def restart_kernel_and_run(self, *_args):
+        """Restart the visible page kernel and runs all cells"""
+
         asyncio.create_task(self._restart_kernel_and_run())
 
     async def _restart_kernel_and_run(self):
+        """Restart the visible page kernel and runs all cells asynchronously"""
+
         kernel_id = self.get_visible_page().get_kernel().kernel_id
 
         success = await self._restart_kernel_by_id(kernel_id)
@@ -513,12 +545,16 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def save_viewed(self):
+        """Saves the visible page"""
+
         page = self.get_visible_page()
         if isinstance(page, ISaveable):
             page.get_save_delegate().save_async(
                 None, self.on_saved_finished)
 
     def on_saved_finished(self, delegate, result):
+        """Save operation finish callback"""
+
         print("saved")
 
     #
@@ -526,6 +562,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def open_browser_page(self, action, variant):
+        """Opens a new Browser page with a starting url or the default
+        if empty"""
+
         page = BrowserPage(variant.get_string())
         self.panel_grid.add(page)
 
@@ -534,12 +573,16 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def create_action(self, name, callback):
+        """Used to create a new action without target"""
+
         action = Gio.SimpleAction.new(name, None)
         action.connect("activate", callback)
         self.add_action(action)
         return action
 
     def create_action_with_target(self, name, target_type, callback):
+        """Used to create a new action with a target"""
+
         action = Gio.SimpleAction.new(name, target_type)
         action.connect("activate", callback)
         self.add_action(action)
@@ -550,9 +593,13 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def on_open_notebook_action(self, *_args):
+        """Opens a new notebook using a File dialog"""
+
         asyncio.create_task(self._on_open_notebook_action())
 
     async def _on_open_notebook_action(self):
+        """Opens a new notebook using a File dialog asynchronously"""
+
         file_filter = Gtk.FileFilter(name=_("All supported formats"))
         file_filter.add_pattern("*.ipynb")
         filter_list = Gio.ListStore.new(Gtk.FileFilter())
@@ -564,14 +611,18 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         )
         try:
             file = await dialog.open(self)
-            self.open_notebook(file.get_path())
+            self.panel_grid.add(NotebookPage(file.get_path()))
         except Exception as e:
             print(e)
 
     def on_open_code_action(self, *_args):
+        """Opens a new code page using a File dialog"""
+
         asyncio.create_task(self._on_open_code_action())
 
     async def _on_open_code_action(self):
+        """Opens a new code page using a File dialog asynchronously"""
+
         file_filter = Gtk.FileFilter(name=_("All supported formats"))
         file_filter.add_pattern("*.py")
         filter_list = Gio.ListStore.new(Gtk.FileFilter())
@@ -584,7 +635,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         try:
             file = await dialog.open(self)
-            self.open_code(file.get_path())
+            self.panel_grid.add(CodePage(file.get_path()))
         except Exception as e:
             print(e)
 
@@ -593,11 +644,13 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def on_open_file_action(self, action, variant):
+        """Handles the open-file action, takes the file's path"""
         file_path = variant.get_string()
 
         self.open_file(file_path)
 
     def open_file(self, file_path):
+        """Opens a file given his path, if already open it raises it's page"""
         if self.raise_page_if_open(file_path):
             return
 
@@ -629,6 +682,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                     launcher.launch(self, None, None)
 
     def open_file_with_text(self, action, variant):
+        """Opens a file using the Text page"""
         file_path = variant.get_string()
 
         if self.raise_page_if_open(file_path):
@@ -636,13 +690,13 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.panel_grid.add(TextPage(file_path))
 
-    def open_notebook(self, file_path=None):
-        self.panel_grid.add(NotebookPage(file_path))
-
-    def open_code(self, file_path):
-        self.panel_grid.add(CodePage(file_path))
-
     def raise_page_if_open(self, file_path):
+        """Raises a page if it has opened a file with the same path
+
+        :returns: if a page has been raised
+        :rtypes: bool
+        """
+
         result = False
 
         def check_frame(frame):
@@ -660,6 +714,12 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         return result
 
     def raise_page(self, rise_page):
+        """Raises a page
+
+        :returns: if a page has been raised
+        :rtypes: bool
+        """
+
         result = False
 
         def check_frame(frame):
@@ -680,6 +740,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def on_focus_changed(self, *_args):
+        """Called when the focused widget changes it checks the visible page
+        properties and connects signals/shows hide UI based on it
+        """
+
         page = self.get_visible_page()
 
         self.disconnect_page_funcs(self.previous_page)
@@ -731,6 +795,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.previous_page = page
 
     def update_kernel_info(self, page):
+        """Updates the UI with the page kernel information or hides UI if
+        the kernel is None
+        """
+
         if page:
             kernel = page.get_kernel()
             if kernel:
@@ -759,6 +827,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self.restart_kernel_action.set_enabled(False)
 
     def update_page_language(self, page):
+        """Updates the UI with the page language"""
+
         lang = page.get_language()
         if lang == "" or lang is None:
             lang = _("None")
@@ -766,6 +836,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.language_button.set_label(lang.title())
 
     def on_cursor_moved(self, page, buffer, index):
+        """Updates the UI with the new cursor position"""
+
         if buffer is None:
             return
         insert_mark = buffer.get_insert()
@@ -792,6 +864,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 entry_position, len(entry_position))
 
     def disconnect_page_funcs(self, page):
+        """Disconnect all functions connected to the previously visible page"""
+
         if isinstance(page, IKernel):
             page.disconnect_by_func(self.update_kernel_info)
         if isinstance(page, ICursor):
@@ -805,6 +879,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     @Gtk.Template.Callback("on_move_cursor_activated")
     def on_move_cursor_activated(self, *_args):
+        """Handles clicking the cursor GO button or activating the entry"""
+
         page = self.get_visible_page()
         if isinstance(page, ICursor):
             text = self.move_cursor_entry_buffer.get_text()
@@ -820,19 +896,26 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def on_change_kernel_action(self, action, target):
+        """Handles the change-kernel action
+
+        If the target is empty it changes the visible page kernel, if not it
+        finds the page with the corresponding page_id and raises it
+        """
+
         if target.get_string() == "":
             page = self.get_visible_page()
         else:
             page = self.find_ikernel_page(target.get_string())
+            self.raise_page(page)
 
         if page:
             asyncio.create_task(self._change_kernel(page))
 
     async def _change_kernel(self, page):
-        self.select_kernel_combo_row.set_selected(0)
-        # 2 + len of avalab kernels + pos in kernels
+        """Changes the kernel of the given page by showing a dialog"""
 
-        self.raise_page(page)
+        self.select_kernel_combo_row.set_selected(0)
+        # TODO start with the current kernel
 
         choice = await dialog_choose_async(self, self.select_kernel_dialog)
 
@@ -858,13 +941,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #   CHARGE/SELECT KERNEL ALERT DIALOG LIST VIEW
     #
 
-    def create_sub_models(self, item):
-        if isinstance(item, Gio.ListStore):
-            return item
-        return None
-
     @Gtk.Template.Callback("on_select_kernel_header_setup")
     def on_select_kernel_header_setup(self, factory, list_item):
+        """Setup a change kernel dialog list view header"""
+
         list_item.set_child(
             Gtk.Label(
                 xalign=0,
@@ -875,10 +955,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     @Gtk.Template.Callback("on_select_kernel_header_bind")
     def on_select_kernel_header_bind(self, factory, list_item):
+        """Binds a change kernel dialog list view header"""
+
         item = list_item.get_item()
         label = list_item.get_child()
-
-        print("HEADER ", item)
 
         # FIXME It would be better to have a way to get the name stored
         #           in the MultiListModel
@@ -889,6 +969,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     @Gtk.Template.Callback("on_select_kernel_setup")
     def on_select_kernel_setup(self, factory, list_item):
+        """Setup the change kernel dialog list view widgets"""
+
         list_item.set_child(
             Gtk.Label(
                 xalign=0,
@@ -899,6 +981,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     @Gtk.Template.Callback("on_select_kernel_bind")
     def on_select_kernel_bind(self, factory, list_item):
+        """Binds a change kernel dialog list view widget to a list_item"""
+
         item = list_item.get_item()
         label = list_item.get_child()
 
@@ -909,6 +993,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def search_visible_page(self):
+        """Handles app.search action"""
+
         page = self.get_visible_page()
 
         if isinstance(page, ISearchable):
@@ -918,7 +1004,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     @Gtk.Template.Callback("on_search_changed")
     def on_search_changed(self, *_args):
-        print("search changed")
+        """Callback to the search entry search-changed signal"""
+
         page = self.get_visible_page()
         if isinstance(page, ISearchable):
             page.set_search_text(self.search_entry.get_text())
@@ -926,14 +1013,20 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     @Gtk.Template.Callback("on_search_next_match")
     def on_search_next_match(self, *_args):
+        """Handles focusing to the next search match"""
+
         pass
 
     @Gtk.Template.Callback("on_search_previous_match")
     def on_search_previous_match(self, *_args):
+        """Handles focusing to the previous search match"""
+
         pass
 
     @Gtk.Template.Callback("on_search_close_clicked")
     def on_search_close_clicked(self, *_args):
+        """Callback to the search bar close button clicked signal"""
+
         self.toolbar_view.set_reveal_bottom_bars(False)
 
         page = self.get_visible_page()

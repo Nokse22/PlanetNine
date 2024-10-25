@@ -46,10 +46,12 @@ class VariablesPanel(Panel.Widget):
             "bind", self.on_factory_bind, "value")
 
     def set_model(self, variables):
+        """Sets the variables model where all variables are stored"""
         selection = Gtk.NoSelection.new(model=variables)
         self.column_view.set_model(model=selection)
 
     def on_factory_setup(self, _factory, list_item):
+        """Setup the variable list view widget"""
         label = Gtk.Label(ellipsize=3)
         label.set_selectable(True)
         label.set_xalign(0)
@@ -57,6 +59,7 @@ class VariablesPanel(Panel.Widget):
         list_item.set_child(label)
 
     def on_factory_bind(self, _factory, list_item, attr):
+        """Binds the widget to the variable"""
         widget = list_item.get_child()
         variable = list_item.get_item()
 
@@ -70,6 +73,7 @@ class VariablesPanel(Panel.Widget):
         widget.set_label(value)
 
     def disconnect(self, *_args):
+        """Disconnect all signals"""
         for column in self.column_view.get_columns():
             factory = column.get_factory()
             factory.disconnect_by_func(self.on_factory_setup)

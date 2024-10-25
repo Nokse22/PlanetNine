@@ -72,7 +72,7 @@ class BrowserPage(Panel.Widget, IDisconnectable):
 
         if _initial_uri:
             self.web_view.load_uri(_initial_uri)
-        else:
+        elif _initial_uri is None or _initial_uri == "":
             self.web_view.load_uri(
                 self.settings.get_string('browser-default-url'))
 

@@ -16,9 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
-
-from gi.repository import Gtk
-
 from .terminal_panel import TerminalPanel
 
 
@@ -31,12 +28,14 @@ class KernelTerminalPanel(TerminalPanel):
         self.kernel = None
 
     def set_kernel(self, kernel):
+        """Handles setting the kernel"""
         if not kernel:
             self.vte_terminal.reset(True, True)
         elif kernel != self.kernel:
             self.change_kernel(kernel)
 
     def change_kernel(self, kernel):
+        """Handles changing the viewed page so the kernel too"""
         self.vte_terminal.reset(True, True)
         for msg in kernel.get_messages():
             for line in msg.splitlines():
