@@ -9,7 +9,7 @@
       <colors name="solarized"/>
     </palette>
     <palette name="Tango">
-      <source light="tango" dark="oblivion"/>
+      <source light="tango-light" dark="oblivion-dark"/>
       <colors name="tango"/>
     </palette>
     <palette name="Campbell">

@@ -90,7 +90,7 @@ class IKernel:
 
         self.emit("kernel-info-changed")
 
-    def on_kernel_info_changed(self):
+    def on_kernel_info_changed(self, *_args):
         """Emits the signal kernel-info-changed
 
         Run whenever the status or the kernel itself changes

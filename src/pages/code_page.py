@@ -192,8 +192,6 @@ class CodePage(
 
         print(content)
 
-        # TODO add the output somewhere
-
         if msg_type == 'stream':
             print("Stream")
 
@@ -217,12 +215,15 @@ class CodePage(
     def set_language(self, _language):
         """Overrides the ILanguage interface set_language method to use
         custom language definition that supports highlighting cells"""
+
         self.language = _language
+
+        print(self.language_manager.get_language_ids())
 
         if self.language + "cells" in self.language_manager.get_language_ids():
             lang = self.language_manager.get_language(self.language + "cells")
         else:
-            lang = self.language
+            lang = self.language_manager.get_language(self.language)
 
         # TODO change the language based on the file mimetype
 

@@ -21,13 +21,14 @@ from gi.repository import Gtk, GObject, Gio
 from gi.repository import Panel, GtkSource
 from gi.repository import Spelling
 
-from ..utils.converters import get_language_highlight_name
+# from ..utils.converters import get_language_highlight_name
 
 from ..interfaces.saveable import ISaveable
 from ..interfaces.disconnectable import IDisconnectable
 from ..interfaces.cursor import ICursor
 from ..interfaces.language import ILanguage
 from ..interfaces.style_update import IStyleUpdate
+from ..interfaces.searchable import ISearchable
 
 import asyncio
 
@@ -38,7 +39,7 @@ GObject.type_register(GtkSource.VimIMContext)
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/text_page.ui')
 class TextPage(
         Panel.Widget, ISaveable, IDisconnectable, ICursor, ILanguage,
-        IStyleUpdate):
+        IStyleUpdate, ISearchable):
     __gtype_name__ = 'TextPage'
 
     path = GObject.Property(type=str, default="")
@@ -52,6 +53,7 @@ class TextPage(
         ILanguage.__init__(self, **kwargs)
         ISaveable.__init__(self, **kwargs)
         IStyleUpdate.__init__(self, **kwargs)
+        ISearchable.__init__(self, **kwargs)
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
@@ -86,6 +88,8 @@ class TextPage(
                     file_path, None)
                 if language:
                     self.set_language(language.get_id())
+
+                self.set_modified(False)
 
         except Exception as e:
             print(e)

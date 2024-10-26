@@ -3,6 +3,7 @@
 <style-scheme id="xterm-dark" name="XTerm Dark" version="1.0">
 
   <color name="Foreground" value="#ffffff"/>
+  <color name="Background" value="#000000"/>
   <color name="Cursor" value="#ffffff"/>
   <color name="Gutter" value="#3f3f3f"/>
   <color name="CurrentLine" value="#0c0c0c"/>
@@ -22,7 +23,6 @@
   <color name="Color13" value="#ff00ff"/>
   <color name="Color14" value="#00ffff"/>
   <color name="Color15" value="#ffffff"/>
-  <color name="Background" value="#000000" />
 
   <style name="text" background="Background" foreground="Foreground"/>
   <style name="cursor" foreground="Cursor"/>

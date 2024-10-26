@@ -31,6 +31,7 @@ from ..interfaces.language import ILanguage
 from ..interfaces.saveable import ISaveable
 from ..interfaces.cursor import ICursor
 from ..interfaces.style_update import IStyleUpdate
+from ..interfaces.searchable import ISearchable
 
 import os
 
@@ -39,7 +40,7 @@ import os
     resource_path='/io/github/nokse22/PlanetNine/gtk/json_viewer_page.ui')
 class JsonViewerPage(
         Panel.Widget, IDisconnectable, ILanguage, ISaveable, ICursor,
-        IStyleUpdate):
+        IStyleUpdate, ISearchable):
     __gtype_name__ = 'JsonViewerPage'
 
     path = GObject.Property(type=str, default="")
@@ -54,6 +55,8 @@ class JsonViewerPage(
         ICursor.__init__(self, **kwargs)
         IStyleUpdate.__init__(self, **kwargs)
         ISaveable.__init__(self, **kwargs)
+        ILanguage.__init__(self, **kwargs)
+        ISearchable.__init__(self, **kwargs)
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
@@ -72,14 +75,6 @@ class JsonViewerPage(
 
         adapter.set_enabled(True)
 
-        # ADD SAVE DELEGATE
-
-        self.save_delegate = GenericSaveDelegate(self)
-        self.set_save_delegate(self.save_delegate)
-
-        if not _path:
-            self.save_delegate.set_is_draft(True)
-
         # LOAD File
 
         if _path:
@@ -89,6 +84,8 @@ class JsonViewerPage(
             self.buffer.set_text(content)
 
             self.set_path(_path)
+
+            self.set_modified(False)
 
         # SETUP the page
 

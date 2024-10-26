@@ -113,10 +113,10 @@ class JupyterKernel(GObject.GObject):
         self.exec_msg_callback = None
         self.exec_msg_arguments = None
 
-        asyncio.create_task(self.__get_control_msg())
-        asyncio.create_task(self.__get_iopub_msg())
-        # asyncio.create_task(self.__get_stdin_msg())
-        # asyncio.create_task(self.__get_shell_msg())
+        asyncio.create_task(self._get_control_msg())
+        asyncio.create_task(self._get_iopub_msg())
+        # asyncio.create_task(self._get_stdin_msg())
+        # asyncio.create_task(self._get_shell_msg())
 
     def __connect(self):
         connection_file_path = f"{
@@ -134,7 +134,7 @@ class JupyterKernel(GObject.GObject):
 
         print(f"Kernel Started: \n{self.kernel_client.comm_info()}")
 
-    async def __get_control_msg(self):
+    async def _get_control_msg(self):
         while True:
             try:
                 msg = await self.kernel_client.get_control_msg()
@@ -144,7 +144,7 @@ class JupyterKernel(GObject.GObject):
             except Exception as e:
                 print(f"Exception while getting control msg:\n{e}")
 
-    async def __get_iopub_msg(self):
+    async def _get_iopub_msg(self):
         while True:
             try:
                 msg = await self.kernel_client.get_iopub_msg()
@@ -207,7 +207,7 @@ class JupyterKernel(GObject.GObject):
                 print(f"Exception while getting iopub msg: {e}")
                 traceback.print_exc()
 
-    async def __get_shell_msg(self):
+    async def _get_shell_msg(self):
         while True:
             try:
                 msg = await self.kernel_client.get_shell_msg()
@@ -217,7 +217,7 @@ class JupyterKernel(GObject.GObject):
             except Exception as e:
                 print(f"Exception while getting shell msg:\n{e}")
 
-    async def __get_stdin_msg(self):
+    async def _get_stdin_msg(self):
         while True:
             try:
                 msg = await self.kernel_client.get_stdin_msg()
@@ -231,6 +231,8 @@ class JupyterKernel(GObject.GObject):
         self.execution_queue.append((code, callback, *args))
 
         print("EXECUTE: ", self.executing, len(self.execution_queue), code)
+
+        self.get_completion("")
 
         if not self.executing:
             self.executing = True
@@ -304,3 +306,6 @@ class JupyterKernel(GObject.GObject):
 
     def get_messages(self):
         return self.messages
+
+    def get_completion(self, context):
+        print("COMPLETION: ", self.kernel_client.complete(context))

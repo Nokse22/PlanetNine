@@ -55,7 +55,7 @@ class MatrixPage(Panel.Widget, ILanguage):
 
         # LOAD File
 
-        self.set_path(_path)
+        self.set_title(os.path.basename(_path))
 
         asyncio.create_task(self._load_file(_path))
 

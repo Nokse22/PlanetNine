@@ -3,6 +3,7 @@
 <style-scheme id="campbell-dark" name="Campbell Dark" version="1.0">
 
   <color name="Foreground" value="#777777"/>
+  <color name="Background" value="#090909"/>
   <color name="Cursor" value="#777777"/>
   <color name="Gutter" value="#262626"/>
   <color name="CurrentLine" value="#111111"/>
@@ -22,7 +23,6 @@
   <color name="Color13" value="#b4009e"/>
   <color name="Color14" value="#61d6d6"/>
   <color name="Color15" value="#f2f2f2"/>
-  <color name="Background" value="#090909" />
 
   <style name="text" background="Background" foreground="Foreground"/>
   <style name="cursor" foreground="Cursor"/>

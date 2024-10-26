@@ -326,8 +326,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         if self.settings.get_boolean("start-server-immediately"):
             self.jupyter_server.start()
-            self.change_kernel_action.set_enabled(True)
-            self.start_server_action.set_enabled(False)
 
     #
     #   NEW NOTEBOOK PAGE WITH KERNEL NAME
@@ -447,8 +445,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         """Starts the Jupyter Kernel"""
 
         self.jupyter_server.start()
-        self.change_kernel_action.set_enabled(True)
-        self.start_server_action.set_enabled(False)
 
     #
     #   SHUTDOWN KERNEL BY ID
@@ -501,7 +497,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         asyncio.create_task(self._interrupt_kernel_by_id(variant.get_string()))
 
-    def _interrupt_kernel_by_id(self, kernel_id):
+    async def _interrupt_kernel_by_id(self, kernel_id):
         """Interrupt a kernel given an id asynchronously"""
 
         success = await self.jupyter_server.interrupt_kernel(kernel_id)
@@ -1038,19 +1034,24 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def close(self):
+        """Called when the user request the app to be closed"""
+
         self.panel_grid.agree_to_close_async(None, self.finish_close)
         return True
 
     def finish_close(self, _grid, result):
+        """Callback to the close function after having closed all pages"""
+
         try:
             success = self.panel_grid.agree_to_close_finish(result)
-            print("RESULT: ", success)
             if success:
                 asyncio.create_task(self._quit())
         except Exception as e:
             print(e)
 
     async def _quit(self):
+        """Asynchronously shutdown the server with a confirmation dialog"""
+
         if self.jupyter_server.get_is_running():
             choice = await dialog_choose_async(self, self.quit_dialog)
 
@@ -1066,32 +1067,50 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def add_cell_to_page(self, cell_type):
+        """Add cell of type cell_type to the visible page"""
+
         page = self.get_visible_page()
         if isinstance(page, ICells):
             page.add_cell(cell_type)
 
     def on_run(self, *_args):
+        """Run the visible page selected cell"""
+
         page = self.get_visible_page()
         if isinstance(page, ICells):
             page.run_selected_cell()
 
     def on_run_and_advance(self, *_args):
+        """Run the visible page selected cell and advance to the next one"""
+
         page = self.get_visible_page()
         if isinstance(page, ICells):
             page.run_selected_and_advance()
 
     def on_run_line(self, *_args):
+        """Run the visible page line, only for CodePage"""
+
         page = self.get_visible_page()
         if isinstance(page, CodePage):
             page.run_line()
 
     def on_jupyter_server_started(self, server):
+        """Callback to the Server started signal, updates the UI"""
+
         self.server_status_label.set_label("Server Connected")
 
+        self.change_kernel_action.set_enabled(True)
+        self.start_server_action.set_enabled(False)
+
     def on_jupyter_server_has_new_line(self, server, line):
+        """Callback to the Server new-line signal,
+        updates the Server Terminal Panel"""
+
         self.server_terminal.feed(line)
 
     def get_visible_page(self):
+        """Returns the visible page"""
+
         try:
             return self.panel_grid.get_most_recent_frame().get_visible_child()
         except Exception as e:
@@ -1100,6 +1119,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     @Gtk.Template.Callback("on_create_frame")
     def on_create_frame(self, *_args):
+        """create frame function for panel_grid"""
+
         new_frame = Panel.Frame()
         new_frame.set_placeholder(
             Launcher(self.jupyter_server.avalaible_kernels))
@@ -1111,6 +1132,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         return new_frame
 
     def on_page_closed(self, frame, widget):
+        """Callback to any frame page-closed signal"""
+
         if widget == self.previous_page:
             self.disconnect_page_funcs(widget)
 
@@ -1132,6 +1155,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                             self._shutdown_kernel_by_id(kernel_id))
 
     def get_page_with_kernel(self, kernel_id):
+        """Returns a page with a specific kernel by kernel_id"""
+
         result = None
 
         def check_frame(frame):
@@ -1149,6 +1174,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     @Gtk.Template.Callback("on_key_pressed")
     def on_key_pressed(self, controller, keyval, keycode, state):
+        """Callback to the KeyController key-pressed signal"""
+
         print(keyval, keycode, state)
 
         if keycode == 36 and state == Gdk.ModifierType.CONTROL_MASK:
@@ -1159,6 +1186,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #
 
     def on_select_cell_action(self, action, variant):
+        """Handles the select-cell action, takes the cell index to select"""
+
         notebook = self.get_visible_page()
         if not isinstance(notebook, NotebookPage):
             return
@@ -1167,6 +1196,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     @Gtk.Template.Callback("on_chapter_menu_activated")
     def on_chapter_menu_activated(self, *_args):
+        """Run when the chapter menu popover is activate to populate it"""
+
         page = self.get_visible_page()
         if not isinstance(page, NotebookPage):
             return
@@ -1182,7 +1213,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 for match in matches:
                     chapters.append((len(match[0]), match[1].strip(), index))
 
-        print(chapters)
         chapter_model = Gio.ListStore.new(TreeNode)
 
         level_stack = []
@@ -1215,6 +1245,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.chapters_list_view.set_model(selection_model)
 
     def create_model_func(self, item):
+        """Chapter tree create sub model function"""
+
         if item.children == []:
             return None
 
@@ -1225,10 +1257,14 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     @Gtk.Template.Callback("on_chapter_factory_setup")
     def on_chapter_factory_setup(self, factory, list_item):
+        """Factory setup for chapter listview"""
+
         list_item.set_child(ChapterRow(css_classes=["chapter-button"]))
 
     @Gtk.Template.Callback("on_chapter_factory_bind")
     def on_chapter_factory_bind(self, factory, list_item):
+        """Factory bind for chapter listview"""
+
         item = list_item.get_item()
         widget = list_item.get_child()
         widget.expander.set_list_row(item)

@@ -135,6 +135,8 @@ class StyleManager(GObject.GObject):
 
         self.css_provider = Gtk.CssProvider()
 
+        print(self.style_scheme_manager.get_scheme_ids())
+
     @GObject.Property(type=int)
     def selected(self):
         return self._selected
@@ -205,9 +207,10 @@ class StyleManager(GObject.GObject):
         :root {{
             --primary-bg-color: {primary};
             --primary-fg-color: {secondary};
-            --headerbar-bg-color: {titlebar_bg};
-            --headerbar-fg-color: {titlebar_fg};
-            --headerbar-border-color: var(--window-fg-color);
+            --headerbar-bg-color: {primary};
+            --headerbar-fg-color: {secondary};
+            --headerbar-backdrop-color: mix(var(--headerbar-bg-color), var(--headerbar-bg-color), .5);
+            --headerbar-shade-color: alpha(var(--primary-fg-color), 0.2);
             --window-bg-color: {primary};
             --window-fg-color: {secondary};
             --view-bg-color: color-mix(in srgb, {primary} 90%, {secondary} 10%);

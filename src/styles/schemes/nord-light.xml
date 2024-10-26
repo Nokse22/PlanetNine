@@ -3,6 +3,7 @@
 <style-scheme id="nord-light" name="Nord Light" version="1.0">
 
   <color name="Foreground" value="#414858"/>
+  <color name="Background" value="#f7faff"/>
   <color name="Cursor" value="#414858"/>
   <color name="Gutter" value="#bcc0ca"/>
   <color name="CurrentLine" value="#dce0e8"/>
@@ -22,7 +23,6 @@
   <color name="Color13" value="#b48dac"/>
   <color name="Color14" value="#8fbcbb"/>
   <color name="Color15" value="#eceff4"/>
-  <color name="Background" value="#f7faff" />
 
   <style name="text" background="Background" foreground="Foreground"/>
   <style name="cursor" foreground="Cursor"/>

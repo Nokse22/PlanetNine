@@ -146,6 +146,9 @@ class NotebookPage(
         if cell.executing:
             return
 
+        self.notebook_model.jupyter_kernel.get_completion(cell.source)
+        return
+
         if cell.source.startswith("!"):
             cell.reset_output()
             self.command_line.run_command(
@@ -493,7 +496,7 @@ class NotebookPage(
         """Overrides the set_search_text of the ISearchable interface"""
         for index in range(0, self.notebook_model.get_n_items()):
             cell = self.cells_list_box.get_row_at_index(index).get_child()
-            cell.set_search_text()
+            cell.set_search_text(text)
 
     #
     #   Implement Disconnectable Interface

@@ -30,6 +30,8 @@
     <file preprocess="xml-stripblanks">styles/schemes/xterm-light.xml</file>
     <file preprocess="xml-stripblanks">styles/schemes/catppuccin-dark.xml</file>
     <file preprocess="xml-stripblanks">styles/schemes/catppuccin-light.xml</file>
+    <file preprocess="xml-stripblanks">styles/schemes/oblivion-dark.xml</file>
+    <file preprocess="xml-stripblanks">styles/schemes/tango-light.xml</file>
 
     <file preprocess="xml-stripblanks">gtk/window.ui</file>
     <file preprocess="xml-stripblanks">gtk/cell.ui</file>

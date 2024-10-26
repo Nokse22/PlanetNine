@@ -3,6 +3,7 @@
 <style-scheme id="gnome-light" name="GNOME Light" version="1.0">
 
   <color name="Foreground" value="#1e1e1e"/>
+  <color name="Background" value="#ffffff"/>
   <color name="Cursor" value="#1e1e1e"/>
   <color name="Gutter" value="#c6c6c6"/>
   <color name="CurrentLine" value="#f3f3f3"/>
@@ -22,7 +23,6 @@
   <color name="Color13" value="#c061cb"/>
   <color name="Color14" value="#33c7de"/>
   <color name="Color15" value="#ffffff"/>
-  <color name="Background" value="#ffffff" />
 
   <style name="text" background="Background" foreground="Foreground"/>
   <style name="cursor" foreground="Cursor"/>

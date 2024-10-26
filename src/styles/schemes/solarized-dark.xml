@@ -3,6 +3,7 @@
 <style-scheme id="solarized-dark" name="Solarized Dark" version="1.0">
 
   <color name="Foreground" value="#839496"/>
+  <color name="Background" value="#00222b"/>
   <color name="Cursor" value="#839496"/>
   <color name="Gutter" value="#20454e"/>
   <color name="CurrentLine" value="#06303a"/>
@@ -22,7 +23,6 @@
   <color name="Color13" value="#6c71c4"/>
   <color name="Color14" value="#93a1a1"/>
   <color name="Color15" value="#fdf6e3"/>
-  <color name="Background" value="#00222b" />
 
   <style name="text" background="Background" foreground="Foreground"/>
   <style name="cursor" foreground="Cursor"/>

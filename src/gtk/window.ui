@@ -122,6 +122,7 @@
                     <property name="valign">center</property>
                     <child>
                       <object class="GtkSearchEntry" id="search_entry">
+                        <property name="search-delay">50</property>
                         <signal name="search-changed" handler="on_search_changed"/>
                         <signal name="next-match" handler="on_search_next_match"/>
                         <signal name="previous-match" handler="on_search_previous_match"/>
