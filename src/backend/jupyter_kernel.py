@@ -95,6 +95,10 @@ class JupyterKernel(GObject.GObject):
         self.address = ""
         self.token = ""
 
+        self.shell_futures: Dict[str, asyncio.Future] = {}
+
+        self._running = False
+
         self._variables = Gio.ListStore()
 
         self.messages = []
@@ -113,10 +117,14 @@ class JupyterKernel(GObject.GObject):
         self.exec_msg_callback = None
         self.exec_msg_arguments = None
 
+        self.comp_msg_id = ""
+        self.comp_msg_callback = None
+        self.comp_msg_arguments = None
+
         asyncio.create_task(self._get_control_msg())
         asyncio.create_task(self._get_iopub_msg())
         # asyncio.create_task(self._get_stdin_msg())
-        # asyncio.create_task(self._get_shell_msg())
+        asyncio.create_task(self._get_shell_msg())
 
     def __connect(self):
         connection_file_path = f"{
@@ -132,10 +140,12 @@ class JupyterKernel(GObject.GObject):
         self.kernel_client.load_connection_info(connection_info)
         self.kernel_client.start_channels()
 
+        self._running = True
+
         print(f"Kernel Started: \n{self.kernel_client.comm_info()}")
 
     async def _get_control_msg(self):
-        while True:
+        while self._running:
             try:
                 msg = await self.kernel_client.get_control_msg()
                 print("CONTROL MSG:")
@@ -145,7 +155,7 @@ class JupyterKernel(GObject.GObject):
                 print(f"Exception while getting control msg:\n{e}")
 
     async def _get_iopub_msg(self):
-        while True:
+        while self._running:
             try:
                 msg = await self.kernel_client.get_iopub_msg()
 
@@ -208,17 +218,20 @@ class JupyterKernel(GObject.GObject):
                 traceback.print_exc()
 
     async def _get_shell_msg(self):
-        while True:
+        while self._running:
             try:
                 msg = await self.kernel_client.get_shell_msg()
-                print("SHELL MSG:")
-                pprint(msg)
-
+                parent_id = msg['parent_header'].get('msg_id')
+                if parent_id in self.shell_futures:
+                    future = self.shell_futures[parent_id]
+                    if not future.done():
+                        future.set_result(msg)
             except Exception as e:
-                print(f"Exception while getting shell msg:\n{e}")
+                print(f"Error in shell handler: {e}")
+                await asyncio.sleep(0.1)
 
     async def _get_stdin_msg(self):
-        while True:
+        while self._running:
             try:
                 msg = await self.kernel_client.get_stdin_msg()
                 print("STDIN MSG:")
@@ -231,8 +244,6 @@ class JupyterKernel(GObject.GObject):
         self.execution_queue.append((code, callback, *args))
 
         print("EXECUTE: ", self.executing, len(self.execution_queue), code)
-
-        self.get_completion("")
 
         if not self.executing:
             self.executing = True
@@ -307,5 +318,16 @@ class JupyterKernel(GObject.GObject):
     def get_messages(self):
         return self.messages
 
-    def get_completion(self, context):
-        print("COMPLETION: ", self.kernel_client.complete(context))
+    async def complete(self, code, cursor_pos=None):
+        """Get code completion with proper response handling"""
+
+        msg_id = self.kernel_client.complete(code, cursor_pos)
+
+        future = asyncio.Future()
+        self.shell_futures[msg_id] = future
+
+        try:
+            response = await asyncio.wait_for(future, timeout=5.0)
+            return response['content']
+        finally:
+            self.shell_futures.pop(msg_id, None)

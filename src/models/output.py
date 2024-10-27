@@ -88,8 +88,8 @@ class Output(GObject.GObject):
 
         :param str json_string: The json representation of the output
         """
-        instance = cls()
 
+        instance = cls()
         instance.parse(json_string)
 
         return instance
@@ -121,6 +121,7 @@ class Output(GObject.GObject):
 
         :param json_node: The json representation of the display data
         """
+
         if 'application/json' in json_node['data']:
             self.data_content = json_node['data']['application/json']
             self.data_type = DataType.JSON
@@ -169,6 +170,7 @@ class Output(GObject.GObject):
 
         :returns: The json representation of the output
         """
+
         match self.output_type:
             case OutputType.STREAM:
                 output_node = nbformat.v4.new_output('stream')

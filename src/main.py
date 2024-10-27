@@ -30,6 +30,8 @@ from .preferences import Preferences
 
 from gettext import gettext as _
 
+GtkSource.init()
+
 GObject.type_register(Vte.Terminal)
 GObject.type_register(GtkSource.View)
 GObject.type_register(GtkSource.Buffer)

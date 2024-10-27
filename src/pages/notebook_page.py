@@ -32,6 +32,7 @@ from ..models.notebook import Notebook
 from ..backend.command_line import CommandLine
 # from ..completion_providers.completion_providers import LSPCompletionProvider
 from ..completion_providers.completion_providers import WordsCompletionProvider
+from ..completion_providers.kernel_completion import KernelCompletionProvider
 from ..others.save_delegate import GenericSaveDelegate
 from ..interfaces.saveable import ISaveable
 from ..interfaces.disconnectable import IDisconnectable
@@ -70,6 +71,7 @@ class NotebookPage(
 
         self.words_provider = WordsCompletionProvider()
         # self.lsp_provider = LSPCompletionProvider()
+        self.kernel_provider = KernelCompletionProvider(self)
 
         self.list_drop_target.set_gtypes([Cell])
         self.list_drop_target.set_actions(Gdk.DragAction.MOVE)
@@ -149,9 +151,6 @@ class NotebookPage(
         if cell.executing:
             return
 
-        # self.notebook_model.jupyter_kernel.get_completion(cell.source)
-        # return
-
         if cell.source.startswith("!"):
             cell.reset_output()
             self.command_line.run_command(
@@ -228,7 +227,7 @@ class NotebookPage(
         cell.connect("request-delete", self.on_cell_request_delete)
         cell.connect("notify::source", self.on_cell_source_changed)
         cell.add_provider(self.words_provider)
-        # cell.add_provider(self.lsp_provider)
+        cell.add_provider(self.kernel_provider)
         return cell
 
     def on_cell_source_changed(self, *_args):

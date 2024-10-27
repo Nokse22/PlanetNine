@@ -163,9 +163,6 @@ class LSPCompletionProvider(GObject.Object, GtkSource.CompletionProvider):
 
 
 class WordsCompletionProvider(GtkSource.CompletionWords):
-    def __init__(self):
-        super().__init__()
-
     def do_display(self, context, proposal, cell):
         if cell.get_column() == GtkSource.CompletionColumn.TYPED_TEXT:
             cell.set_text(proposal.props.word)

@@ -23,6 +23,9 @@ from gi.repository import Spelling
 
 from ..others.image_loader import ImageLoader
 
+from ..completion_providers.completion_providers import WordsCompletionProvider
+from ..completion_providers.kernel_completion import KernelCompletionProvider
+
 from ..interfaces.saveable import ISaveable
 from ..interfaces.disconnectable import IDisconnectable
 from ..interfaces.kernel import IKernel
@@ -101,6 +104,18 @@ class CodePage(
         self.source_view.insert_action_group('spelling', adapter)
 
         adapter.set_enabled(True)
+
+        # Add Providers
+
+        self.words_provider = WordsCompletionProvider()
+
+        self.words_provider.register(self.buffer)
+        self.source_view.get_completion().add_provider(self.words_provider)
+
+        self.kernel_provider = KernelCompletionProvider(self)
+
+        self.kernel_provider.register(self.buffer)
+        self.source_view.get_completion().add_provider(self.kernel_provider)
 
         # LOAD File
 
