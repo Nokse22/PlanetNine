@@ -95,7 +95,7 @@ class JupyterKernel(GObject.GObject):
         self.address = ""
         self.token = ""
 
-        self.shell_futures: Dict[str, asyncio.Future] = {}
+        self.shell_futures = {}
 
         self._running = False
 
@@ -111,7 +111,7 @@ class JupyterKernel(GObject.GObject):
 
         self.executing = False
 
-        self.execution_queue = []
+        self.execution_queue = {}
 
         self.exec_msg_id = ""
         self.exec_msg_callback = None
@@ -158,64 +158,48 @@ class JupyterKernel(GObject.GObject):
         while self._running:
             try:
                 msg = await self.kernel_client.get_iopub_msg()
-
-                if not msg:
-                    return
-
-                print("IOPUB MSG:")
-                pprint(msg)
-
-                msg = self.extract_variables(msg)
-
-                msg_type = msg['header']['msg_type']
-                msg_content = msg['content']
-                if 'msg_id' in msg['parent_header']:
-                    msg_id = msg['parent_header']['msg_id']
-                else:
-                    msg_id = ''
-
-                print(f"\nReceived {msg_type} MSG with ID: {msg_id}")
-                print(f"Queued message ID is: {self.exec_msg_id}")
-
-                if msg_type == 'stream':
-                    self.messages.append(msg_content['text'])
-
-                elif msg_type == 'execute_input':
-                    code = msg_content['code']
-                    start = f"In [{msg_content['execution_count']}]"
-                    # code_modified = "\n".join(
-                    #     " " * len(start) + ln for ln in code.splitlines())
-                    # \n{code_modified}
-
-                    self.messages.append(
-                        f"\033[32;1m{start}\033[0m Code Executed")
-
-                elif msg_type == 'error':
-                    self.messages.append("\n".join(msg_content['traceback']))
-
-                if msg_id in self.exec_msg_id:
-                    print("Matching ID\n")
-                    if self.exec_msg_callback:
-                        self.exec_msg_callback(
-                            msg, *self.exec_msg_arguments)
-
-                if msg_type == 'status':
-                    self.status = msg['content']['execution_state']
-                    print(f"STATUS: {self.status}")
-                    self.emit("status-changed", self.status)
-
-                    if self.status == "idle":
-                        self.executing = False
-                        if not len(self.execution_queue) == 0:
-                            self.execution_queue.pop(0)
-                        if len(self.execution_queue) >= 1:
-                            code, callback, *args = self.execution_queue[0]
-                            asyncio.create_task(
-                                self._execute(code, callback, *args))
+                self.process_iopub_msg(msg)
 
             except Exception as e:
                 print(f"Exception while getting iopub msg: {e}")
                 traceback.print_exc()
+
+    def process_iopub_msg(self, msg):
+        if not msg:
+            return
+
+        print("IOPUB MSG:")
+        pprint(msg)
+
+        msg = self.extract_variables(msg)
+
+        msg_type = msg['header']['msg_type']
+        msg_content = msg['content']
+        if 'msg_id' in msg['parent_header']:
+            msg_id = msg['parent_header']['msg_id']
+        else:
+            msg_id = ''
+
+        if msg_type == 'stream':
+            self.messages.append(msg_content['text'])
+        elif msg_type == 'execute_input':
+            start = f"In [{msg_content['execution_count']}]"
+            self.messages.append(
+                f"\033[32;1m{start}\033[0m Code Executed")
+        elif msg_type == 'error':
+            self.messages.append("\n".join(msg_content['traceback']))
+        elif msg_type == 'status':
+            self.status = msg['content']['execution_state']
+            self.emit("status-changed", self.status)
+
+        if msg_id in self.execution_queue:
+            print("Matching ID\n")
+            callback, args = self.execution_queue[msg_id]
+            callback(msg, args)
+
+    #
+    #
+    #
 
     async def _get_shell_msg(self):
         while self._running:
@@ -241,28 +225,17 @@ class JupyterKernel(GObject.GObject):
                 print(f"Exception while getting stdin msg:\n{e}")
 
     def execute(self, code, callback, *args):
-        self.execution_queue.append((code, callback, *args))
-
         print("EXECUTE: ", self.executing, len(self.execution_queue), code)
 
-        if not self.executing:
-            self.executing = True
-            asyncio.create_task(self._execute(code, callback, *args))
+        asyncio.create_task(self._execute(code, callback, *args))
 
     async def _execute(self, code, callback, *args):
-        # print("AWAITING READY")
-        # await self.kernel_client.wait_for_ready()
-
         code += '\n%whos'  # added %whos to get the variables
         # FIXME if it's not ipykernel it should not be used
 
         msg_id = self.kernel_client.execute(code)
 
-        print(f"Executing with ID: {msg_id}")
-
-        self.exec_msg_id = msg_id
-        self.exec_msg_callback = callback
-        self.exec_msg_arguments = args
+        self.execution_queue[msg_id] = (callback, *args)
 
     def extract_variables(self, msg):
         if msg['header']['msg_type'] != 'stream':
@@ -306,7 +279,7 @@ class JupyterKernel(GObject.GObject):
         self.exec_msg_arguments = None
 
         self.executing = False
-        self.execution_queue = []
+        self.execution_queue = {}
 
         self.reset_variables()
 
