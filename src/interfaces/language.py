@@ -38,6 +38,7 @@ class ILanguage:
         :returns: the page language
         :rtype: str
         """
+
         return self.language
 
     def set_language(self, language):
@@ -45,6 +46,7 @@ class ILanguage:
 
         :param str language: the new page language
         """
+
         self.language = language
         lang = self.language_manager.get_language(self.language)
         self.buffer.set_language(lang)
@@ -58,4 +60,5 @@ class ILanguage:
         :returns: if the page language is changeable
         :rtype: bool
         """
+
         return False  # By default the language is not settable

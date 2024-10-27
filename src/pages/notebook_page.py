@@ -87,6 +87,7 @@ class NotebookPage(
 
     async def _load_file(self, file_path):
         """Load a file"""
+
         if file_path:
             self.notebook_model = await asyncio.to_thread(
                 Notebook.new_from_file,
@@ -119,6 +120,7 @@ class NotebookPage(
 
     def on_selected_cell_changed(self, *_args):
         """Handles when the selected cell has changed"""
+
         selected_row = self.cells_list_box.get_selected_row()
         if selected_row:
             buffer = selected_row.get_child().buffer
@@ -138,6 +140,7 @@ class NotebookPage(
 
     def run_cell(self, cell):
         """Handles running a cell"""
+
         if cell.cell_type != CellType.CODE:
             return
 
@@ -146,8 +149,8 @@ class NotebookPage(
         if cell.executing:
             return
 
-        self.notebook_model.jupyter_kernel.get_completion(cell.source)
-        return
+        # self.notebook_model.jupyter_kernel.get_completion(cell.source)
+        # return
 
         if cell.source.startswith("!"):
             cell.reset_output()
@@ -169,12 +172,14 @@ class NotebookPage(
 
     def run_command_callback(self, line, cell):
         """Callback to running a command for a cell"""
+
         output = Output(OutputType.STREAM)
         output.text = line + '\n'
         cell.add_output(output)
 
     def run_code_callback(self, msg, cell):
         """Callback to running the code in a cell"""
+
         if msg is None or msg['header'] is None:
             return
         msg_type = msg['header']['msg_type']
@@ -218,6 +223,7 @@ class NotebookPage(
 
     def create_widgets(self, cell):
         """Create widgets for the Gtk.ListBox"""
+
         cell = CellUI(cell)
         cell.connect("request-delete", self.on_cell_request_delete)
         cell.connect("notify::source", self.on_cell_source_changed)
@@ -227,10 +233,12 @@ class NotebookPage(
 
     def on_cell_source_changed(self, *_args):
         """Sets the page status to modified when a cell content has changed"""
+
         self.set_modified(True)
 
     def on_cell_request_delete(self, cell_ui):
         """Handle the request of deletion of a cell"""
+
         found, position = self.notebook_model.find(cell_ui.cell)
 
         if found:
@@ -253,6 +261,7 @@ class NotebookPage(
 
     def add_cell(self, cell_type):
         """Adds a cell of type cell_type to the notebook_model"""
+
         cell = Cell(cell_type)
         if self.notebook_model.get_n_items() > 1:
             index = self.get_selected_cell_index()
@@ -269,11 +278,13 @@ class NotebookPage(
 
     def get_selected_cell(self):
         """Return the selected cell"""
+
         cell_ui = self.cells_list_box.get_selected_row().get_child()
         return cell_ui.cell
 
     def select_next_cell(self):
         """Selects the next cell"""
+
         cell = self.get_selected_cell()
         found, position = self.notebook_model.find(cell)
         if found and position != self.notebook_model.get_n_items() - 1:
@@ -281,6 +292,7 @@ class NotebookPage(
 
     def get_selected_cell_index(self):
         """Returns the index of the selected cell"""
+
         selected_cell = self.cells_list_box.get_selected_row()
 
         for index in range(0, self.notebook_model.get_n_items()):
@@ -291,6 +303,7 @@ class NotebookPage(
 
     def set_selected_cell_index(self, index):
         """Sets the selected cell from an index"""
+
         row = self.cells_list_box.get_row_at_index(index)
         if row:
             self.cells_list_box.select_row(row)
@@ -301,6 +314,7 @@ class NotebookPage(
 
     def on_drop_target_drop(self, drop_target, cell, x, y):
         """Handles dropping a cell into cells_list_box"""
+
         target_row = self.cells_list_box.get_row_at_y(y)
 
         cell_index = None
@@ -319,6 +333,7 @@ class NotebookPage(
 
     def on_drop_target_motion(self, drop_target, x, y):
         """Handles moving on cells_list_box while a drag and drop operation"""
+
         target_row = self.cells_list_box.get_row_at_y(y)
 
         if target_row:
@@ -350,6 +365,7 @@ class NotebookPage(
 
     def on_drop_target_leave(self, drop_target):
         """Handles leaving cells_list_box while a drag and drop operation"""
+
         self.cells_list_box.drag_unhighlight_row()
 
     #
@@ -358,6 +374,7 @@ class NotebookPage(
 
     def get_language(self):
         """Overrides the get_language method of ILanguage"""
+
         kernel = self.get_kernel()
         if kernel:
             self.language = kernel.language
@@ -367,6 +384,7 @@ class NotebookPage(
 
     def set_language(self, _language):
         """Overrides the set_language method of ILanguage"""
+
         # self.get_kernel().language = _language
         # self.language = _language
         # lang = self.language_manager.get_language(self.language)
@@ -384,10 +402,12 @@ class NotebookPage(
 
     def on_cursor_position_changed(self, buffer, pos, index):
         """Emits cursor-moved signal when the cursor position changes"""
+
         self.emit("cursor-moved", buffer, index + 1)
 
     def get_cursor_position(self):
         """Returns the currently selected buffer and cell"""
+
         row = self.cells_list_box.get_selected_row()
         if row:
             cell_ui = row.get_child()
@@ -399,6 +419,7 @@ class NotebookPage(
 
     def move_cursor(self, line, column, index):
         """Handles moving the cursor to a cell position"""
+
         index = index - 1
         if index < self.notebook_model.get_n_items():
             row = self.cells_list_box.get_row_at_index(index)
@@ -416,10 +437,12 @@ class NotebookPage(
 
     def get_path(self):
         """Overrides the get_path of the ISaveable interface"""
+
         return self.notebook_model.get_path()
 
     def set_path(self, _path):
         """Overrides the set_path of the ISaveable interface"""
+
         self.notebook_model.set_path(_path)
         self.save_delegate.set_subtitle(_path)
         if not _path:
@@ -429,6 +452,7 @@ class NotebookPage(
 
     def get_content(self):
         """Overrides the get_content of the ISaveable interface"""
+
         return nbformat.writes(
             self.notebook_model.get_notebook_node())
 
@@ -438,6 +462,7 @@ class NotebookPage(
 
     def set_kernel(self, jupyter_kernel):
         """Overrides the set_kernel of the IKernel interface"""
+
         kernel = self.get_kernel()
 
         if kernel:
@@ -450,12 +475,14 @@ class NotebookPage(
 
     def get_kernel(self):
         """Overrides the get_kernel of the IKernel interface"""
+
         if self.notebook_model:
             return self.notebook_model.jupyter_kernel
         return None
 
     def on_kernel_status_changed(self, kernel, status):
         """Overrides the on_kernel_status_changed of the IKernel interface"""
+
         self.emit("kernel-info-changed")
 
         if status == "starting":
@@ -468,16 +495,19 @@ class NotebookPage(
 
     def run_selected_cell(self):
         """Overrides the run_selected_cell of the ICells interface"""
+
         cell = self.get_selected_cell()
         self.run_cell(cell)
 
     def run_selected_and_advance(self):
         """Overrides the run_selected_and_advance of the ICells interface"""
+
         self.run_selected_cell()
         self.select_next_cell()
 
     def run_all_cells(self):
         """Overrides the run_all_cells of the ICells interface"""
+
         for index, cell in enumerate(self.notebook_model):
             if cell.cell_type == CellType.CODE:
                 self.run_cell(cell)
@@ -488,12 +518,14 @@ class NotebookPage(
 
     def search_text(self):
         """Overrides the search_text of the ISearchable interface"""
+
         for index in range(0, self.notebook_model.get_n_items()):
             cell = self.cells_list_box.get_row_at_index(index).get_child()
             cell.search_text()
 
     def set_search_text(self, text):
         """Overrides the set_search_text of the ISearchable interface"""
+
         for index in range(0, self.notebook_model.get_n_items()):
             cell = self.cells_list_box.get_row_at_index(index).get_child()
             cell.set_search_text(text)
@@ -504,6 +536,7 @@ class NotebookPage(
 
     def disconnect(self, *_args):
         """Disconnect all signals"""
+
         self.list_drop_target.disconnect_by_func(self.on_drop_target_drop)
         self.list_drop_target.disconnect_by_func(self.on_drop_target_motion)
         self.list_drop_target.disconnect_by_func(self.on_drop_target_leave)

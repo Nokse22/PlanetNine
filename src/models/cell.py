@@ -21,6 +21,7 @@ from gi.repository import Gio
 from gi.repository import GObject
 
 import nbformat
+import uuid
 
 from enum import IntEnum
 
@@ -68,6 +69,7 @@ class Cell(GObject.GObject):
     @classmethod
     def new_from_json(cls, json_cell):
         """Initialize a new Cell from a json representation of the cell"""
+
         instance = cls()
 
         instance.parse(json_cell)
@@ -97,6 +99,7 @@ class Cell(GObject.GObject):
 
         :param str value: The new content
         """
+
         self.source = value
 
     def get_source(self):
@@ -105,6 +108,7 @@ class Cell(GObject.GObject):
         :returns: The content of the cell
         :rtypes: str
         """
+
         return self.source
 
     def add_output(self, output):
@@ -112,6 +116,7 @@ class Cell(GObject.GObject):
 
         :param Output output: A new output
         """
+
         self._outputs.append(output)
         self.emit("output-added", output)
 
@@ -120,6 +125,7 @@ class Cell(GObject.GObject):
 
         :param str content:
         """
+
         display_id = content['transient']['display_id']
         for index, output in enumerate(self._outputs):
             if output.display_id == display_id:
@@ -131,6 +137,7 @@ class Cell(GObject.GObject):
 
     def reset_output(self):
         """Resets all the outputs"""
+
         self._outputs.remove_all()
         self.execution_count = 0
         self.emit("output-reset")
@@ -141,6 +148,7 @@ class Cell(GObject.GObject):
         :returns: The type of cell
         :rtypes: CellType
         """
+
         if self.cell_type == CellType.TEXT:
             cell_node = nbformat.v4.new_markdown_cell()
             cell_node.source = self.source
@@ -163,12 +171,15 @@ class Cell(GObject.GObject):
 
         :param str json_cell: The json representation of the cell
         """
+
         if json_cell['cell_type'] == "code":
             self.cell_type = CellType.CODE
         else:
             self.cell_type = CellType.TEXT
         self.source = ''.join(json_cell['source'])
         self.id = json_cell['id']
+        if self.id is None or self.id == "":
+            self.id = str(uuid.uuid4())
 
         if self.cell_type == CellType.CODE:
             self.execution_count = json_cell['execution_count'] or 0

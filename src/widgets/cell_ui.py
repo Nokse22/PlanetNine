@@ -26,15 +26,15 @@ from gi.repository import Gdk
 import os
 
 from ..models.cell import Cell, CellType
-from ..others.style_manager import StyleManager
 from ..others.output_loader import OutputLoader
 from ..interfaces.searchable import ISearchable
 from ..interfaces.cursor import ICursor
 from ..interfaces.style_update import IStyleUpdate
+from ..interfaces.language import ILanguage
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/cell.ui')
-class CellUI(Gtk.Box, ISearchable, ICursor, IStyleUpdate):
+class CellUI(Gtk.Box, ISearchable, ICursor, IStyleUpdate, ILanguage):
     __gtype_name__ = 'CellUI'
 
     __gsignals__ = {
@@ -66,6 +66,7 @@ class CellUI(Gtk.Box, ISearchable, ICursor, IStyleUpdate):
         super().__init__(**kwargs)
         ISearchable.__init__(self, **kwargs)
         IStyleUpdate.__init__(self, **kwargs)
+        ILanguage.__init__(self, **kwargs)
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
@@ -73,19 +74,9 @@ class CellUI(Gtk.Box, ISearchable, ICursor, IStyleUpdate):
         self.bindings = []
         self.providers = []
 
-        self.buffer.connect("changed", self.on_source_changed)
-        self.drag_source.connect("prepare", self.on_drag_source_prepare)
-        self.drag_source.connect("drag-begin", self.on_drag_source_begin)
-        self.drag_source.connect("drag-end", self.delete_cell)
-        self.click_gesture.connect("released", self.on_click_released)
-        self.markdown_text_view.connect("changed", self.on_source_changed)
-
         self.cell = cell
 
-        lm = GtkSource.LanguageManager()
-        lang = lm.get_language("python3")
-        self.buffer.set_language(lang)
-        self.buffer.set_highlight_syntax(True)
+        self.set_language("python3")
 
         self.output_loader = OutputLoader(self.output_box)
 
@@ -122,17 +113,6 @@ class CellUI(Gtk.Box, ISearchable, ICursor, IStyleUpdate):
 
         self.insert_action_group("cell", self.action_group)
 
-        self.bindings.append(self.bind_property("source", self.cell, "source"))
-        self.bindings.append(
-            self.bind_property("cell_type", self.cell, "cell_type"))
-
-        self.cell.connect(
-            "execution-count-changed", self.on_execution_count_changed)
-        self.cell.connect("output-added", self.on_add_output)
-        self.cell.connect("output-updated", self.on_update_output)
-        self.cell.connect("output-reset", self.on_reset_output)
-        self.cell.connect("notify::executing", self.on_executing_changed)
-
         self.settings.bind(
             'notebook-line-number',
             self.source_view,
@@ -146,6 +126,26 @@ class CellUI(Gtk.Box, ISearchable, ICursor, IStyleUpdate):
             has_arrow=False,
             halign=1,
         )
+
+        # Connect
+
+        self.buffer.connect("changed", self.on_source_changed)
+        self.drag_source.connect("prepare", self.on_drag_source_prepare)
+        self.drag_source.connect("drag-begin", self.on_drag_source_begin)
+        self.drag_source.connect("drag-end", self.delete_cell)
+        self.click_gesture.connect("released", self.on_click_released)
+        self.markdown_text_view.connect("changed", self.on_source_changed)
+
+        self.bindings.append(self.bind_property("source", self.cell, "source"))
+        self.bindings.append(
+            self.bind_property("cell_type", self.cell, "cell_type"))
+
+        self.cell.connect(
+            "execution-count-changed", self.on_execution_count_changed)
+        self.cell.connect("output-added", self.on_add_output)
+        self.cell.connect("output-updated", self.on_update_output)
+        self.cell.connect("output-reset", self.on_reset_output)
+        self.cell.connect("notify::executing", self.on_executing_changed)
 
     @GObject.Property(type=str, default="")
     def source(self):

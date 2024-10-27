@@ -164,8 +164,6 @@ class Output(GObject.GObject):
             if 'display_id' in json_node['transient']:
                 self.display_id = json_node['transient']['display_id']
 
-        print(json_node['data'])
-
     def get_output_node(self):
         """Get the output as a json node
 

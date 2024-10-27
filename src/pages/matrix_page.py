@@ -61,6 +61,7 @@ class MatrixPage(Panel.Widget, ILanguage):
 
     async def _load_file(self, file_path):
         """Load a file"""
+
         if file_path:
             gfile = Gio.File.new_for_path(file_path)
 
@@ -76,6 +77,7 @@ class MatrixPage(Panel.Widget, ILanguage):
 
     async def _matrix_from_csv(self, file):
         """Populates the matrix with rows and columns from a csv file"""
+
         file_input_stream = file.read()
         data_input_stream = Gio.DataInputStream.new(file_input_stream)
 
@@ -118,6 +120,7 @@ class MatrixPage(Panel.Widget, ILanguage):
 
     def set_language(self, _language):
         """Override the ILanguage interface set_language"""
+
         self.language = _language
 
         self.emit('language-changed')
@@ -128,6 +131,7 @@ class MatrixPage(Panel.Widget, ILanguage):
 
     def disconnect(self, *_args):
         """Disconnect all signals"""
+
         self.save_delegate.disconnect_all()
         self.matrix_viewer.disconnect()
 

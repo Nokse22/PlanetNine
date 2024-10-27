@@ -17,15 +17,11 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gtk, GObject, Adw, Gio
-from gi.repository import Panel, GtkSource, GLib
+from gi.repository import Gtk, GObject, Gio
+from gi.repository import Panel, GtkSource
 from gi.repository import Spelling
 
-from ..others.save_delegate import GenericSaveDelegate
 from ..others.image_loader import ImageLoader
-from ..others.style_manager import StyleManager
-
-from ..utils.converters import get_language_highlight_name
 
 from ..interfaces.saveable import ISaveable
 from ..interfaces.disconnectable import IDisconnectable
@@ -95,8 +91,6 @@ class CodePage(
         self.language_manager.append_search_path(
             "resource:///io/github/nokse22/PlanetNine/custom_languages/")
 
-        self.set_language("python3")
-
         # ENABLE SPELL CHECK
 
         checker = Spelling.Checker.get_default()
@@ -128,7 +122,8 @@ class CodePage(
         )
 
     async def _load_file(self, file_path):
-        print("Loading: ", file_path)
+        """Loads the file"""
+
         try:
             file = Gio.File.new_for_path(file_path)
 
@@ -151,6 +146,7 @@ class CodePage(
 
     def get_selected_cell_content(self):
         """Returns the selected cell content"""
+
         cursor_iter = self.buffer.get_iter_at_mark(
             self.buffer.get_insert())
 
@@ -184,6 +180,7 @@ class CodePage(
 
     def run_code_callback(self, msg):
         """Callback to receive messages from the kernel"""
+
         if msg is None or msg['header'] is None:
             print("No message")
             return
@@ -238,6 +235,7 @@ class CodePage(
 
     def run_selected_cell(self):
         """Runs the currently selected cell"""
+
         code_portion = self.get_selected_cell_content()
         self.jupyter_kernel.execute(
             code_portion,
@@ -246,11 +244,13 @@ class CodePage(
 
     def run_selected_and_advance(self):
         """Runs current cell and moves the cursor to the next cell"""
+
         self.run_selected_cell()
         # TODO move the cursor to the start of the next cell
 
     def run_all_cells(self):
         """Runs the entire script"""
+
         self.jupyter_kernel.execute(
             self.get_content(),
             self.run_code_callback
@@ -259,6 +259,7 @@ class CodePage(
     # Only for code page
     def run_line(self):
         """Runs the current line where is the cursor"""
+
         start_iter = self.buffer.get_iter_at_mark(
             self.buffer.get_insert())
 
@@ -278,6 +279,7 @@ class CodePage(
 
         :param CellType cell_type: the type of cell to add
         """
+
         self.buffer.begin_user_action()
 
         bounds = self.buffer.get_selection_bounds()
@@ -314,6 +316,7 @@ class CodePage(
 
     def disconnect(self, *_args):
         """Disconnect all signals"""
+
         self.style_manager.disconnect_by_func(self.update_style_scheme)
         self.buffer.disconnect_by_func(self.on_cursor_position_changed)
         self.buffer.disconnect_by_func(self.on_text_changed)

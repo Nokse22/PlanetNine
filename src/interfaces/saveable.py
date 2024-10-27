@@ -36,6 +36,7 @@ class ISaveable:
 
     def on_text_changed(self, *_args):
         """Used to set the page to modified when the buffer changes"""
+
         self.set_modified(True)
 
     def set_path(self, _path):
@@ -43,6 +44,7 @@ class ISaveable:
 
         :param str path: the page file path
         """
+
         self.path = _path
         self.set_title(os.path.basename(self.path)
                        if self.path else "Untitled")
@@ -58,6 +60,7 @@ class ISaveable:
         :returns: the page path
         :rtype: str
         """
+
         return self.path
 
     def get_content(self):
@@ -66,6 +69,7 @@ class ISaveable:
         :returns: the page content
         :rtype: str
         """
+
         start = self.buffer.get_start_iter()
         end = self.buffer.get_end_iter()
         return self.buffer.get_text(start, end, True)
