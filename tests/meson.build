@@ -1,9 +1,3 @@
-test_data = [
-  'data/json_display.ipynb'
-]
-
-install_data(test_data, install_dir: join_paths(meson.current_build_dir(), 'data'))
-
 envdata = environment()
 python_paths = [join_paths(meson.current_build_dir(), '..')]
 envdata.append('PYTHONPATH', python_paths)

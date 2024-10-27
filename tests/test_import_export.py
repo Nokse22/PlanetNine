@@ -39,35 +39,35 @@ def setup_module(module):
 #   Import Export Tests Start
 
 def test_images_url_display(monkeypatch):
-    __test_file('./data/images_url_display.ipynb')
+    __test_file('./data/notebooks/images_url_display.ipynb')
 
 
 def test_json_display(monkeypatch):
-    __test_file('./data/json_display.ipynb')
+    __test_file('./data/notebooks/json_display.ipynb')
 
 
 def test_markdown_cell(monkeypatch):
-    __test_file('./data/markdown_cell.ipynb')
+    __test_file('./data/notebooks/markdown_cell.ipynb')
 
 
 def test_markdown_display(monkeypatch):
-    __test_file('./data/markdown_display.ipynb')
+    __test_file('./data/notebooks/markdown_display.ipynb')
 
 
 def test_png_file_display(monkeypatch):
-    __test_file('./data/png_file_display.ipynb')
+    __test_file('./data/notebooks/png_file_display.ipynb')
 
 
 def test_png_graph_display(monkeypatch):
-    __test_file('./data/png_graph_display.ipynb')
+    __test_file('./data/notebooks/png_graph_display.ipynb')
 
 
 def test_stream_output(monkeypatch):
-    __test_file('./data/stream_output.ipynb')
+    __test_file('./data/notebooks/stream_output.ipynb')
 
 
 def test_text_output(monkeypatch):
-    __test_file('./data/text_output.ipynb')
+    __test_file('./data/notebooks/text_output.ipynb')
 
 
 #   Tear down
@@ -87,7 +87,7 @@ def __test_file(full_path):
     output = nbformat.writes(notebook.get_notebook_node())
 
     with open(full_path, 'r') as file:
-        file_content = file.read()[:-1]
+        file_content = file.read()
         try:
             assert output == file_content
         except AssertionError:
