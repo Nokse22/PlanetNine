@@ -24,12 +24,13 @@ I might change the name before releasing it
 - Kernel Panel (start, stop, restart, new from)
 - Workspace Panel (to see avalaible files and import new files)
 
-### Notebook supported outputs
-- Images (`png` only for now)
+### Notebook supported inline outputs
+- Images (`.png`, `.svg`, `.jpeg`, `.jpg`)
 - Markdown
 - Text
-- HTML (Not great)
 - Json
+- LaTeX (rendered with matplotlib)
+Many outputs are received as HTML and can be viewed in the browser
 
 ### Planned Features
 - Better support for more languages (R, Julia, Octave)

@@ -109,7 +109,7 @@
                 {
                     "type" : "git",
                     "url" : "https://gitlab.gnome.org/GNOME/gtksourceview.git",
-                    "commit" : "17fb6bd091f5d2ee4a796cd47c87652c1aea1241"
+                    "commit" : "bd2ad5c9a86e4321a9a213e01009aa9137b96879"
                 }
             ]
         },
