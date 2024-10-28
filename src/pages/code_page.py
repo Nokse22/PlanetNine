@@ -345,3 +345,4 @@ class CodePage(
 
     def __del__(self):
         print(f"DELETING {self}")
+
