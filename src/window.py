@@ -1154,6 +1154,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                         asyncio.create_task(
                             self._shutdown_kernel_by_id(kernel_id))
 
+        # Update the UI
+        self.on_focus_changed()
+
     def get_page_with_kernel(self, kernel_id):
         """Returns a page with a specific kernel by kernel_id"""
 

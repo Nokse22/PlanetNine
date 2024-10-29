@@ -70,5 +70,9 @@
     <section id="bookmark_menu">
     </section>
   </menu>
+  <menu id="menu">
+    <section id="page_menu">
+    </section>
+  </menu>
 </interface>
 

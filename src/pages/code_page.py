@@ -56,10 +56,10 @@ class CodePage(
     def __init__(self, file_path=None, **kwargs):
         super().__init__(**kwargs)
         IKernel.__init__(self, **kwargs)
-        ISearchable.__init__(self, **kwargs)
-        ICursor.__init__(self, **kwargs)
-        IStyleUpdate.__init__(self, **kwargs)
-        ISaveable.__init__(self, **kwargs)
+        ISearchable.__init__(self)
+        ICursor.__init__(self)
+        IStyleUpdate.__init__(self)
+        ISaveable.__init__(self)
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 

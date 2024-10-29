@@ -6,6 +6,7 @@
   <template class="CodePage" parent="PanelWidget">
     <property name="title">Untitled.py</property>
     <property name="icon-name">text-x-python-symbolic</property>
+    <property name="menu-model">menu</property>
     <child>
       <object class="GtkBox">
         <child>
@@ -75,5 +76,9 @@
       </object>
     </child>
   </template>
+  <menu id="menu">
+    <section id="page_menu">
+    </section>
+  </menu>
 </interface>
 

@@ -6,6 +6,7 @@
   <template class="JsonViewerPage" parent="PanelWidget">
     <property name="title">file.json</property>
     <property name="icon-name">text-json-symbolic</property>
+    <property name="menu-model">menu</property>
     <child>
       <object class="GtkBox">
         <property name="orientation">vertical</property>
@@ -76,5 +77,9 @@
       </object>
     </child>
   </template>
+  <menu id="menu">
+    <section id="page_menu">
+    </section>
+  </menu>
 </interface>
 

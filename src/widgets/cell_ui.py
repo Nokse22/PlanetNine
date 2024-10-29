@@ -64,9 +64,9 @@ class CellUI(Gtk.Box, ISearchable, ICursor, IStyleUpdate, ILanguage):
 
     def __init__(self, cell, **kwargs):
         super().__init__(**kwargs)
-        ISearchable.__init__(self, **kwargs)
-        IStyleUpdate.__init__(self, **kwargs)
-        ILanguage.__init__(self, **kwargs)
+        ISearchable.__init__(self)
+        IStyleUpdate.__init__(self)
+        ILanguage.__init__(self)
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 

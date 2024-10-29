@@ -6,6 +6,7 @@
   <template class="ConsolePage" parent="PanelWidget">
     <property name="title">Console</property>
     <property name="icon-name">terminal-symbolic</property>
+    <property name="menu-model">menu</property>
     <child>
       <object class="GtkBox">
         <property name="orientation">vertical</property>
@@ -92,5 +93,9 @@ circular</property>
       </object>
     </child>
   </template>
+  <menu id="menu">
+    <section id="page_menu">
+    </section>
+  </menu>
 </interface>
 

@@ -101,13 +101,13 @@
           <object class="AdwPreferencesGroup">
             <property name="title" translatable="yes">Code View</property>
             <child>
-              <object class="GtkGridView" id="grid_view">
-                <property name="factory">
-                  <object class="GtkSignalListItemFactory">
-                    <signal name="setup" handler="on_grid_view_setup"/>
-                    <signal name="bind" handler="on_grid_view_bind"/>
-                  </object>
-                </property>
+              <object class="GtkFlowBox" id="flow_box">
+                <!-- <property name="factory"> -->
+                <!--   <object class="GtkSignalListItemFactory"> -->
+                <!--     <signal name="setup" handler="on_grid_view_setup"/> -->
+                <!--     <signal name="bind" handler="on_grid_view_bind"/> -->
+                <!--   </object> -->
+                <!-- </property> -->
               </object>
             </child>
           </object>

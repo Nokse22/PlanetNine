@@ -16,8 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
-from gi.repository import GObject
+from gi.repository import GObject, Gio, Panel
 from ..others.save_delegate import GenericSaveDelegate
+from gettext import gettext as _
 import os
 
 
@@ -28,11 +29,26 @@ class ISaveable:
         super().__init_subclass__(**kwargs)
         cls.path = GObject.Property(type=str, default="")
 
-    def __init__(self, **kwargs):
-        self.save_delegate = GenericSaveDelegate(self)
-        self.set_save_delegate(self.save_delegate)
+    def __init__(self, override=False):
+        if not override:
+            self.save_delegate = GenericSaveDelegate(self)
+            self.set_save_delegate(self.save_delegate)
 
-        self.buffer.connect("changed", self.on_text_changed)
+            self.buffer.connect("changed", self.on_text_changed)
+
+        if isinstance(self, Panel.Widget):
+            menu = Gio.Menu()
+
+            menu_item = Gio.MenuItem.new(_("Save"), "app.save")
+            menu.append_item(menu_item)
+
+            menu_item = Gio.MenuItem.new(_("Save As"), "app.save-as")
+            menu.append_item(menu_item)
+
+            menu_item = Gio.MenuItem.new(_("Reopen As"), "win.reopen-as")
+            menu.append_item(menu_item)
+
+            self.get_menu_model().append_section(None, menu)
 
     def on_text_changed(self, *_args):
         """Used to set the page to modified when the buffer changes"""

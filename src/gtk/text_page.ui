@@ -5,6 +5,7 @@
   <requires lib="libadwaita" version="1.4"/>
   <template class="TextPage" parent="PanelWidget">
     <property name="icon-name">text-symbolic</property>
+    <property name="menu-model">menu</property>
     <child>
       <object class="GtkBox">
         <child>
@@ -48,5 +49,9 @@
       </object>
     </child>
   </template>
+  <menu id="menu">
+    <section id="page_menu">
+    </section>
+  </menu>
 </interface>
 

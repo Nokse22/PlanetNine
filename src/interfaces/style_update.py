@@ -21,7 +21,7 @@ from ..others.style_manager import StyleManager
 
 
 class IStyleUpdate:
-    def __init__(self, **kwargs):
+    def __init__(self):
         self.style_manager = StyleManager()
         self.style_manager.connect("style-changed", self.update_style_scheme)
         self.update_style_scheme()

@@ -16,17 +16,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
-from gi.repository import GtkSource
+from gi.repository import GtkSource, Gio, Panel
+from gettext import gettext as _
 
 
 # The ISearchable interface is used for any page that supports seraching
 #       it's content
 class ISearchable:
-    def __init__(self, **kwargs):
-        self.search_settings = GtkSource.SearchSettings()
-        self.search_context = GtkSource.SearchContext.new(
-            self.buffer, self.search_settings
-        )
+    def __init__(self, override=False):
+        if not override:
+            self.search_settings = GtkSource.SearchSettings()
+            self.search_context = GtkSource.SearchContext.new(
+                self.buffer, self.search_settings
+            )
+
+        if isinstance(self, Panel.Widget):
+            menu = Gio.Menu()
+
+            menu_item = Gio.MenuItem.new(_("Find..."), "app.search")
+            menu.append_item(menu_item)
+
+            self.get_menu_model().append_section(None, menu)
 
     def search_text(self):
         """Search the string in the page"""

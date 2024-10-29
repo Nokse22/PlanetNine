@@ -90,21 +90,25 @@ listview.sidebar-list {
 
 listview.sidebar-list row{
   padding: 3px;
-  border-radius: 6px;
+  border-radius: 9px;
 }
 
-gridview {
-  background-color: transparent;
-}
+/* gridview { */
+/*   background-color: transparent; */
+/* } */
 
-gridview child {
-  padding: 2px;
-  border-radius: 14px;
-}
+/* gridview child { */
+/*   padding: 2px; */
+/*   border-radius: 14px; */
+/* } */
 
-gridview child:selected box {
-  background-color:var(--accent-color);
-}
+/* gridview child:selected { */
+/*   background-color: transparent; */
+/* } */
+
+/* gridview child:hover { */
+/*   background-color: transparent; */
+/* } */
 
 .matrixviewer listview > row > cell {
   padding: 2px;

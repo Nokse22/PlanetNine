@@ -5,6 +5,7 @@
   <requires lib="libadwaita" version="1.0"/>
   <template class="MatrixPage" parent="PanelWidget">
     <property name="icon-name">table-symbolic</property>
+    <property name="menu-model">menu</property>
     <child>
       <object class="GtkStack" id="stack">
         <child>
@@ -46,4 +47,8 @@
       </object>
     </child>
   </template>
+  <menu id="menu">
+    <section id="page_menu">
+    </section>
+  </menu>
 </interface>

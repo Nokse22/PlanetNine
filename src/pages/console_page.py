@@ -53,9 +53,9 @@ class ConsolePage(
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         IKernel.__init__(self, **kwargs)
-        ICursor.__init__(self, **kwargs)
-        IStyleUpdate.__init__(self, **kwargs)
-        ILanguage.__init__(self, **kwargs)
+        ICursor.__init__(self)
+        IStyleUpdate.__init__(self)
+        ILanguage.__init__(self)
 
         self.jupyter_kernel = None
 

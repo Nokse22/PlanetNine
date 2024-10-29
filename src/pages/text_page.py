@@ -49,11 +49,11 @@ class TextPage(
 
     def __init__(self, file_path="", **kwargs):
         super().__init__(**kwargs)
-        ICursor.__init__(self, **kwargs)
-        ILanguage.__init__(self, **kwargs)
-        ISaveable.__init__(self, **kwargs)
-        IStyleUpdate.__init__(self, **kwargs)
-        ISearchable.__init__(self, **kwargs)
+        ICursor.__init__(self)
+        ILanguage.__init__(self)
+        ISaveable.__init__(self)
+        IStyleUpdate.__init__(self)
+        ISearchable.__init__(self)
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 

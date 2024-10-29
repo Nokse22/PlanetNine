@@ -6,6 +6,7 @@
   <template class="NotebookPage" parent="PanelWidget">
     <property name="title">Untitled.ipynb</property>
     <property name="icon-name">notepad-symbolic</property>
+    <property name="menu-model">menu</property>
     <child>
       <object class="GtkStack" id="stack">
         <child>
@@ -56,4 +57,8 @@
       </object>
     </child>
   </template>
+  <menu id="menu">
+    <section id="page_menu">
+    </section>
+  </menu>
 </interface>

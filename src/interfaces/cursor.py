@@ -29,10 +29,11 @@ class ICursor:
             "cursor-moved", arg_types=([Gtk.TextBuffer, int])
         )
 
-    def __init__(self, **kwargs):
-        self.buffer.connect(
-            "notify::cursor-position",
-            self.on_cursor_position_changed)
+    def __init__(self, override=False):
+        if not override:
+            self.buffer.connect(
+                "notify::cursor-position",
+                self.on_cursor_position_changed)
 
     def on_cursor_position_changed(self, *_args):
         """Emits the signal cursor-moved when the cursor is moved"""

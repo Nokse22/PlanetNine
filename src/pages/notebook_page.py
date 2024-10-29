@@ -60,6 +60,9 @@ class NotebookPage(
     def __init__(self, _file_path="", **kwargs):
         super().__init__(**kwargs)
         IKernel.__init__(self, **kwargs)
+        ISearchable.__init__(self, True)
+        ICursor.__init__(self, True)
+        ISaveable.__init__(self, True)
 
         self.bindings = []
 

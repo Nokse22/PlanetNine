@@ -17,8 +17,9 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import GObject, GLib
+from gi.repository import GObject, GLib, Gio, Panel
 from .language import ILanguage
+from gettext import gettext as _
 import random
 import string
 
@@ -40,6 +41,17 @@ class IKernel:
             self.kernel_id = kwargs["kernel_id"]
         elif "kernel_name" in kwargs.keys():
             self.kernel_name = kwargs["kernel_name"]
+
+        if isinstance(self, Panel.Widget):
+            menu = Gio.Menu()
+
+            menu_item = Gio.MenuItem()
+            menu_item.set_label(_("Change Kernel"))
+            menu_item.set_action_and_target_value(
+                "win.change-kernel", GLib.Variant('s', ""))
+            menu.append_item(menu_item)
+
+            self.get_menu_model().append_section(None, menu)
 
     def start_kernel(self):
         """Starts a kernel for this page

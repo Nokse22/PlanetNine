@@ -67,6 +67,8 @@ class PlanetnineApplication(Adw.Application):
         self.create_action(
             'save', self.on_save_action, ['<primary>s'])
         self.create_action(
+            'save-as', self.on_save_action)
+        self.create_action(
             'save-all', self.on_save_all_action, ['<primary><shift>s'])
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')

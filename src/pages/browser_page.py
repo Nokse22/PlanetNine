@@ -129,7 +129,7 @@ class BrowserPage(Panel.Widget, IDisconnectable):
 
     def add_bookmark(self, bookmark_name, bookmark_url):
         """Handles adding a new bookmark to the bookmark menu"""
-        menu_item = Gio.MenuItem()
+        menu_item = Gio.MenuItem.new()
         menu_item.set_label(bookmark_name)
         menu_item.set_action_and_target_value(
             "browser.open", GLib.Variant('s', bookmark_url))

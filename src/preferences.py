@@ -17,10 +17,22 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gtk, GObject, Adw, Gio, Gdk, Graphene
-from gi.repository import Panel, GtkSource
+from gi.repository import Gtk, Adw, Gio
+from gi.repository import GtkSource
 
 from .others.style_manager import StyleManager
+
+
+class ThemeSelector(Adw.Bin):
+    __gtype_name__ = 'ThemeSelector'
+
+    def __init__(self, light_scheme, dark_scheme):
+        super().__init__()
+
+        self.light_preview = GtkSource.StyleSchemePreview.new(light_scheme)
+        self.dark_preview = GtkSource.StyleSchemePreview.new(dark_scheme)
+
+        self.set_child(self.light_preview)
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/preferences.ui')
@@ -38,7 +50,7 @@ class Preferences(Adw.PreferencesDialog):
     start_switch = Gtk.Template.Child()
     shutdown_kernels_switch = Gtk.Template.Child()
 
-    grid_view = Gtk.Template.Child()
+    flow_box = Gtk.Template.Child()
 
     def __init__(self):
         super().__init__()
@@ -51,12 +63,12 @@ class Preferences(Adw.PreferencesDialog):
 
         self.style_manager = StyleManager()
 
-        self.selection_model = Gtk.SingleSelection(
-            model=self.style_manager.palettes)
-        self.grid_view.set_model(self.selection_model)
+        self.flow_box.bind_model(
+            self.style_manager.palettes,
+            self.create_theme_selectors)
 
-        self.selection_model.connect(
-            "notify::selected", self.on_selected_style_changed)
+        self.flow_box.connect(
+            "selected-children-changed", self.on_selected_style_changed)
 
         # Bind settings to widgets
 
@@ -91,30 +103,16 @@ class Preferences(Adw.PreferencesDialog):
             'selected', Gio.SettingsBindFlags.DEFAULT)
 
         self.style_manager.selected = self.settings.get_int('selected-theme-n')
-        self.selection_model.set_selected(
-            self.settings.get_int('selected-theme-n'))
+        self.flow_box.select_child(
+            self.flow_box.get_child_at_index(
+                self.settings.get_int('selected-theme-n')))
 
     def on_selected_style_changed(self, *_args):
         self.style_manager.selected = self.selection_model.get_selected()
 
-    @Gtk.Template.Callback("on_grid_view_setup")
-    def on_grid_view_setup(self, _factory, list_item):
-        list_item.set_child(Gtk.Box(
-            halign=Gtk.Align.CENTER,
-            overflow=Gtk.Overflow.HIDDEN
-        ))
-
-    @Gtk.Template.Callback("on_grid_view_bind")
-    def on_grid_view_bind(self, _factory, list_item):
-        widget = list_item.get_child()
-        palette = list_item.get_item()
-
-        scheme = self.scheme_manager.get_scheme(palette.light_source_name)
-        light_preview = GtkSource.StyleSchemePreview.new(scheme)
-
-        scheme = self.scheme_manager.get_scheme(palette.dark_source_name)
-        dark_preview = GtkSource.StyleSchemePreview.new(scheme)
-
-        widget.append(light_preview)
-        widget.append(dark_preview)
-        widget.add_css_class("card")
+    def create_theme_selectors(self, palette):
+        light_scheme = self.scheme_manager.get_scheme(
+            palette.light_source_name)
+        dark_scheme = self.scheme_manager.get_scheme(
+            palette.dark_source_name)
+        return ThemeSelector(light_scheme, dark_scheme)
