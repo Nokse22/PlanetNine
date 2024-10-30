@@ -118,6 +118,10 @@ class ThemeSelector(Adw.Bin):
         else:
             self.set_child(self.light_preview)
 
+    def set_selected(self, selected):
+        self.light_preview.set_selected(selected)
+        self.dark_preview.set_selected(selected)
+
 
 class StyleManager(GObject.GObject):
     __gtype_name__ = "StyleManager"

@@ -93,22 +93,11 @@ listview.sidebar-list row{
   border-radius: 9px;
 }
 
-/* gridview { */
-/*   background-color: transparent; */
-/* } */
-
-/* gridview child { */
-/*   padding: 2px; */
-/*   border-radius: 14px; */
-/* } */
-
-/* gridview child:selected { */
-/*   background-color: transparent; */
-/* } */
-
-/* gridview child:hover { */
-/*   background-color: transparent; */
-/* } */
+flowbox.theme-selector flowboxchild {
+  background-color: transparent;
+  --accent-color: transparent;
+  --accent-bg-color: transparent;
+}
 
 .matrixviewer listview > row > cell {
   padding: 2px;

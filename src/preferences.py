@@ -90,8 +90,12 @@ class Preferences(Adw.PreferencesDialog):
         self.flow_box.select_child(self.flow_box.get_child_at_index(0))
 
     def on_selected_style_changed(self, *_args):
+        if self.prev_style_preview:
+            self.prev_style_preview.set_selected(False)
         selected = self.flow_box.get_selected_children()[0].get_child()
+        selected.set_selected(True)
         self.style_manager.palette = selected.palette
+        self.prev_style_preview = selected
 
     def create_theme_selectors(self, palette):
         return ThemeSelector(palette)
