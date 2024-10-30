@@ -34,7 +34,7 @@ class MarkdownTextView(Gtk.TextView, IStyleUpdate, IDisconnectable):
 
     def __init__(self):
         super().__init__()
-        IStyleUpdate.__init__(self)
+        self.buffer = self.get_buffer()
 
         self.set_css_name("markdownview")
 
@@ -43,38 +43,32 @@ class MarkdownTextView(Gtk.TextView, IStyleUpdate, IDisconnectable):
 
         self.set_size_request(-1, 18)
 
-        self.buffer = self.get_buffer()
+        self.foreground_accent_tags = []
 
-        accent_color = self.style_manager.get_accent_color()
-
-        self.buffer.create_tag(
-            "h1", weight=Pango.Weight.BOLD, scale=2.0, foreground=accent_color)
-        self.buffer.create_tag(
-            "h2", weight=Pango.Weight.BOLD, scale=1.8, foreground=accent_color)
-        self.buffer.create_tag(
-            "h3", weight=Pango.Weight.BOLD, scale=1.6, foreground=accent_color)
-        self.buffer.create_tag(
-            "h4", weight=Pango.Weight.BOLD, scale=1.4, foreground=accent_color)
-        self.buffer.create_tag(
-            "h5", weight=Pango.Weight.BOLD, scale=1.2, foreground=accent_color)
-        self.buffer.create_tag(
-            "h6", weight=Pango.Weight.BOLD, scale=1, foreground=accent_color)
+        for scale in range(1, 7):
+            self.foreground_accent_tags.append(
+                self.buffer.create_tag(
+                    f"h{scale}",
+                    weight=Pango.Weight.BOLD,
+                    scale=2.0-(scale-1)/5)
+            )
 
         self.buffer.create_tag(
             "bold", weight=Pango.Weight.BOLD)
         self.buffer.create_tag(
             "italic", style=Pango.Style.ITALIC)
         self.buffer.create_tag(
-            "code", style=Pango.Style.OBLIQUE, background="#f0f0f0")
-        self.buffer.create_tag(
             "bold_italic", weight=Pango.Weight.BOLD, style=Pango.Style.ITALIC)
-        self.buffer.create_tag(
-            "block_code", family="Monospace", background="#f0f0f0")
-        self.buffer.create_tag(
-            "link", foreground="#3584E4", underline=Pango.Underline.SINGLE)
-        self.buffer.create_tag(
+
+        self.link_tag = self.buffer.create_tag(
+            "link", underline=Pango.Underline.SINGLE)
+        self.quote_tag = self.buffer.create_tag(
             "quote", style=Pango.Style.ITALIC,
-            foreground="#6a737d", left_margin=20)
+            left_margin=20)
+        self.code_tag = self.buffer.create_tag(
+            "code", style=Pango.Style.OBLIQUE)
+        self.block_code_tag = self.buffer.create_tag(
+            "block_code", family="Monospace")
 
         self.full_line_tags = [
             ("# ", "h1"),
@@ -97,6 +91,8 @@ class MarkdownTextView(Gtk.TextView, IStyleUpdate, IDisconnectable):
         self.buffer.connect("changed", self.on_text_changed)
         self.buffer.connect_after("insert-text", self.on_text_inserted)
         self.buffer.connect("delete-range", self.on_text_deleted)
+
+        IStyleUpdate.__init__(self)
 
     def set_text(self, text):
         self.buffer.set_text(text)
@@ -263,7 +259,19 @@ class MarkdownTextView(Gtk.TextView, IStyleUpdate, IDisconnectable):
     def update_style_scheme(self, *_args):
         """Updates the accent color"""
 
-        pass
+        accent_color = self.style_manager.get_accent_color()
+        if self.style_manager.get_dark():
+            bg_color = "#3F3F3F"
+        else:
+            bg_color = "#E0E0E0"
+
+        self.link_tag.set_property("foreground", accent_color)
+        self.quote_tag.set_property("background", bg_color)
+        self.code_tag.set_property("background", bg_color)
+        self.block_code_tag.set_property("background", bg_color)
+
+        for tag in self.foreground_accent_tags:
+            tag.set_property("foreground", accent_color)
 
     def disconnect(self, *_args):
         self.buffer.disconnect_by_func(self.on_text_changed)

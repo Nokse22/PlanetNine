@@ -87,13 +87,11 @@ class Preferences(Adw.PreferencesDialog):
             'selected', Gio.SettingsBindFlags.DEFAULT)
 
         self.style_manager.selected = self.settings.get_string('selected-theme')
-        self.flow_box.select_child(
-            self.flow_box.get_child_at_index(
-                self.settings.get_string('selected-theme')))
+        self.flow_box.select_child(self.flow_box.get_child_at_index(0))
 
     def on_selected_style_changed(self, *_args):
         selected = self.flow_box.get_selected_children()[0].get_child()
-        self.style_manager.selected = selected.palette.name
+        self.style_manager.palette = selected.palette
 
     def create_theme_selectors(self, palette):
         return ThemeSelector(palette)

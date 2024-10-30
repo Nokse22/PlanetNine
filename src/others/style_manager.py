@@ -99,6 +99,9 @@ class ThemeSelector(Adw.Bin):
 
         self.palette = _palette
 
+        self.adw_style_manager = Adw.StyleManager.get_default()
+        self.adw_style_manager.connect("notify::dark", self.set_preview_child)
+
         light_scheme = self.scheme_manager.get_scheme(
             self.palette.light_source_name)
         dark_scheme = self.scheme_manager.get_scheme(
@@ -107,7 +110,13 @@ class ThemeSelector(Adw.Bin):
         self.light_preview = GtkSource.StyleSchemePreview.new(light_scheme)
         self.dark_preview = GtkSource.StyleSchemePreview.new(dark_scheme)
 
-        self.set_child(self.light_preview)
+        self.set_preview_child()
+
+    def set_preview_child(self, *_args):
+        if self.adw_style_manager.get_dark():
+            self.set_child(self.dark_preview)
+        else:
+            self.set_child(self.light_preview)
 
 
 class StyleManager(GObject.GObject):
@@ -179,6 +188,10 @@ class StyleManager(GObject.GObject):
             print(palette.name)
             if palette.name == self.selected:
                 return palette
+
+    @palette.setter
+    def palette(self, _palette):
+        self.selected = _palette.name
 
     @GObject.Property(type=GObject.GObject)
     def palettes(self):
