@@ -18,12 +18,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from gi.repository import Gtk, Pango, GObject
+from ..interfaces.style_update import IStyleUpdate
+from ..interfaces.disconnectable import IDisconnectable
 
 import sys
 import re
 
 
-class MarkdownTextView(Gtk.TextView):
+class MarkdownTextView(Gtk.TextView, IStyleUpdate, IDisconnectable):
     __gtype_name__ = 'MarkdownTextView'
 
     __gsignals__ = {
@@ -32,6 +34,7 @@ class MarkdownTextView(Gtk.TextView):
 
     def __init__(self):
         super().__init__()
+        IStyleUpdate.__init__(self)
 
         self.set_css_name("markdownview")
 
@@ -42,18 +45,20 @@ class MarkdownTextView(Gtk.TextView):
 
         self.buffer = self.get_buffer()
 
+        accent_color = self.style_manager.get_accent_color()
+
         self.buffer.create_tag(
-            "h1", weight=Pango.Weight.BOLD, scale=2.0, foreground="#78aeed")
+            "h1", weight=Pango.Weight.BOLD, scale=2.0, foreground=accent_color)
         self.buffer.create_tag(
-            "h2", weight=Pango.Weight.BOLD, scale=1.8, foreground="#78aeed")
+            "h2", weight=Pango.Weight.BOLD, scale=1.8, foreground=accent_color)
         self.buffer.create_tag(
-            "h3", weight=Pango.Weight.BOLD, scale=1.6, foreground="#78aeed")
+            "h3", weight=Pango.Weight.BOLD, scale=1.6, foreground=accent_color)
         self.buffer.create_tag(
-            "h4", weight=Pango.Weight.BOLD, scale=1.4, foreground="#78aeed")
+            "h4", weight=Pango.Weight.BOLD, scale=1.4, foreground=accent_color)
         self.buffer.create_tag(
-            "h5", weight=Pango.Weight.BOLD, scale=1.2, foreground="#78aeed")
+            "h5", weight=Pango.Weight.BOLD, scale=1.2, foreground=accent_color)
         self.buffer.create_tag(
-            "h6", weight=Pango.Weight.BOLD, scale=1, foreground="#78aeed")
+            "h6", weight=Pango.Weight.BOLD, scale=1, foreground=accent_color)
 
         self.buffer.create_tag(
             "bold", weight=Pango.Weight.BOLD)
@@ -255,10 +260,17 @@ class MarkdownTextView(Gtk.TextView):
                     else:
                         buffer.insert(loc, new_order_bullet, -1)
 
+    def update_style_scheme(self, *_args):
+        """Updates the accent color"""
+
+        pass
+
     def disconnect(self, *_args):
         self.buffer.disconnect_by_func(self.on_text_changed)
         self.buffer.disconnect_by_func(self.on_text_inserted)
         self.buffer.disconnect_by_func(self.on_text_deleted)
+
+        self.style_manager.disconnect_by_func(self.update_style_scheme)
 
         print("unrealize:", sys.getrefcount(self))
 

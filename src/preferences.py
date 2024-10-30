@@ -20,19 +20,7 @@
 from gi.repository import Gtk, Adw, Gio
 from gi.repository import GtkSource
 
-from .others.style_manager import StyleManager
-
-
-class ThemeSelector(Adw.Bin):
-    __gtype_name__ = 'ThemeSelector'
-
-    def __init__(self, light_scheme, dark_scheme):
-        super().__init__()
-
-        self.light_preview = GtkSource.StyleSchemePreview.new(light_scheme)
-        self.dark_preview = GtkSource.StyleSchemePreview.new(dark_scheme)
-
-        self.set_child(self.light_preview)
+from .others.style_manager import StyleManager, ThemeSelector
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/preferences.ui')
@@ -56,10 +44,6 @@ class Preferences(Adw.PreferencesDialog):
         super().__init__()
 
         self.prev_style_preview = None
-
-        self.scheme_manager = GtkSource.StyleSchemeManager()
-        self.scheme_manager.append_search_path(
-            "resource:///io/github/nokse22/PlanetNine/styles/schemes/")
 
         self.style_manager = StyleManager()
 
@@ -99,20 +83,17 @@ class Preferences(Adw.PreferencesDialog):
             'active', Gio.SettingsBindFlags.DEFAULT)
 
         self.settings.bind(
-            'selected-theme-n', self.style_manager,
+            'selected-theme', self.style_manager,
             'selected', Gio.SettingsBindFlags.DEFAULT)
 
-        self.style_manager.selected = self.settings.get_int('selected-theme-n')
+        self.style_manager.selected = self.settings.get_string('selected-theme')
         self.flow_box.select_child(
             self.flow_box.get_child_at_index(
-                self.settings.get_int('selected-theme-n')))
+                self.settings.get_string('selected-theme')))
 
     def on_selected_style_changed(self, *_args):
-        self.style_manager.selected = self.selection_model.get_selected()
+        selected = self.flow_box.get_selected_children()[0].get_child()
+        self.style_manager.selected = selected.palette.name
 
     def create_theme_selectors(self, palette):
-        light_scheme = self.scheme_manager.get_scheme(
-            palette.light_source_name)
-        dark_scheme = self.scheme_manager.get_scheme(
-            palette.dark_source_name)
-        return ThemeSelector(light_scheme, dark_scheme)
+        return ThemeSelector(palette)

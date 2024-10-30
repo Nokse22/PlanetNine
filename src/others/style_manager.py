@@ -42,7 +42,7 @@ class Palette(GObject.GObject):
     def __init__(self, palette):
         super().__init__()
 
-        self.name = palette.attrib
+        self.name = palette.attrib["name"]
         self.display_name = palette.attrib
 
         self.dark_source_name = palette.find("source").get("dark")
@@ -85,6 +85,31 @@ class Palette(GObject.GObject):
         return palette
 
 
+class ThemeSelector(Adw.Bin):
+    __gtype_name__ = 'ThemeSelector'
+
+    palette = GObject.Property(type=GObject.GObject)
+
+    scheme_manager = GtkSource.StyleSchemeManager()
+    scheme_manager.append_search_path(
+        "resource:///io/github/nokse22/PlanetNine/styles/schemes/")
+
+    def __init__(self, _palette):
+        super().__init__()
+
+        self.palette = _palette
+
+        light_scheme = self.scheme_manager.get_scheme(
+            self.palette.light_source_name)
+        dark_scheme = self.scheme_manager.get_scheme(
+            self.palette.dark_source_name)
+
+        self.light_preview = GtkSource.StyleSchemePreview.new(light_scheme)
+        self.dark_preview = GtkSource.StyleSchemePreview.new(dark_scheme)
+
+        self.set_child(self.light_preview)
+
+
 class StyleManager(GObject.GObject):
     __gtype_name__ = "StyleManager"
 
@@ -97,7 +122,7 @@ class StyleManager(GObject.GObject):
 
     _palettes = Gio.ListStore.new(Palette)
 
-    _selected = 0
+    _selected = "Adwaita"
 
     def __new__(cls):
         if cls._instance is None:
@@ -110,7 +135,8 @@ class StyleManager(GObject.GObject):
             return
 
         self.adw_style_manager = Adw.StyleManager.get_default()
-        self.adw_style_manager.connect("notify::dark", self.on_dark_changed)
+        self.adw_style_manager.connect("notify::dark", self.on_style_changed)
+        self.adw_style_manager.connect("notify::accent-color", self.on_style_changed)
 
         self.style_scheme_manager = GtkSource.StyleSchemeManager()
         self.style_scheme_manager.append_search_path(
@@ -135,9 +161,7 @@ class StyleManager(GObject.GObject):
 
         self.css_provider = Gtk.CssProvider()
 
-        print(self.style_scheme_manager.get_scheme_ids())
-
-    @GObject.Property(type=int)
+    @GObject.Property(type=str, default="Adwaita")
     def selected(self):
         return self._selected
 
@@ -151,27 +175,39 @@ class StyleManager(GObject.GObject):
 
     @GObject.Property(type=GObject.GObject)
     def palette(self):
-        return self._palettes[self._selected]
+        for palette in self.palettes:
+            print(palette.name)
+            if palette.name == self.selected:
+                return palette
 
     @GObject.Property(type=GObject.GObject)
     def palettes(self):
         return self._palettes
 
-    def get_avalaible_palettes(self) -> Gio.ListStore:
+    def get_avalaible_palettes(self):
         """Returns the list of avalaible palettes"""
+
         return self._palettes
 
-    def on_dark_changed(self, *_args):
+    def on_style_changed(self, *_args):
         """Run when the theme changes"""
+
         self.emit("style-changed")
         self.update_style_scheme()
 
     def get_dark(self):
         """Returns true if the current theme is dark"""
+
         return self.adw_style_manager.get_dark()
+
+    def get_accent_color(self):
+        """Returns the current accent color"""
+
+        return self.adw_style_manager.get_accent_color_rgba().to_string()
 
     def get_current_scheme(self):
         """Returns the current GtkSource style scheme"""
+
         if self.adw_style_manager.get_dark():
             scheme = self.palette.dark_source_name
             return self.style_scheme_manager.get_scheme(scheme)
@@ -181,6 +217,7 @@ class StyleManager(GObject.GObject):
 
     def get_current_colors(self):
         """Returns the current list of colors"""
+
         if self.adw_style_manager.get_dark():
             return self.palette.dark_palette
         else:
@@ -188,6 +225,7 @@ class StyleManager(GObject.GObject):
 
     def update_style_scheme(self, *_args):
         """Updates the libadwaita colors"""
+
         Gtk.StyleContext.remove_provider_for_display(
             Gdk.Display.get_default(), self.css_provider
         )

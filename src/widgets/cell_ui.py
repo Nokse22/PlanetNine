@@ -31,10 +31,13 @@ from ..interfaces.searchable import ISearchable
 from ..interfaces.cursor import ICursor
 from ..interfaces.style_update import IStyleUpdate
 from ..interfaces.language import ILanguage
+from ..interfaces.disconnectable import IDisconnectable
 
 
 @Gtk.Template(resource_path='/io/github/nokse22/PlanetNine/gtk/cell.ui')
-class CellUI(Gtk.Box, ISearchable, ICursor, IStyleUpdate, ILanguage):
+class CellUI(
+        Gtk.Box, ISearchable, ICursor, IStyleUpdate, ILanguage,
+        IDisconnectable):
     __gtype_name__ = 'CellUI'
 
     __gsignals__ = {
@@ -310,12 +313,22 @@ class CellUI(Gtk.Box, ISearchable, ICursor, IStyleUpdate, ILanguage):
         self.cell.disconnect_by_func(self.on_add_output)
         self.cell.disconnect_by_func(self.on_reset_output)
         self.cell.disconnect_by_func(self.on_executing_changed)
+        self.cell.disconnect_by_func(self.on_update_output)
         self.buffer.disconnect_by_func(self.on_source_changed)
         self.drag_source.disconnect_by_func(self.on_drag_source_prepare)
         self.drag_source.disconnect_by_func(self.on_drag_source_begin)
         self.drag_source.disconnect_by_func(self.delete_cell)
         self.click_gesture.disconnect_by_func(self.on_click_released)
         self.markdown_text_view.disconnect_by_func(self.on_source_changed)
+
+        self.markdown_text_view.disconnect()
+
+        child = self.output_box.get_first_child()
+        while child:
+            if isinstance(child, IDisconnectable):
+                child.disconnect()
+            self.output_box.remove(child)
+            child = child.get_next_sibling()
 
         for action, callback in self.actions_signals:
             action.disconnect_by_func(callback)
