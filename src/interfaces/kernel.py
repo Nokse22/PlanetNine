@@ -59,6 +59,7 @@ class IKernel:
         To be run when the page has been initalized so that a kernel can be
         started.
         """
+
         if self.kernel_name:
             self.activate_action(
                 "win.request-kernel-name",
@@ -82,6 +83,7 @@ class IKernel:
         :returns: the page kernel
         :rtype: JupyterKernel
         """
+
         return self.jupyter_kernel
 
     def set_kernel(self, jupyter_kernel):
@@ -89,6 +91,7 @@ class IKernel:
 
         :param JupyterKernel jupyter_kernel: the new page kernel
         """
+
         if isinstance(self, ILanguage):
             self.set_language(jupyter_kernel.language)
 
@@ -107,4 +110,5 @@ class IKernel:
 
         Run whenever the status or the kernel itself changes
         """
+
         self.emit("kernel-info-changed")

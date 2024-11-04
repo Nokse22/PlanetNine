@@ -79,7 +79,7 @@
                 {
                     "type" : "git",
                     "url" : "https://gitlab.gnome.org/GNOME/gtksourceview.git",
-                    "branch" : "master"
+                    "commit" : "4bed95288d953981ecd649b6ce02a348afbf051a"
                 }
             ]
         },

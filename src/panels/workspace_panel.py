@@ -54,6 +54,9 @@ class WorkspacePanel(Panel.Widget):
 
     box = Gtk.Template.Child()
 
+    workspace_list_view = Gtk.Template.Child()
+    other_files_list_view = Gtk.Template.Child()
+
     workspace_menu = Gtk.Template.Child()
     other_menu = Gtk.Template.Child()
 
@@ -62,11 +65,21 @@ class WorkspacePanel(Panel.Widget):
 
         self.workspace_root = TreeNode(
             "Workspace", NodeType.ROOT, [], self.workspace_menu)
-        self.setup_listview(self.workspace_root)
+        tree_model = Gio.ListStore()
+        tree_model.append(self.workspace_root)
+        tree_list_model = Gtk.TreeListModel.new(
+            tree_model, False, True, self.create_model_func)
+        selection_model = Gtk.NoSelection(model=tree_list_model)
+        self.workspace_list_view.set_model(selection_model)
 
         self.files_root = TreeNode(
             "Other Files", NodeType.ROOT, [], self.other_menu)
-        self.setup_listview(self.files_root)
+        tree_model = Gio.ListStore()
+        tree_model.append(self.files_root)
+        tree_list_model = Gtk.TreeListModel.new(
+            tree_model, False, True, self.create_model_func)
+        selection_model = Gtk.NoSelection(model=tree_list_model)
+        self.other_files_list_view.set_model(selection_model)
 
         self.action_group = Gio.SimpleActionGroup()
         self.box.insert_action_group("workspace", self.action_group)
@@ -87,26 +100,6 @@ class WorkspacePanel(Panel.Widget):
 
         self.create_action("import-files", self.on_import_file)
         self.create_action("import-folders", self.on_import_folder)
-
-    def setup_listview(self, root):
-        tree_model = Gio.ListStore.new(TreeNode)
-        tree_model.append(root)
-
-        tree_list_model = Gtk.TreeListModel.new(
-            tree_model, False, True, self.create_model_func)
-        tree_list_model.set_autoexpand(False)
-
-        selection_model = Gtk.NoSelection(model=tree_list_model)
-
-        factory = Gtk.SignalListItemFactory()
-        factory.connect("setup", self.on_factory_setup)
-        factory.connect("bind", self.on_factory_bind)
-
-        list_view = Gtk.ListView.new(selection_model, factory)
-        list_view.add_css_class("workspace")
-        list_view.add_css_class("sidebar-list")
-
-        self.box.append(list_view)
 
     #
     #   SET THE WORKSPACE
@@ -313,9 +306,11 @@ class WorkspacePanel(Panel.Widget):
             return child_model
         return None
 
+    @Gtk.Template.Callback("on_setup")
     def on_factory_setup(self, factory, list_item):
         list_item.set_child(TreeWidget())
 
+    @Gtk.Template.Callback("on_bind")
     def on_factory_bind(self, factory, list_item):
         item = list_item.get_item()
         widget = list_item.get_child()

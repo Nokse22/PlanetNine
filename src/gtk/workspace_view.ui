@@ -14,6 +14,28 @@
         <child>
           <object class="GtkBox" id="box">
             <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkListView" id="workspace_list_view">
+                <property name="css-classes">sidebar-list</property>
+                <property name="factory">
+                  <object class="GtkSignalListItemFactory">
+                    <signal name="setup" handler="on_setup"></signal>
+                    <signal name="bind" handler="on_bind"></signal>
+                  </object>
+                </property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkListView" id="other_files_list_view">
+                <property name="css-classes">sidebar-list</property>
+                <property name="factory">
+                  <object class="GtkSignalListItemFactory">
+                    <signal name="setup" handler="on_setup"></signal>
+                    <signal name="bind" handler="on_bind"></signal>
+                  </object>
+                </property>
+              </object>
+            </child>
           </object>
         </child>
       </object>

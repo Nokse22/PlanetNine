@@ -31,5 +31,6 @@ class IStyleUpdate:
 
         Overridden when something else needs to be updated
         """
+
         scheme = self.style_manager.get_current_scheme()
         self.buffer.set_style_scheme(scheme)

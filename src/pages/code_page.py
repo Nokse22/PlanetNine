@@ -230,8 +230,6 @@ class CodePage(
 
         self.language = _language
 
-        print(self.language_manager.get_language_ids())
-
         if self.language + "cells" in self.language_manager.get_language_ids():
             lang = self.language_manager.get_language(self.language + "cells")
         else:

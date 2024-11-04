@@ -16,24 +16,24 @@ list.notebook-list {
 }
 
 /* This causes the completion suggestion popover to be styled uncorreclty */
-list.notebook-list row {
+list.notebook-list > row {
   background-color:transparent;
   padding-top: 3px;
   padding-bottom: 3px;
   border-radius: 12px;
 }
 
-list.notebook-list row:selected frame{
+list.notebook-list > row:selected frame{
   background-color:transparent;
   border: 2px alpha(var(--accent-color), 0.5) solid;
   transition: border ease-in-out 100ms;
 }
 
-list.notebook-list row frame{
+list.notebook-list > row frame{
   border-width: 2px;
 }
 
-list.notebook-list row:selected .markdown-view{
+list.notebook-list > row:selected .markdown-view{
   border: 2px alpha(var(--accent-color), 0.4) solid;
 }
 
@@ -41,7 +41,7 @@ list.console {
   background-color: transparent;
 }
 
-list.console row {
+list.console > row {
   background-color:transparent;
   padding-top: 3px;
   padding-bottom: 3px;

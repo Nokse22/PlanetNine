@@ -171,6 +171,7 @@ class OutputLoader(GObject.GObject):
         """Adds an output in an OutputTerminal used for any text display"""
 
         child = OutputTerminal()
+        child.set_focusable(True)
         child.display_id = output.display_id
         self.output_box.append(child)
         child.insert_with_escapes(output.data_content)
@@ -179,6 +180,7 @@ class OutputLoader(GObject.GObject):
         """Adds an markdown output"""
 
         child = OutputMarkdown()
+        child.set_focusable(True)
         child.display_id = output.display_id
         self.output_box.append(child)
         child.set_text(output.data_content)
@@ -187,6 +189,7 @@ class OutputLoader(GObject.GObject):
         """Adds an json output"""
 
         child = OutputJSON()
+        child.set_focusable(True)
         child.display_id = output.display_id
         child.parse_json_string(output.data_content)
         self.output_box.append(child)
@@ -236,6 +239,7 @@ class OutputLoader(GObject.GObject):
         child = OutputHTML(
             "file://" + html_page_path, "Open {} in Browser".format(html_name)
         )
+        child.set_focusable(True)
         child.display_id = output.display_id
 
         self.output_box.append(child)
@@ -267,6 +271,7 @@ class OutputLoader(GObject.GObject):
 
         pixbuf = GdkPixbuf.Pixbuf.new_from_file(image_path)
         picture = OutputPicture()
+        picture.set_focusable(True)
         picture.set_pixbuf(pixbuf)
         if pixbuf.get_width() > 800:
             picture.set_size_request(

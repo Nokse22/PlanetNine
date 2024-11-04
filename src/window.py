@@ -105,6 +105,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     toolbar_view = Gtk.Template.Child()
     search_entry = Gtk.Template.Child()
 
+    kernel_language_label = Gtk.Template.Child()
+    kernel_display_name_label = Gtk.Template.Child()
+    kernel_name_label = Gtk.Template.Child()
+
     cache_dir = os.environ["XDG_CACHE_HOME"]
     files_cache_dir = os.path.join(cache_dir, "files")
 
@@ -801,6 +805,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 self.kernel_status_menu.set_label(kernel.status)
                 self.omni_label.set_label(kernel.display_name)
 
+                self.kernel_language_label.set_label(kernel.language)
+                self.kernel_display_name_label.set_label(kernel.display_name)
+                self.kernel_name_label.set_label(kernel.name)
+
                 self.variables_panel.set_model(kernel.get_variables())
                 self.kernel_terminal.set_kernel(kernel)
 
@@ -812,6 +820,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         else:
             self.kernel_status_menu.set_label("")
             self.omni_label.set_label("No Kernel")
+
+            self.kernel_language_label.set_label(_("None"))
+            self.kernel_display_name_label.set_label(_("None"))
+            self.kernel_name_label.set_label(_("None"))
 
             self.variables_panel.set_model(None)
             self.kernel_terminal.set_kernel(None)

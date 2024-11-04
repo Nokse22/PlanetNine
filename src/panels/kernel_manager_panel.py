@@ -89,34 +89,31 @@ class KernelManagerPanel(Panel.Widget):
     def create_avalaible_kernels_sub_model(self, item):
         """Gtk.TreeListModel create sub model functions for avalaible kernels
         list"""
+
         if isinstance(item, TreeNode):
             return self.avalaible_kernels_model
+
         return None
 
     def create_running_kernels_sub_model(self, item):
         """Gtk.TreeListModel create sub model functions for running kernels
         list"""
+
         if isinstance(item, TreeNode):
             return self.running_kernels_model
 
-        elif isinstance(item, Session):
-            return Gtk.TreeListModel.new(
-                item.notebook_store,
-                False,
-                True,
-                self.create_running_kernels_sub_model)
-
-        elif isinstance(item, Notebook):
-            return None
+        return None
 
     @Gtk.Template.Callback("on_setup")
     def on_setup(self, factory, list_item):
         """Setup the list view widget"""
+
         list_item.set_child(TreeWidget())
 
     @Gtk.Template.Callback("on_bind")
     def on_bind(self, factory, list_item):
         """Binds the list view widget to a list_item"""
+
         list_row = list_item.get_item()
         widget = list_item.get_child()
         item = list_item.get_item().get_item()

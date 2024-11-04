@@ -37,6 +37,7 @@ class ICursor:
 
     def on_cursor_position_changed(self, *_args):
         """Emits the signal cursor-moved when the cursor is moved"""
+
         self.emit("cursor-moved", self.buffer, 0)
 
     def get_cursor_position(self):
@@ -45,6 +46,7 @@ class ICursor:
         :returns: the buffere and cell where is the cursor
         :rtype: GtkSourceBuffer, int
         """
+
         return self.buffer, 0
 
     def move_cursor(self, line, column, index=0):
@@ -54,6 +56,7 @@ class ICursor:
         :param int column: The column where to move the cursor
         :param int index: The cell where to move the cursor
         """
+
         succ, cursor_iter = self.buffer.get_iter_at_line_offset(line, column)
         if succ:
             self.buffer.place_cursor(cursor_iter)
