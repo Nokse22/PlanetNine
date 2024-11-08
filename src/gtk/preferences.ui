@@ -3,6 +3,7 @@
 <interface>
   <requires lib="libadwaita" version="1.4"/>
   <template class="Preferences" parent="AdwPreferencesDialog">
+    <property name="content-height">600</property>
     <child>
       <object class="AdwPreferencesPage">
         <property name="title" translatable="yes">App</property>

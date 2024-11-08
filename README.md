@@ -30,6 +30,7 @@ I might change the name before releasing it
 - Text
 - Json
 - LaTeX (rendered with matplotlib)
+- GEO Json map using shumate
 Many outputs are received as HTML and can be viewed in the browser
 
 ### Planned Features

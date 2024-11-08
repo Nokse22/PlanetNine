@@ -22,6 +22,7 @@ from gi.repository import GObject, Gtk, GLib, GdkPixbuf, Gio
 from ..widgets.json_viewer import JsonViewer
 from ..widgets.terminal_textview import TerminalTextView
 from ..widgets.markdown_textview import MarkdownTextView
+from ..widgets.geo_json_map import GeoJsonMap
 
 from ..models.output import OutputType, DataType, Output
 
@@ -124,6 +125,8 @@ class OutputLoader(GObject.GObject):
                         self.display_markdown(output)
                     case DataType.JSON:
                         self.display_json(output)
+                    case DataType.GEO_JSON:
+                        self.display_geo_json(output)
                     case DataType.LATEX:
                         self.display_latex(output)
 
@@ -194,13 +197,24 @@ class OutputLoader(GObject.GObject):
         child.parse_json_string(output.data_content)
         self.output_box.append(child)
 
+    def display_geo_json(self, output: Output):
+        """Adds an GEO json output"""
+
+        geo_json_map = GeoJsonMap()
+        geo_json_map.parse(output.data_content)
+        frame = Gtk.Frame(
+            child=geo_json_map,
+            height_request=300,
+            css_classes=["output-frame"])
+        self.output_box.append(frame)
+
     def display_latex(self, output: Output):
         """Renders and displays a latex string"""
 
         import matplotlib.pyplot as plt
 
         latex_image_path = os.path.join(
-            self.html_path, f"{
+            self.latex_path, f"{
                 random.randint(
                     0, 100)}.png")
 

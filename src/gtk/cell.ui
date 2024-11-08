@@ -67,6 +67,7 @@
                   <object class="GtkFrame">
                     <property name="height-request">50</property>
                     <property name="width-request">200</property>
+                    <property name="css-classes">cell-frame</property>
                     <child>
                       <object class="GtkSourceView" id="source_view">
                         <property name="monospace">True</property>

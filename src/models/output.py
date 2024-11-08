@@ -40,6 +40,7 @@ class DataType(IntEnum):
     IMAGE_JPEG = 6
     IMAGE_SVG = 7
     LATEX = 8
+    GEO_JSON = 9
 
 
 # This represent a cell output
@@ -125,6 +126,10 @@ class Output(GObject.GObject):
         if 'application/json' in json_node['data']:
             self.data_content = json_node['data']['application/json']
             self.data_type = DataType.JSON
+
+        elif 'application/geo+json' in json_node['data']:
+            self.data_content = json_node['data']['application/geo+json']
+            self.data_type = DataType.GEO_JSON
 
         elif 'text/markdown' in json_node['data']:
             self.data_content = json_node['data']['text/markdown']

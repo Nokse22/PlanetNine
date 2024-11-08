@@ -114,9 +114,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
     images_path = os.path.join(cache_dir, "g_images")
     html_path = os.path.join(cache_dir, "g_html")
+    latex_path = os.path.join(cache_dir, "g_latex")
 
     os.makedirs(images_path, exist_ok=True)
     os.makedirs(html_path, exist_ok=True)
+    os.makedirs(latex_path, exist_ok=True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
