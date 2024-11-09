@@ -40,6 +40,7 @@ def get_mime_icon(filename):
         ".csv": "table-symbolic",
 
         ".json": "text-json-symbolic",
+        ".geojson": "text-json-symbolic",
 
         ".html": "text-html-symbolic",
         ".htm": "text-html-symbolic",

@@ -1,0 +1,80 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Created with Cambalache 0.90.4 -->
+<interface>
+  <requires lib="gtk" version="4.6"/>
+  <requires lib="libadwaita" version="1.0"/>
+  <template class="GeoJsonPage" parent="PanelWidget">
+    <property name="title">file.json</property>
+    <property name="icon-name">map-symbolic</property>
+    <property name="menu-model">menu</property>
+    <child>
+      <object class="GtkBox">
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="AdwViewStack" id="stack">
+            <child>
+              <object class="AdwViewStackPage">
+                <property name="name">json</property>
+                <property name="title">Geo Json</property>
+                <property name="icon-name">text-json-symbolic</property>
+                <property name="child">
+                  <object class="GtkScrolledWindow" id="scrolled_window">
+                    <property name="vexpand">true</property>
+                    <child>
+                      <object class="GtkSourceView" id="source_view">
+                        <property name="hexpand">True</property>
+                        <property name="monospace">True</property>
+                        <property name="highlight-current-line">True</property>
+                        <property name="show-line-numbers">True</property>
+                        <property name="background-pattern">grid</property>
+                        <property name="auto-indent">True</property>
+                        <property name="top-margin">12</property>
+                        <property name="bottom-margin">12</property>
+                        <property name="left-margin">12</property>
+                        <property name="right-margin">6</property>
+                        <property name="pixels-above-lines">2</property>
+                        <property name="pixels-below-lines">2</property>
+                        <property name="pixels-inside-wrap">2</property>
+                        <property name="wrap-mode">word-char</property>
+                        <property name="tab-width">4</property>
+                        <property name="buffer">
+                          <object class="GtkSourceBuffer" id="buffer">
+                            <property name="enable-undo">True</property>
+                            <property name="highlight-syntax">True</property>
+                            <property name="highlight-matching-brackets">True</property>
+                          </object>
+                        </property>
+                      </object>
+                    </child>
+                  </object>
+                </property>
+              </object>
+            </child>
+            <child>
+              <object class="AdwViewStackPage">
+                <property name="name">viewer</property>
+                <property name="title">Viewer</property>
+                <property name="icon-name">map-symbolic</property>
+                <property name="child">
+                  <object class="AdwBin" id="geo_json_bin">
+                  </object>
+                </property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwViewSwitcherBar">
+            <property name="stack">stack</property>
+            <property name="reveal">true</property>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+  <menu id="menu">
+    <section id="page_menu">
+    </section>
+  </menu>
+</interface>
+

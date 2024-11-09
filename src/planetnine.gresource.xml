@@ -47,6 +47,7 @@
     <file preprocess="xml-stripblanks">gtk/code_page.ui</file>
     <file preprocess="xml-stripblanks">gtk/preferences.ui</file>
     <file preprocess="xml-stripblanks">gtk/json_viewer_page.ui</file>
+    <file preprocess="xml-stripblanks">gtk/geo_json_page.ui</file>
     <file preprocess="xml-stripblanks">gtk/text_page.ui</file>
     <file preprocess="xml-stripblanks">gtk/images_panel.ui</file>
     <file preprocess="xml-stripblanks">gtk/matrix_page.ui</file>
@@ -87,6 +88,7 @@
     <file>icons/16x16/mimetypes/unknown-symbolic.svg</file>
     <file>icons/16x16/mimetypes/octave-symbolic.svg</file>
     <file>icons/16x16/mimetypes/table-symbolic.svg</file>
+    <file>icons/16x16/mimetypes/map-symbolic.svg</file>
 
     <file>custom_languages/python3cells.lang</file>
 

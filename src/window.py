@@ -43,6 +43,7 @@ from .pages.code_page import CodePage
 from .pages.json_viewer_page import JsonViewerPage
 from .pages.text_page import TextPage
 from .pages.matrix_page import MatrixPage
+from .pages.geo_json_page import GeoJsonPage
 
 from .panels.kernel_manager_panel import KernelManagerPanel
 from .panels.workspace_panel import WorkspacePanel
@@ -670,6 +671,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 self.panel_grid.add(NotebookPage(file_path))
             case "text/x-python":
                 self.panel_grid.add(CodePage(file_path))
+            case "application/geo+json":
+                self.panel_grid.add(GeoJsonPage(file_path))
             case mime_type if is_mime_displayable(mime_type):
                 self.panel_grid.add(TextPage(file_path))
             case _:
