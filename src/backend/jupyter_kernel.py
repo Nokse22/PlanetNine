@@ -158,6 +158,8 @@ class JupyterKernel(GObject.GObject):
         while self._running:
             try:
                 msg = await self.kernel_client.get_iopub_msg()
+                print("IOPUB MSG:")
+                pprint(msg)
                 self.process_iopub_msg(msg)
 
             except Exception as e:
@@ -167,9 +169,6 @@ class JupyterKernel(GObject.GObject):
     def process_iopub_msg(self, msg):
         if not msg:
             return
-
-        print("IOPUB MSG:")
-        pprint(msg)
 
         msg = self.extract_variables(msg)
 
@@ -194,8 +193,8 @@ class JupyterKernel(GObject.GObject):
 
         if msg_id in self.execution_queue:
             print("Matching ID\n")
-            callback, args = self.execution_queue[msg_id]
-            callback(msg, args)
+            callback, *args = self.execution_queue[msg_id]
+            callback(msg, *args)
 
     #
     #
