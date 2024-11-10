@@ -82,12 +82,14 @@ class JupyterKernel(GObject.GObject):
     name = GObject.Property(type=str, default='')
     kernel_id = GObject.Property(type=str, default='')
 
-    def __init__(self, _name, _kernel_id, _language):
+    def __init__(self, _name, _kernel_id, _language, _search_path):
         super().__init__()
 
         self.name = _name
         self.display_name = _name.title() + " " + _kernel_id[:5]
         self.language = _language
+        self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
+
         self.kernel_id = _kernel_id
         self.status = ""
 
@@ -105,7 +107,7 @@ class JupyterKernel(GObject.GObject):
 
         self.kernel_client = jupyter_client.AsyncKernelClient()
 
-        self.data_dir = GLib.getenv("XDG_DATA_HOME")
+        self.conn_file_dir = _search_path
 
         self.__connect()
 
@@ -127,11 +129,9 @@ class JupyterKernel(GObject.GObject):
         asyncio.create_task(self._get_shell_msg())
 
     def __connect(self):
-        connection_file_path = f"{
-            self.data_dir}/jupyter/runtime/kernel-{
-            self.kernel_id}.json"
-
-        print(connection_file_path)
+        connection_file_path = jupyter_client.connect.find_connection_file(
+            filename=f'kernel-{self.kernel_id}.json',
+            path=self.conn_file_dir)
 
         with open(connection_file_path) as f:
             connection_info = json.load(f)
@@ -229,8 +229,9 @@ class JupyterKernel(GObject.GObject):
         asyncio.create_task(self._execute(code, callback, *args))
 
     async def _execute(self, code, callback, *args):
-        code += '\n%whos'  # added %whos to get the variables
-        # FIXME if it's not ipykernel it should not be used
+        if self.language == "python":
+            code += '\n%whos'  # added %whos to get the variables
+            # FIXME if it's not ipykernel it should not be used
 
         msg_id = self.kernel_client.execute(code)
 

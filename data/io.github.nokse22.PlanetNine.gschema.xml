@@ -30,5 +30,12 @@
       <default>false</default>
     </key>
 
+	  <key name="use-external-server" type="b">
+      <default>false</default>
+    </key>
+	  <key name="jupyter-path" type="s">
+      <default>'~/.local/share/jupyter/runtime'</default>
+    </key>
+
 	</schema>
 </schemalist>

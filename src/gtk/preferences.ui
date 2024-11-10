@@ -29,6 +29,22 @@
             </child>
           </object>
         </child>
+        <child>
+          <object class="AdwPreferencesGroup" id="sandboxed_settings_group">
+            <property name="title" translatable="yes">Sandbox</property>
+            <child>
+              <object class="AdwSwitchRow" id="sandbox_server_switch">
+                <property name="title" translatable="yes">Use external Jupyter Server</property>
+                <property name="subtitle" translatable="yes">Use the Jupyter Server installed on the system instead of the built-in one</property>
+              </object>
+            </child>
+            <child>
+              <object class="AdwEntryRow" id="jupyter_path_entry">
+                <property name="title" translatable="yes">Jupyter directory</property>
+              </object>
+            </child>
+          </object>
+        </child>
       </object>
     </child>
     <child>

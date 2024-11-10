@@ -63,6 +63,7 @@ class NotebookPage(
         ISearchable.__init__(self, True)
         ICursor.__init__(self, True)
         ISaveable.__init__(self, True)
+        ILanguage.__init__(self)
 
         self.bindings = []
 
@@ -387,14 +388,12 @@ class NotebookPage(
     def set_language(self, _language):
         """Overrides the set_language method of ILanguage"""
 
-        # self.get_kernel().language = _language
-        # self.language = _language
-        # lang = self.language_manager.get_language(self.language)
-        # self.buffer.set_language(lang)
-        # self.buffer.set_highlight_syntax(True)
+        self.language = _language
+        lang = self.language_manager.get_language(self.language)
 
-        # TODO Need to ask the kernel to change the language if it make sense
-        #           or set as fixed
+        for index in range(0, self.notebook_model.get_n_items()):
+            cell = self.cells_list_box.get_row_at_index(index).get_child()
+            cell.set_language(self.language)
 
         self.emit('language-changed')
 
@@ -473,6 +472,8 @@ class NotebookPage(
         self.notebook_model.jupyter_kernel = jupyter_kernel
         self.notebook_model.jupyter_kernel.connect(
             "status-changed", self.on_kernel_status_changed)
+
+        self.set_language(self.get_kernel().language)
         self.emit("kernel-info-changed")
 
     def get_kernel(self):

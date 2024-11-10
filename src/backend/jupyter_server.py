@@ -17,7 +17,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gio
+from gi.repository import Gio, Xdp
 from gi.repository import GObject
 
 import re
@@ -53,14 +53,17 @@ class JupyterServer(GObject.GObject):
         'new-line': (GObject.SignalFlags.RUN_FIRST, None, (str,)),
     }
 
-    sandboxed = GObject.Property(type=bool, default=True)
-
     avalaible_kernels = Gio.ListStore()
     kernels = Gio.ListStore()
     default_kernel_name = GObject.Property(type=str, default="")
 
+    data_dir = os.environ["XDG_DATA_HOME"]
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+        self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
+        self.portal = Xdp.Portal()
 
         self.jupyter_process = None
 
@@ -69,24 +72,38 @@ class JupyterServer(GObject.GObject):
         self.token = ""
 
         self.is_running = False
-
-        self.sandboxed = True
+        self.sandboxed = None
+        self.use_external = None
+        self.flatpak_spawn = None
+        self.conn_file_dir = None
 
         self.sessions = Gio.ListStore.new(Session)
         self.kernels = Gio.ListStore.new(JupyterKernel)
         self.avalaible_kernels = Gio.ListStore.new(JupyterKernelInfo)
         self.default_kernel_name = ""
 
-        self.data_dir = os.environ["XDG_DATA_HOME"]
-
     def start(self):
-        asyncio.create_task(self.__start())
+        self.sandboxed = self.portal.running_under_sandbox()
+        self.use_external = self.settings.get_boolean("use-external-server") or not self.sandboxed
+        self.flatpak_spawn = self.sandboxed and self.use_external
 
-    async def __start(self):
+        if self.use_external:
+            self.conn_file_dir = self.settings.get_string("jupyter-path")
+        else:
+            self.conn_file_dir = f"{self.data_dir}/jupyter/runtime/"
+
+        print("SPAWN: ", self.flatpak_spawn)
+
+        asyncio.create_task(self._start())
+
+    async def _start(self):
         self.jupyter_process = Gio.Subprocess.new(
-            ['jupyter-server'] if self.sandboxed else ['flatpak-spawn', '--host', 'jupyter-server'],
+            ['jupyter-server'] if not self.flatpak_spawn else ['flatpak-spawn', '--host', 'jupyter-server'],
             Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_MERGE
         )
+
+        # if not self.jupyter_process.get_successful():
+        #     return
 
         stdout = self.jupyter_process.get_stdout_pipe()
         stdout_stream = Gio.DataInputStream.new(stdout)
@@ -94,8 +111,8 @@ class JupyterServer(GObject.GObject):
         while True:
             line, _ = await stdout_stream.read_line_async(0)
 
-            if line is None:
-                continue
+            if line is None or line == b'':
+                return
 
             line = line.decode('utf-8')
 
@@ -145,20 +162,17 @@ class JupyterServer(GObject.GObject):
         if response.status_code == 201:
             kernel_info = response.json()
 
-            pprint(kernel_info)
-
             kernel_language = ""
             for av_kernel_info in self.avalaible_kernels:
-                print(kernel_name, av_kernel_info.name)
                 if kernel_name == av_kernel_info.name:
                     kernel_language = av_kernel_info.language
-                    print(kernel_language)
                     break
 
             kernel = JupyterKernel(
                 kernel_info['name'],
                 kernel_info['id'],
-                kernel_language
+                kernel_language,
+                self.conn_file_dir
             )
 
             self.kernels.append(kernel)

@@ -66,6 +66,8 @@ def get_language_icon(lang):
     languages_to_icon = {
         "python": "text-x-python-symbolic",
         "octave": "octave-symbolic",
+        "julia": "julia-symbolic",
+        "R": "r-symbolic",
     }
 
     return languages_to_icon.get(lang, "processor-symbolic")

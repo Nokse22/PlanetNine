@@ -33,7 +33,7 @@
                     <child>
                       <object class="PanelOmniBar" id="omni_bar">
                         <property name="icon-name">stop-symbolic</property>
-                        <property name="width-request">200</property>
+                        <!-- <property name="width-request">200</property> -->
                         <property name="menu-model">run-menu</property>
                         <property name="action-name">win.interrupt-kernel</property>
                         <property name="popover">
@@ -132,6 +132,12 @@
                           </object>
                         </property>
                         <child type="prefix">
+                          <object class="GtkImage" id="omni_image">
+                            <property name="visible">false</property>
+                            <property name="margin-end">6</property>
+                          </object>
+                        </child>
+                        <child type="prefix">
                           <object class="GtkLabel" id="omni_label">
                             <property name="label" translatable="yes">No Kernel</property>
                           </object>
@@ -142,24 +148,21 @@
                       <object class="GtkButton">
                         <property name="icon-name">run-cell-symbolic</property>
                         <property name="action-name">win.run-cell</property>
+                        <property name="tooltip-text" translatable="yes">Run Cell</property>
                       </object>
                     </child>
                     <child>
                       <object class="GtkButton">
                         <property name="icon-name">run-line-symbolic</property>
                         <property name="action-name">win.run-line</property>
+                        <property name="tooltip-text" translatable="yes">Run Line</property>
                       </object>
                     </child>
                     <child>
                       <object class="GtkButton">
                         <property name="icon-name">run-cell-and-advance-symbolic</property>
                         <property name="action-name">win.run-cell-and-advance</property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkButton">
-                        <property name="icon-name">media-playback-pause-symbolic</property>
-                        <property name="action-name">win.run-cell</property>
+                        <property name="tooltip-text" translatable="yes">Run Cell and Advance</property>
                       </object>
                     </child>
                   </object>
@@ -177,6 +180,8 @@
                     <property name="menu-model">add-menu</property>
                     <property name="action-name">win.add-code-cell</property>
                     <property name="visible">false</property>
+                    <property name="tooltip-text" translatable="yes">Add Code Cell</property>
+                    <property name="dropdown-tooltip" translatable="yes">More Cell Types</property>
                   </object>
                 </child>
                 <child type="end">

@@ -17,7 +17,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gtk, Adw, Gio
+from gi.repository import Gtk, Adw, Gio, Xdp
 from gi.repository import GtkSource
 
 from .others.style_manager import StyleManager, ThemeSelector
@@ -39,6 +39,10 @@ class Preferences(Adw.PreferencesDialog):
     shutdown_kernels_switch = Gtk.Template.Child()
 
     flow_box = Gtk.Template.Child()
+
+    sandboxed_settings_group = Gtk.Template.Child()
+    sandbox_server_switch = Gtk.Template.Child()
+    jupyter_path_entry = Gtk.Template.Child()
 
     def __init__(self):
         super().__init__()
@@ -86,8 +90,21 @@ class Preferences(Adw.PreferencesDialog):
             'selected-theme', self.style_manager,
             'selected', Gio.SettingsBindFlags.DEFAULT)
 
+        self.settings.bind(
+            'use-external-server', self.sandbox_server_switch,
+            'active', Gio.SettingsBindFlags.DEFAULT)
+        self.settings.bind(
+            'jupyter-path', self.jupyter_path_entry,
+            'text', Gio.SettingsBindFlags.DEFAULT)
+
         self.style_manager.selected = self.settings.get_string('selected-theme')
         self.flow_box.select_child(self.flow_box.get_child_at_index(0))
+
+        self.portal = Xdp.Portal()
+
+        if not self.portal.running_under_sandbox():
+            self.sandboxed_settings_group.set_visible(False)
+            self.sandbox_server_switch.set_active(False)
 
     def on_selected_style_changed(self, *_args):
         if self.prev_style_preview:

@@ -64,6 +64,7 @@ from .widgets.launcher import Launcher
 from .widgets.chapter_row import ChapterRow
 
 from .utils.converters import is_mime_displayable
+from .utils.converters import get_language_icon
 
 from gettext import gettext as _
 
@@ -93,7 +94,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     restart_kernel_dialog = Gtk.Template.Child()
     quit_dialog = Gtk.Template.Child()
     select_kernel_combo_row = Gtk.Template.Child()
-    omni_label = Gtk.Template.Child()
     server_status_label = Gtk.Template.Child()
     start_sidebar_panel_frame = Gtk.Template.Child()
     bottom_panel_frame = Gtk.Template.Child()
@@ -106,6 +106,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     toolbar_view = Gtk.Template.Child()
     search_entry = Gtk.Template.Child()
     omni_bar = Gtk.Template.Child()
+    omni_image = Gtk.Template.Child()
+    omni_label = Gtk.Template.Child()
 
     kernel_language_label = Gtk.Template.Child()
     kernel_display_name_label = Gtk.Template.Child()
@@ -824,6 +826,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             if kernel:
                 self.kernel_status_menu.set_label(kernel.status)
                 self.omni_label.set_label(kernel.display_name)
+                self.omni_image.set_visible(True)
+                self.omni_image.set_from_icon_name(
+                    get_language_icon(kernel.language))
 
                 self.kernel_language_label.set_label(kernel.language)
                 self.kernel_display_name_label.set_label(kernel.display_name)
@@ -847,6 +852,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         else:
             self.kernel_status_menu.set_label("")
             self.omni_label.set_label("No Kernel")
+            self.omni_image.set_visible(False)
 
             self.kernel_language_label.set_label(_("None"))
             self.kernel_display_name_label.set_label(_("None"))
