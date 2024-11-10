@@ -40,10 +40,10 @@ class ConsoleCell(Gtk.Box, IStyleUpdate, ILanguage):
 
     cache_dir = os.environ["XDG_CACHE_HOME"]
 
-    def __init__(self, content, **kwargs):
-        super().__init__(**kwargs)
-        IStyleUpdate.__init__(self, **kwargs)
-        ILanguage.__init__(self, **kwargs)
+    def __init__(self, content):
+        super().__init__()
+        IStyleUpdate.__init__(self)
+        ILanguage.__init__(self)
 
         self.buffer.set_text(content)
 

@@ -38,7 +38,7 @@ list.notebook-list > row:selected frame.cell-frame{
   transition: border ease-in-out 100ms;
 }
 
-list.notebook-list > row frame.cell-frame{
+frame.cell-frame{
   border-width: 2px;
 }
 

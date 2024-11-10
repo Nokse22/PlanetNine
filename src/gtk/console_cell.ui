@@ -14,6 +14,7 @@
         <property name="hexpand">True</property>
         <child>
           <object class="GtkFrame">
+            <property name="css-classes">cell-frame</property>
             <child>
               <object class="GtkSourceView" id="source_view">
                 <property name="height-request">50</property>
@@ -25,7 +26,7 @@
                 <property name="bottom-margin">12</property>
                 <property name="left-margin">12</property>
                 <property name="right-margin">6</property>
-                <property name="show-cursor">false</property>
+                <!-- <property name="show-cursor">false</property> -->
                 <property name="pixels-above-lines">2</property>
                 <property name="pixels-below-lines">2</property>
                 <property name="pixels-inside-wrap">2</property>
