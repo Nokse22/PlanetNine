@@ -32,10 +32,10 @@
                     <property name="spacing">6</property>
                     <child>
                       <object class="PanelOmniBar" id="omni_bar">
-                        <property name="icon-name">run-cell-symbolic</property>
+                        <property name="icon-name">stop-symbolic</property>
                         <property name="width-request">200</property>
                         <property name="menu-model">run-menu</property>
-                        <property name="action-name">win.run-cell</property>
+                        <property name="action-name">win.interrupt-kernel</property>
                         <property name="popover">
                           <object class="GtkPopover">
                             <child>

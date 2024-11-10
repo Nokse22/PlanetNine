@@ -105,6 +105,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     chapters_list_view = Gtk.Template.Child()
     toolbar_view = Gtk.Template.Child()
     search_entry = Gtk.Template.Child()
+    omni_bar = Gtk.Template.Child()
 
     kernel_language_label = Gtk.Template.Child()
     kernel_display_name_label = Gtk.Template.Child()
@@ -256,6 +257,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             'change-kernel',
             GLib.VariantType.new("s"),
             self.on_change_kernel_action)
+        self.interrupt_kernel_action = self.create_action(
+            'interrupt-kernel', self.on_interrupt_kernel)
 
         self.create_action_with_target(
             'select-cell',
@@ -268,6 +271,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.restart_kernel_and_run_action.set_enabled(False)
         self.restart_kernel_action.set_enabled(False)
         self.change_kernel_action.set_enabled(False)
+        self.interrupt_kernel_action.set_enabled(False)
 
         #   OTHER ACTIONS
 
@@ -544,6 +548,17 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self.get_visible_page().run_all_cells()
 
     #
+    #   INTERRUPT VISIBLE KERNEL
+    #
+
+    def on_interrupt_kernel(self, *_args):
+        """Interrupts the visible page kernel"""
+
+        kernel_id = self.get_visible_page().get_kernel().kernel_id
+
+        asyncio.create_task(self._interrupt_kernel_by_id(kernel_id))
+
+    #
     #   SAVE VISIBLE PAGE
     #
 
@@ -817,6 +832,13 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 self.variables_panel.set_model(kernel.get_variables())
                 self.kernel_terminal.set_kernel(kernel)
 
+                if kernel.status == "busy":
+                    self.omni_bar.start_pulsing()
+                    self.interrupt_kernel_action.set_enabled(True)
+                else:
+                    self.omni_bar.stop_pulsing()
+                    self.interrupt_kernel_action.set_enabled(False)
+
                 self.run_cell_and_advance_action.set_enabled(True)
                 self.run_line_action.set_enabled(True)
                 self.run_selected_action.set_enabled(True)
@@ -838,6 +860,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self.run_selected_action.set_enabled(False)
             self.restart_kernel_and_run_action.set_enabled(False)
             self.restart_kernel_action.set_enabled(False)
+            self.interrupt_kernel_action.set_enabled(False)
 
     def update_page_language(self, page):
         """Updates the UI with the page language"""
