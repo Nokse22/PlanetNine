@@ -71,18 +71,6 @@
                 }
             ]
         },
-	{
-            "name" : "gtksource",
-            "buildsystem" : "meson",
-            "builddir" : true,
-            "sources" : [
-                {
-                    "type" : "git",
-                    "url" : "https://gitlab.gnome.org/GNOME/gtksourceview.git",
-                    "commit" : "4bed95288d953981ecd649b6ce02a348afbf051a"
-                }
-            ]
-        },
         {
             "name" : "libshumate",
             "builddir" : true,
