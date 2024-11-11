@@ -27,6 +27,12 @@
                 <property name="subtitle" translatable="yes">When a kernel is not used by any page</property>
               </object>
             </child>
+            <child>
+              <object class="AdwSwitchRow" id="start_kernel_switch">
+                <property name="title" translatable="yes">Start last Kernel automatically</property>
+                <property name="subtitle" translatable="yes">Start last kernel for any notebook automatically</property>
+              </object>
+            </child>
           </object>
         </child>
         <child>

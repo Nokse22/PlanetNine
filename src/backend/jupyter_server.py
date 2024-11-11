@@ -82,6 +82,8 @@ class JupyterServer(GObject.GObject):
         self.avalaible_kernels = Gio.ListStore.new(JupyterKernelInfo)
         self.default_kernel_name = ""
 
+        self.address_pattern = r'(http[s]?://\S+?)\?token=([\w-]+)'
+
     def start(self):
         self.sandboxed = self.portal.running_under_sandbox()
         self.use_external = self.settings.get_boolean("use-external-server") or not self.sandboxed
@@ -92,11 +94,21 @@ class JupyterServer(GObject.GObject):
         else:
             self.conn_file_dir = f"{self.data_dir}/jupyter/runtime/"
 
-        print("SPAWN: ", self.flatpak_spawn)
-
         asyncio.create_task(self._start())
 
     async def _start(self):
+        list_servers_process = Gio.Subprocess.new(
+            ['jupyter-server', 'list'] if not self.flatpak_spawn else ['flatpak-spawn', '--host', 'jupyter-server', 'list'],
+            Gio.SubprocessFlags.STDOUT_PIPE
+        )
+
+        succ, output_buf, err_buff = await list_servers_process.communicate_async()
+
+        if succ:
+            output_str = output_buf.get_data().decode('utf-8')
+            if self._get_address(output_str):
+                return
+
         self.jupyter_process = Gio.Subprocess.new(
             ['jupyter-server'] if not self.flatpak_spawn else ['flatpak-spawn', '--host', 'jupyter-server'],
             Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_MERGE
@@ -119,15 +131,21 @@ class JupyterServer(GObject.GObject):
             self.emit("new-line", line)
 
             if self.address == "":
-                match = re.search(r'(http[s]?://\S+?)(\?token=([\w-]+))', line)
-                if match:
-                    print(line)
-                    self.address = match.group(1)
-                    self.token = match.group(3)
-                    self.emit("started")
-                    self.is_running = True
+                self._get_address(line)
 
-                    asyncio.create_task(self.get_avalaible_kernels())
+
+    def _get_address(self, string):
+        addresses = re.findall(self.address_pattern, string)
+
+        if addresses != []:
+            self.address = addresses[0][0]
+            self.token = addresses[0][1]
+            self.emit("started")
+            self.is_running = True
+
+            asyncio.create_task(self.get_avalaible_kernels())
+            return True
+        return False
 
     def stop(self):
         if self.jupyter_process:

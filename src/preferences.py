@@ -36,7 +36,9 @@ class Preferences(Adw.PreferencesDialog):
     notebook_line_number_switch = Gtk.Template.Child()
 
     start_switch = Gtk.Template.Child()
+
     shutdown_kernels_switch = Gtk.Template.Child()
+    start_kernel_switch = Gtk.Template.Child()
 
     flow_box = Gtk.Template.Child()
 
@@ -85,6 +87,10 @@ class Preferences(Adw.PreferencesDialog):
         self.settings.bind(
             'auto-shutdown-kernel', self.shutdown_kernels_switch,
             'active', Gio.SettingsBindFlags.DEFAULT)
+        self.settings.bind(
+            'auto-start-kernel', self.start_kernel_switch,
+            'active', Gio.SettingsBindFlags.DEFAULT)
+
 
         self.settings.bind(
             'selected-theme', self.style_manager,

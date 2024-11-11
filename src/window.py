@@ -127,10 +127,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        # Gio.Subprocess.new(
-        #     ['pylsp', '--tcp', '--host', '127.0.0.1', '--port', '2087'],
-        #     Gio.SubprocessFlags.NONE
-        # )
+        # TODO Connect a session (notebook...) to it's kernel and display it
+        # TODO Check for running kernels at startup
+        # TODO Make shutting down servers more reliable
+        # TODO Get kernel metadata and save it in notebooks
+        # TODO Select/start last selected kernel for notebook
 
         self.connect_after("notify::focus-widget", self.on_focus_changed)
 
@@ -965,19 +966,19 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
             kernel = self.select_kernel_combo_row.get_selected_item()
 
+            old_kernel = page.get_kernel()
+
             if isinstance(kernel, JupyterKernelInfo):
                 succ, new_ker = await self.jupyter_server.start_kernel_by_name(
                     kernel.name)
                 if succ:
-                    print("kernel has restarted")
                     page.set_kernel(new_ker)
                     self.update_kernel_info(page)
-                else:
-                    print("kernel has NOT restarted")
             elif isinstance(kernel, JupyterKernel):
                 page.set_kernel(kernel)
                 self.update_kernel_info(page)
-                print("kernel changed")
+
+            self.shutdown_kernel_if_orphan(old_kernel.kernel_id)
 
     #
     #   CHARGE/SELECT KERNEL ALERT DIALOG LIST VIEW
@@ -1192,16 +1193,19 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             kernel = widget.get_kernel()
             if kernel:
                 kernel_id = kernel.kernel_id
-                if not self.get_page_with_kernel(kernel_id):
-                    if self.settings.get_boolean("auto-shutdown-kernel"):
-                        asyncio.create_task(
-                            self.jupyter_server.shutdown_kernel(kernel_id))
-                    else:
-                        asyncio.create_task(
-                            self._shutdown_kernel_by_id(kernel_id))
+                self.shutdown_kernel_if_orphan(kernel_id)
 
         # Update the UI
         self.on_focus_changed()
+
+    def shutdown_kernel_if_orphan(self, kernel_id):
+        if not self.get_page_with_kernel(kernel_id):
+            if self.settings.get_boolean("auto-shutdown-kernel"):
+                asyncio.create_task(
+                    self.jupyter_server.shutdown_kernel(kernel_id))
+            else:
+                asyncio.create_task(
+                    self._shutdown_kernel_by_id(kernel_id))
 
     def get_page_with_kernel(self, kernel_id):
         """Returns a page with a specific kernel by kernel_id"""

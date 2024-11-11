@@ -189,6 +189,21 @@ class CodePage(
 
         return self.buffer.get_text(start_iter, end_iter, False)
 
+    def go_to_next_cell(self):
+        cursor_iter = self.buffer.get_iter_at_mark(
+            self.buffer.get_insert())
+
+        delimiter = "# %%"
+
+        result = cursor_iter.forward_search(
+            delimiter, Gtk.TextSearchFlags.VISIBLE_ONLY, None)
+
+        if result:
+            match_start, match_end = result
+            match_end.forward_line()
+
+            self.buffer.place_cursor(match_end)
+
     #
     #
     #
@@ -235,8 +250,6 @@ class CodePage(
         else:
             lang = self.language_manager.get_language(self.language)
 
-        # TODO change the language based on the file mimetype
-
         self.buffer.set_language(lang)
         self.buffer.set_highlight_syntax(True)
 
@@ -259,7 +272,7 @@ class CodePage(
         """Runs current cell and moves the cursor to the next cell"""
 
         self.run_selected_cell()
-        # TODO move the cursor to the start of the next cell
+        self.go_to_next_cell()
 
     def run_all_cells(self):
         """Runs the entire script"""

@@ -29,6 +29,9 @@
 	  <key name="auto-shutdown-kernel" type="b">
       <default>false</default>
     </key>
+	  <key name="auto-start-kernel" type="b">
+      <default>false</default>
+    </key>
 
 	  <key name="use-external-server" type="b">
       <default>false</default>
