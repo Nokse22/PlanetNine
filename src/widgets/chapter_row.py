@@ -51,3 +51,6 @@ class ChapterRow(Gtk.Button):
 
     def set_text(self, text):
         self.label.set_text(text)
+
+    def disconnect(self, *_args):
+        pass

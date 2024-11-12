@@ -127,11 +127,14 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        # TODO Connect a session (notebook...) to it's kernel and display it
+        # TODO Instead of starting kernels use sessions
+
         # TODO Check for running kernels at startup
         # TODO Make shutting down servers more reliable
         # TODO Get kernel metadata and save it in notebooks
         # TODO Select/start last selected kernel for notebook
+
+        # TODO Add cell splitting
 
         self.connect_after("notify::focus-widget", self.on_focus_changed)
 
@@ -309,6 +312,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             'request-kernel-name',
             GLib.VariantType.new("(ss)"),
             self.on_request_kernel_name)
+
+        self.create_action_with_target(
+            'new-session',
+            GLib.VariantType.new("(sss)"),
+            self.start_new_session)
 
         #
 
@@ -935,6 +943,22 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 page.move_cursor(int(parts[0]), int(parts[1]))
 
     #
+    #   START A NEW SESSION
+    #
+
+    def start_new_session(self, action, target):
+        kernel_name, session_name, file_path = target.unpack()
+        asyncio.create_task(
+            self._start_new_session(kernel_name, session_name, file_path))
+
+    async def _start_new_session(self, kernel_name, session_name, file_path):
+        succ, session_id = await self.jupyter_server.new_session(
+            kernel_name, session_name, file_path)
+
+        if succ:
+            print(session_id)
+
+    #
     #   CHANGE/SELECT KERNEL OF A PAGE BY ID OR VISIBLE
     #
 
@@ -978,7 +1002,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 page.set_kernel(kernel)
                 self.update_kernel_info(page)
 
-            self.shutdown_kernel_if_orphan(old_kernel.kernel_id)
+            if old_kernel:
+                self.shutdown_kernel_if_orphan(old_kernel.kernel_id)
 
     #
     #   CHARGE/SELECT KERNEL ALERT DIALOG LIST VIEW
@@ -1148,6 +1173,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.change_kernel_action.set_enabled(True)
         self.start_server_action.set_enabled(False)
+
+        asyncio.create_task(self.get_se())
+
+    async def get_se(self):
+        await self.jupyter_server.get_sessions()
 
     def on_jupyter_server_has_new_line(self, server, line):
         """Callback to the Server new-line signal,
@@ -1327,3 +1357,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         widget.set_action_name("win.select-cell")
         widget.set_action_target_value(GLib.Variant('u', item.index))
         widget.set_text(item.node_name)
+
+    @Gtk.Template.Callback("on_chapter_factory_unbind")
+    def on_chapter_factory_unbind(self, factory, list_item):
+        """Factory unbind for chapter listview"""
+
+        list_item.get_child().disconnect()

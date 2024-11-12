@@ -115,3 +115,6 @@ class TreeWidget(Adw.Bin):
     def set_activate_action_and_target(self, action, target):
         self.action = action
         self.target = target
+
+    def disconnect(self, *_args):
+        self.click_controller.disconnect_by_func(self.on_click_released)

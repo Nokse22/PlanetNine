@@ -71,6 +71,8 @@ class CellUI(
         IStyleUpdate.__init__(self)
         ILanguage.__init__(self)
 
+        # TODO Add cell collapsing
+
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
         self.actions_signals = []

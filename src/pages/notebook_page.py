@@ -464,6 +464,8 @@ class NotebookPage(
     def set_kernel(self, jupyter_kernel):
         """Overrides the set_kernel of the IKernel interface"""
 
+        # TODO I can probably move the kernel to the page and not have to override this function
+
         kernel = self.get_kernel()
 
         if kernel:

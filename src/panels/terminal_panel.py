@@ -28,6 +28,8 @@ class TerminalPanel(Panel.Widget, IStyleUpdate):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+        # TODO Add copy
+
         self.set_icon_name("terminal-symbolic")
 
         self.vte_terminal = Vte.Terminal(

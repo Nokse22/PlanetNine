@@ -82,9 +82,7 @@ class JsonViewerPage(
                 content = file.read()
 
             self.buffer.set_text(content)
-
             self.set_path(_path)
-
             self.set_modified(False)
 
         # SETUP the page
@@ -105,9 +103,14 @@ class JsonViewerPage(
         if the buffer content have been changed"""
 
         if self.is_changed:
+            child = self.json_viewer_bin.get_child()
+            if child:
+                child.disconnect()
+
             start = self.buffer.get_start_iter()
             end = self.buffer.get_end_iter()
             text = self.buffer.get_text(start, end, True)
+
             viewer = JsonViewer()
             viewer.parse_json_string(text)
             self.json_viewer_bin.set_child(viewer)

@@ -105,7 +105,7 @@ class TreeWidget(Adw.Bin):
     def disconnect(self, *_args):
         self.click_controller.disconnect_by_func(self.on_click_released)
 
-        print(f"Unrealize {self}")
+        print(f"disconnect: {self}")
 
     def __del__(self, *_args):
         print(f"DELETING {self}")
@@ -128,39 +128,40 @@ class JsonViewer(Gtk.Box):
         factory = Gtk.SignalListItemFactory()
         factory.connect("setup", self.on_factory_setup)
         factory.connect("bind", self.on_factory_bind)
+        factory.connect("unbind", self.on_factory_unbind)
         list_view = Gtk.ListView.new(selection_model, factory)
         return list_view
 
     def parse_json_string(self, json_string):
-
         try:
             json_obj = json.loads(format_json(json_string))
         except Exception as e:
             print(e)
             return
 
-        root_node = self.create_tree_node("Root", json_obj, NodeType.ROOT)
+        root_node = self.create_tree_node("Root", json_obj)
 
         tree_model = Gio.ListStore.new(TreeNode)
         tree_model.append(root_node)
 
         self.append(self.create_tree_view(tree_model))
 
-    def create_tree_node(self, key, value, node_type):
+    def create_tree_node(self, node_key, node_value):
+        node_type = self.get_node_type(node_value)
         if node_type in [NodeType.DICTIONARY, NodeType.ROOT]:
             children = [
-                self.create_tree_node(k, v, self.get_node_type(v))
-                for k, v in value.items()
+                self.create_tree_node(j_key, j_value)
+                for j_key, j_value in node_value.items()
             ]
-            return TreeNode(key, value, node_type, children)
+            return TreeNode(node_key, node_value, node_type, children)
         elif node_type == NodeType.ARRAY:
             children = [
-                self.create_tree_node(str(i), v, self.get_node_type(v))
-                for i, v in enumerate(value)
+                self.create_tree_node(str(a_index), a_value)
+                for a_index, a_value in enumerate(node_value)
             ]
-            return TreeNode(key, value, node_type, children)
+            return TreeNode(node_key, node_value, node_type, children)
         else:
-            return TreeNode(key, str(value), node_type)
+            return TreeNode(node_key, str(node_value), node_type)
 
     def get_node_type(self, value):
         if isinstance(value, dict):
@@ -198,18 +199,21 @@ class JsonViewer(Gtk.Box):
         widget.set_key(tree_node.node_type, tree_node.key)
         widget.set_value(tree_node.node_type, tree_node.content)
 
+    def on_factory_unbind(self, factory, list_item):
+        list_item.get_child().disconnect()
+
     def disconnect(self, *_args):
         list_view = self.get_first_child()
-
         while list_view:
+            list_view.set_model(None)
             list_view.get_factory().disconnect_by_func(self.on_factory_setup)
             list_view.get_factory().disconnect_by_func(self.on_factory_bind)
+            list_view.get_factory().disconnect_by_func(self.on_factory_unbind)
 
             self.remove(list_view)
-
             list_view = self.get_first_child()
 
-        print(f"Unrealize {self}")
+        print(f"disconnect {self}")
 
     def __del__(self, *_args):
         print(f"DELETING {self}")

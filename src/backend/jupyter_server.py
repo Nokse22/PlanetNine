@@ -143,7 +143,7 @@ class JupyterServer(GObject.GObject):
             self.emit("started")
             self.is_running = True
 
-            asyncio.create_task(self.get_avalaible_kernels())
+            asyncio.create_task(self.on_kernel_stated())
             return True
         return False
 
@@ -157,7 +157,7 @@ class JupyterServer(GObject.GObject):
     def get_is_running(self):
         return self.is_running
 
-    async def get_avalaible_kernels(self):
+    async def on_kernel_stated(self):
         while True:
             success, kernel_specs = await self.get_kernel_specs()
             if success:
@@ -238,6 +238,14 @@ class JupyterServer(GObject.GObject):
 
         if response.status_code == 200:
             sessions = response.json()
+            for session in sessions:
+                kernel = JupyterKernel(
+                    session['kernel']['name'],
+                    session['kernel']['id'],
+                    "python",
+                    self.conn_file_dir
+                )
+                self.kernels.append(kernel)
             return True, sessions
         else:
             return False, None

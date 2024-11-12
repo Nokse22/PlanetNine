@@ -438,6 +438,7 @@
                                   <object class="GtkSignalListItemFactory">
                                     <signal name="setup" handler="on_chapter_factory_setup"/>
                                     <signal name="bind" handler="on_chapter_factory_bind"/>
+                                    <signal name="unbind" handler="on_chapter_factory_unbind"/>
                                   </object>
                                 </property>
                                 </object>
