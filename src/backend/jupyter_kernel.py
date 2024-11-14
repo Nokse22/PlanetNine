@@ -81,6 +81,7 @@ class JupyterKernel(GObject.GObject):
 
     name = GObject.Property(type=str, default='')
     kernel_id = GObject.Property(type=str, default='')
+    connections = GObject.Property(type=Gio.ListStore)
 
     def __init__(self, _name, _kernel_id, _language, _search_path):
         super().__init__()
@@ -88,6 +89,9 @@ class JupyterKernel(GObject.GObject):
         self.name = _name
         self.display_name = _name.title() + " " + _kernel_id[:5]
         self.language = _language
+
+        self.connections = Gio.ListStore()
+
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
         self.kernel_id = _kernel_id

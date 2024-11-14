@@ -28,21 +28,23 @@ import requests
 from pprint import pprint
 
 from .jupyter_kernel import JupyterKernel, JupyterKernelInfo
-from ..models.notebook import Notebook
 
 
-class Session(GObject.GObject):
-    __gtype_name__ = 'Session'
+class KernelSession(GObject.GObject):
+    __gtype_name__ = 'KernelSession'
 
     name = ""
-    kernel = None
-    notebook_store = None
+    kernel_id = None
+    session_type = None
 
-    def __init__(self, _name=""):
+    def __init__(self, session_json=""):
         super().__init__()
 
-        self.name = _name
-        self.notebook_store = Gio.ListStore.new(Notebook)
+        self.name = session_json.get("name")
+        self.session_type = session_json.get("type")
+
+        kernel = session_json.get("kernel")
+        self.kernel_id = kernel.get("id")
 
 
 class JupyterServer(GObject.GObject):
@@ -77,7 +79,7 @@ class JupyterServer(GObject.GObject):
         self.flatpak_spawn = None
         self.conn_file_dir = None
 
-        self.sessions = Gio.ListStore.new(Session)
+        self.sessions = Gio.ListStore.new(KernelSession)
         self.kernels = Gio.ListStore.new(JupyterKernel)
         self.avalaible_kernels = Gio.ListStore.new(JupyterKernelInfo)
         self.default_kernel_name = ""
@@ -132,7 +134,6 @@ class JupyterServer(GObject.GObject):
 
             if self.address == "":
                 self._get_address(line)
-
 
     def _get_address(self, string):
         addresses = re.findall(self.address_pattern, string)
@@ -242,14 +243,40 @@ class JupyterServer(GObject.GObject):
             sessions = response.json()
             print("SESSIONS: ", sessions)
             for session in sessions:
+                for kernel in self.kernels:
+                    print("KERNEL: ", kernel)
+                    if kernel.kernel_id == session['kernel']['id']:
+                        kernel.connections.append(KernelSession(session))
+
+            return True, sessions
+        else:
+            return False, None
+
+    async def get_running_kernels(self):
+        if self.address == "":
+            return False, None
+        try:
+            response = await asyncio.to_thread(
+                requests.get,
+                f'{self.address}/api/kernels',
+                params={"token": self.token}
+            )
+        except Exception as e:
+            print(e)
+            return False, None
+
+        if response.status_code == 200:
+            kernels = response.json()
+            print("KERNELS: ", kernels)
+            for kernel in kernels:
                 kernel = JupyterKernel(
-                    session['kernel']['name'],
-                    session['kernel']['id'],
+                    kernel['name'],
+                    kernel['id'],
                     "python",
                     self.conn_file_dir
                 )
                 self.kernels.append(kernel)
-            return True, sessions
+            return True, kernels
         else:
             return False, None
 

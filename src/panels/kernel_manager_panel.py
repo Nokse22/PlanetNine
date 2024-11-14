@@ -20,12 +20,10 @@
 from gi.repository import Gtk, Gio, GLib, GObject
 from gi.repository import Panel
 
-from ..backend.jupyter_server import Session
+from ..backend.jupyter_server import KernelSession
 from ..backend.jupyter_kernel import JupyterKernel, JupyterKernelInfo
 
-from ..models.notebook import Notebook
-
-from ..widgets.tree_row_widget import TreeWidget
+from ..widgets.tree_row_widget import TreeWidget, ClickAction
 
 from ..utils.converters import get_language_icon
 
@@ -39,11 +37,9 @@ class NodeType(IntEnum):
 
 
 class TreeNode(GObject.Object):
-    def __init__(self, name, node_type, children=None):
+    def __init__(self, name):
         super().__init__()
         self.name = name
-        self.node_type = node_type
-        self.children = children or []
 
 
 @Gtk.Template(
@@ -65,10 +61,8 @@ class KernelManagerPanel(Panel.Widget):
         self.avalaible_kernels_model = _avalaible_kernels_model
         self.running_kernels_model = _running_kernels_model
 
-        self.avalaible_kernels_root = TreeNode(
-            "Available Kernels", NodeType.ROOT, [])
-        self.running_kernels_root = TreeNode(
-            "Running Kernels", NodeType.ROOT, [])
+        self.avalaible_kernels_root = TreeNode("Available Kernels")
+        self.running_kernels_root = TreeNode("Sessions")
 
         root_model = Gio.ListStore()
         root_model.append(self.avalaible_kernels_root)
@@ -101,6 +95,8 @@ class KernelManagerPanel(Panel.Widget):
 
         if isinstance(item, TreeNode):
             return self.running_kernels_model
+        elif isinstance(item, JupyterKernel):
+            return item.connections
 
         return None
 
@@ -182,8 +178,16 @@ class KernelManagerPanel(Panel.Widget):
 
             widget.set_menu_model(menu_model)
 
-        elif isinstance(item, Notebook):
+        elif isinstance(item, KernelSession):
             widget.set_text(item.name)
+            widget.set_click_action(ClickAction.ACTIVATE)
+
+            if item.session_type == "console":
+                widget.set_activate_action_and_target(
+                    "win.new-console-id", GLib.Variant("s", item.kernel_id))
+            else:
+                widget.set_activate_action_and_target(
+                    "win.new-notebook-id", GLib.Variant("s", item.kernel_id))
 
         else:
             widget.set_text("Unknown")

@@ -168,8 +168,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.images_panel = ImagesPanel()
         self.bottom_panel_frame.add(self.images_panel)
 
-        self.bottom_panel_frame.add(JsonViewerPage())
-
         self.all_kernels = MultiListModel()
         self.all_kernels.add_section(
             self.jupyter_server.avalaible_kernels,
@@ -1215,6 +1213,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         asyncio.create_task(self.get_se())
 
     async def get_se(self):
+        await self.jupyter_server.get_running_kernels()
         await self.jupyter_server.get_sessions()
 
     def on_jupyter_server_has_new_line(self, server, line):

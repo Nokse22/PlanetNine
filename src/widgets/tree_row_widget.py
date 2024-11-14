@@ -17,7 +17,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gtk, Adw, Gio
+from gi.repository import Gtk, Adw
 
 from enum import IntEnum
 
@@ -51,8 +51,8 @@ class TreeWidget(Adw.Bin):
         self.image = Gtk.Image(
             icon_name="python-symbolic", margin_end=6, visible=False)
 
-        self.show_menu = True
-        self.menu_model = Gio.Menu()
+        self.show_menu = False
+        self.menu_model = None
 
         box.append(self.expander)
         box.append(self.image)
@@ -77,6 +77,7 @@ class TreeWidget(Adw.Bin):
         self.image.set_from_icon_name(icon_name)
 
     def set_menu_model(self, model):
+        self.show_menu = True
         self.menu_model = model
 
     def on_click_released(self, gesture, n_press, click_x, click_y):
