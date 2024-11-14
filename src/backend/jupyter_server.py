@@ -137,6 +137,8 @@ class JupyterServer(GObject.GObject):
     def _get_address(self, string):
         addresses = re.findall(self.address_pattern, string)
 
+        print("ADRESSES: ", addresses)
+
         if addresses != []:
             self.address = addresses[0][0]
             self.token = addresses[0][1]
@@ -238,6 +240,7 @@ class JupyterServer(GObject.GObject):
 
         if response.status_code == 200:
             sessions = response.json()
+            print("SESSIONS: ", sessions)
             for session in sessions:
                 kernel = JupyterKernel(
                     session['kernel']['name'],

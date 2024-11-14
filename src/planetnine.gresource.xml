@@ -51,6 +51,8 @@
     <file preprocess="xml-stripblanks">gtk/text_page.ui</file>
     <file preprocess="xml-stripblanks">gtk/images_panel.ui</file>
     <file preprocess="xml-stripblanks">gtk/matrix_page.ui</file>
+    <file preprocess="xml-stripblanks">gtk/error_dialog.ui</file>
+    <file preprocess="xml-stripblanks">gtk/json_viewer.ui</file>
     <file preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
 
     <file>icons/16x16/actions/arrow-circular-small-top-right-symbolic.svg</file>

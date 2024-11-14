@@ -17,13 +17,12 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gtk, Adw, GObject, Gio
-
+from gi.repository import Gtk, Adw, GObject, Gio, GLib
+from ..utils.utilities import format_json
 from enum import IntEnum
+from gettext import gettext as _
 
 import json
-
-from ..utils.utilities import format_json
 
 
 class NodeType(IntEnum):
@@ -105,46 +104,45 @@ class TreeWidget(Adw.Bin):
     def disconnect(self, *_args):
         self.click_controller.disconnect_by_func(self.on_click_released)
 
-        print(f"disconnect: {self}")
 
-    def __del__(self, *_args):
-        print(f"DELETING {self}")
-
-
-class JsonViewer(Gtk.Box):
+@Gtk.Template(
+    resource_path='/io/github/nokse22/PlanetNine/gtk/json_viewer.ui')
+class JsonViewer(Adw.Bin):
     __gtype_name__ = 'JsonViewer'
+
+    list_view = Gtk.Template.Child()
+    factory = Gtk.Template.Child()
+    error_label = Gtk.Template.Child()
+    stack = Gtk.Template.Child()
 
     def __init__(self):
         super().__init__()
 
-        self.set_orientation(Gtk.Orientation.VERTICAL)
-        self.set_spacing(12)
+        self.list_store = Gio.ListStore.new(TreeNode)
 
-    def create_tree_view(self, tree_model):
         tree_list_model = Gtk.TreeListModel.new(
-            tree_model, False, True, self.create_model_func)
-        tree_list_model.set_autoexpand(False)
+            self.list_store, False, True, self.create_model_func)
+        # tree_list_model.set_autoexpand(False)
         selection_model = Gtk.NoSelection(model=tree_list_model)
-        factory = Gtk.SignalListItemFactory()
-        factory.connect("setup", self.on_factory_setup)
-        factory.connect("bind", self.on_factory_bind)
-        factory.connect("unbind", self.on_factory_unbind)
-        list_view = Gtk.ListView.new(selection_model, factory)
-        return list_view
+        self.factory.connect("setup", self.on_factory_setup)
+        self.factory.connect("bind", self.on_factory_bind)
+        self.factory.connect("unbind", self.on_factory_unbind)
+        self.list_view.set_model(selection_model)
 
     def parse_json_string(self, json_string):
         try:
             json_obj = json.loads(format_json(json_string))
-        except Exception as e:
-            print(e)
-            return
+        except Exception as error:
+            self.error_label.set_label(str(error))
+            self.stack.set_visible_child_name("error")
+            return False
 
+        self.stack.set_visible_child_name("json")
         root_node = self.create_tree_node("Root", json_obj)
+        self.list_store.remove_all()
+        self.list_store.append(root_node)
 
-        tree_model = Gio.ListStore.new(TreeNode)
-        tree_model.append(root_node)
-
-        self.append(self.create_tree_view(tree_model))
+        return True
 
     def create_tree_node(self, node_key, node_value):
         node_type = self.get_node_type(node_value)
@@ -203,15 +201,10 @@ class JsonViewer(Gtk.Box):
         list_item.get_child().disconnect()
 
     def disconnect(self, *_args):
-        list_view = self.get_first_child()
-        while list_view:
-            list_view.set_model(None)
-            list_view.get_factory().disconnect_by_func(self.on_factory_setup)
-            list_view.get_factory().disconnect_by_func(self.on_factory_bind)
-            list_view.get_factory().disconnect_by_func(self.on_factory_unbind)
-
-            self.remove(list_view)
-            list_view = self.get_first_child()
+        self.list_store.remove_all()
+        self.factory.disconnect_by_func(self.on_factory_setup)
+        self.factory.disconnect_by_func(self.on_factory_bind)
+        self.factory.disconnect_by_func(self.on_factory_unbind)
 
         print(f"disconnect {self}")
 

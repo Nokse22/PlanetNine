@@ -63,19 +63,15 @@ class IKernel:
         if self.kernel_name:
             self.activate_action(
                 "win.request-kernel-name",
-                GLib.Variant("(ss)", (self.page_id, self.kernel_name)),
-            )
+                GLib.Variant("(ss)", (self.page_id, self.kernel_name)))
         elif self.kernel_id:
             self.activate_action(
                 "win.request-kernel-id",
-                GLib.Variant("(ss)", (self.page_id, self.kernel_id)),
-            )
+                GLib.Variant("(ss)", (self.page_id, self.kernel_id)))
         else:
             self.activate_action(
                 "win.change-kernel",
-                GLib.Variant(
-                    "s",
-                    self.page_id))
+                GLib.Variant("s", self.page_id))
 
     def get_kernel(self):
         """Get the page kernel

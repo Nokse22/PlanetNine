@@ -18,6 +18,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from gi.repository import GObject, Gio, Panel
 from ..others.save_delegate import GenericSaveDelegate
+from .language import ILanguage
 from gettext import gettext as _
 import os
 
@@ -49,6 +50,32 @@ class ISaveable:
             menu.append_item(menu_item)
 
             self.get_menu_model().append_section(None, menu)
+
+    async def load_file(self, file_path):
+        """Handles loading the file in the buffer"""
+
+        try:
+            file = Gio.File.new_for_path(file_path)
+
+            success, contents, _ = await file.load_contents_async(None)
+
+            if success:
+                self.buffer.set_text(contents.decode('utf-8'))
+                self.set_modified(False)
+            else:
+                return
+
+        except Exception as e:
+            print(e)
+            return
+
+        self.set_path(file_path)
+
+        if isinstance(self, ILanguage):
+            language = self.language_manager.guess_language(
+                file_path, None)
+            if language:
+                self.set_language(language.get_id())
 
     def on_text_changed(self, *_args):
         """Used to set the page to modified when the buffer changes"""

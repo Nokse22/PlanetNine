@@ -119,7 +119,7 @@ class CodePage(
 
         # LOAD File
 
-        asyncio.create_task(self._load_file(file_path))
+        asyncio.create_task(self.ov_load_file(file_path))
 
         # VIEW SETTINGS
 
@@ -136,28 +136,10 @@ class CodePage(
             Gio.SettingsBindFlags.DEFAULT
         )
 
-    async def _load_file(self, file_path):
-        """Loads the file"""
-
-        try:
-            file = Gio.File.new_for_path(file_path)
-
-            success, contents, _ = await file.load_contents_async(None)
-
-            if success:
-                text = contents.decode('utf-8')
-                self.buffer.set_text(text)
-
-                language = self.language_manager.guess_language(
-                    file_path, None)
-                if language:
-                    self.set_language(language.get_id())
-
-        except Exception as e:
-            print(e)
+    async def ov_load_file(self, file_path):
+        await self.load_file(file_path)
 
         self.start_kernel()
-        self.set_path(file_path)
 
     def get_selected_cell_content(self):
         """Returns the selected cell content"""

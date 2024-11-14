@@ -71,7 +71,7 @@ class NotebookPage(
 
         self.notebook_model = None
 
-        asyncio.create_task(self._load_file(_file_path))
+        asyncio.create_task(self.load_file(_file_path))
 
         self.words_provider = WordsCompletionProvider()
         # self.lsp_provider = LSPCompletionProvider()
@@ -91,7 +91,7 @@ class NotebookPage(
 
         self.set_selected_cell_index(0)
 
-    async def _load_file(self, file_path):
+    async def load_file(self, file_path):
         """Load a file"""
 
         if file_path:
@@ -577,3 +577,4 @@ class NotebookPage(
 
     def __del__(self):
         print(f"DELETING {self}")
+

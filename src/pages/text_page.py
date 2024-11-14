@@ -70,31 +70,7 @@ class TextPage(
 
         # LOAD File
 
-        asyncio.create_task(self._load_file(file_path))
-
-    async def _load_file(self, file_path):
-        """Handles loading the file in the buffer"""
-
-        try:
-            file = Gio.File.new_for_path(file_path)
-
-            success, contents, _ = await file.load_contents_async(None)
-
-            if success:
-                text = contents.decode('utf-8')
-                self.buffer.set_text(text)
-
-                language = self.language_manager.guess_language(
-                    file_path, None)
-                if language:
-                    self.set_language(language.get_id())
-
-                self.set_modified(False)
-
-        except Exception as e:
-            print(e)
-
-        self.set_path(file_path)
+        asyncio.create_task(self.load_file(file_path))
 
     #
     #   Implement Disconnectable Interface

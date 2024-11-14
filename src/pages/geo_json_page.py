@@ -34,6 +34,7 @@ from ..interfaces.style_update import IStyleUpdate
 from ..interfaces.searchable import ISearchable
 
 import os
+import asyncio
 
 
 @Gtk.Template(
@@ -50,7 +51,7 @@ class GeoJsonPage(
     geo_json_bin = Gtk.Template.Child()
     stack = Gtk.Template.Child()
 
-    def __init__(self, _path=None, **kwargs):
+    def __init__(self, _file_path=None, **kwargs):
         super().__init__(**kwargs)
         ICursor.__init__(self)
         IStyleUpdate.__init__(self)
@@ -77,15 +78,7 @@ class GeoJsonPage(
 
         # LOAD File
 
-        if _path:
-            with open(_path, 'r') as file:
-                content = file.read()
-
-            self.buffer.set_text(content)
-
-            self.set_path(_path)
-
-            self.set_modified(False)
+        asyncio.create_task(self.load_file(_file_path))
 
         # SETUP the page
 

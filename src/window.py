@@ -113,6 +113,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     kernel_display_name_label = Gtk.Template.Child()
     kernel_name_label = Gtk.Template.Child()
 
+    toast_overlay = Gtk.Template.Child()
+
     cache_dir = os.environ["XDG_CACHE_HOME"]
     files_cache_dir = os.path.join(cache_dir, "files")
 
@@ -165,6 +167,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.images_panel = ImagesPanel()
         self.bottom_panel_frame.add(self.images_panel)
+
+        self.bottom_panel_frame.add(JsonViewerPage())
 
         self.all_kernels = MultiListModel()
         self.all_kernels.add_section(
@@ -318,6 +322,22 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             GLib.VariantType.new("(sss)"),
             self.start_new_session)
 
+        self.create_action_with_target(
+            'error-toast',
+            GLib.VariantType.new("(ss)"),
+            self.on_error_toast_action)
+
+        self.create_action_with_target(
+            'error-toast-info',
+            GLib.VariantType.new("s"),
+            self.on_error_toast_info_action)
+
+        self.create_action(
+            'empty-text', self.on_empty_text_action)
+        self.create_action(
+            'empty-json', self.on_empty_json_action)
+        self.create_action(
+            'empty-geo-json', self.on_empty_geo_json_action)
         #
 
         self.command_line = CommandLine()
@@ -353,64 +373,64 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #   NEW NOTEBOOK PAGE WITH KERNEL NAME
     #
 
-    def on_new_notebook_action(self, action, variant):
+    def on_new_notebook_action(self, action, parameter):
         """Creates a new notebook page with a requested kernel by name"""
-        notebook_page = NotebookPage(None, kernel_name=variant.get_string())
+        notebook_page = NotebookPage(None, kernel_name=parameter.get_string())
         self.panel_grid.add(notebook_page)
 
     #
     #   NEW NOTEBOOK PAGE WITH EXISTING KERNEL FROM ID
     #
 
-    def on_new_notebook_id_action(self, action, variant):
+    def on_new_notebook_id_action(self, action, parameter):
         """Creates a new notebook page with an existing kernel by id"""
-        notebook_page = NotebookPage(None, kernel_id=variant.get_string())
+        notebook_page = NotebookPage(None, kernel_id=parameter.get_string())
         self.panel_grid.add(notebook_page)
 
     #
     #   NEW CONSOLE PAGE WITH KERNEL NAME
     #
 
-    def on_new_console_action(self, action, variant):
+    def on_new_console_action(self, action, parameter):
         """Creates a new console page with a requested kernel by name"""
-        console_page = ConsolePage(kernel_name=variant.get_string())
+        console_page = ConsolePage(kernel_name=parameter.get_string())
         self.panel_grid.add(console_page)
 
     #
     #   NEW CONSOLE PAGE WITH EXISTING KERNEL FROM ID
     #
 
-    def on_new_console_id_action(self, action, variant):
+    def on_new_console_id_action(self, action, parameter):
         """Creates a new console page with an existing kernel by id"""
-        console_page = ConsolePage(kernel_id=variant.get_string())
+        console_page = ConsolePage(kernel_id=parameter.get_string())
         self.panel_grid.add(console_page)
 
     #
     #   NEW CODE PAGE WITH KERNEL NAME
     #
 
-    def on_new_code_action(self, action, variant):
+    def on_new_code_action(self, action, parameter):
         """Creates a new code page with a requested kernel by name"""
-        code_page = CodePage(None, kernel_name=variant.get_string())
+        code_page = CodePage(None, kernel_name=parameter.get_string())
         self.panel_grid.add(code_page)
 
     #
     #   NEW CODE PAGE WITH EXISTING KERNEL FROM ID
     #
 
-    def on_new_code_id_action(self, action, variant):
+    def on_new_code_id_action(self, action, parameter):
         """Creates a new code page with an existing kernel by id"""
-        code_page = CodePage(None, kernel_id=variant.get_string())
+        code_page = CodePage(None, kernel_id=parameter.get_string())
         self.panel_grid.add(code_page)
 
     #
     #   SET A NEW or EXISTING KERNEL TO A PAGE
     #
 
-    def on_request_kernel_name(self, action, variant):
+    def on_request_kernel_name(self, action, parameter):
         """Handles the request-kernel-name action"""
 
-        page_id, kernel_name = variant.unpack()
+        page_id, kernel_name = parameter.unpack()
         asyncio.create_task(self._on_request_kernel_name(page_id, kernel_name))
 
     async def _on_request_kernel_name(self, page_id, kernel_name):
@@ -427,11 +447,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 page.set_kernel(kernel)
                 self.update_kernel_info(page)
 
-    def on_request_kernel_id(self, action, variant):
+    def on_request_kernel_id(self, action, parameter):
         """Handles the request-kernel-id action by retriving the requested
         kernel and adding it to the page with the corresponding page_id"""
 
-        page_id, kernel_id = variant.unpack()
+        page_id, kernel_id = parameter.unpack()
         page = self.find_ikernel_page(page_id)
         if page:
             success, kernel = self.jupyter_server.get_kernel_by_id(
@@ -472,10 +492,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #   SHUTDOWN KERNEL BY ID
     #
 
-    def shutdown_kernel_by_id(self, action, variant):
+    def shutdown_kernel_by_id(self, action, parameter):
         """Shutsdown a kernel given an id"""
 
-        asyncio.create_task(self._shutdown_kernel_by_id(variant.get_string()))
+        asyncio.create_task(
+            self._shutdown_kernel_by_id(parameter.get_string()))
 
     async def _shutdown_kernel_by_id(self, kernel_id):
         """Shutsdown a kernel given an id asynchronously"""
@@ -492,10 +513,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #   RESTART KERNEL BY ID
     #
 
-    def restart_kernel_by_id(self, action, variant):
+    def restart_kernel_by_id(self, action, parameter):
         """Restart a kernel given an id"""
 
-        asyncio.create_task(self._restart_kernel_by_id(variant.get_string()))
+        asyncio.create_task(self._restart_kernel_by_id(parameter.get_string()))
 
     async def _restart_kernel_by_id(self, kernel_id):
         """Restart a kernel given an id asynchronously"""
@@ -514,10 +535,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #   INTERRUPT KERNEL  BY ID
     #
 
-    def interrupt_kernel_by_id(self, action, variant):
+    def interrupt_kernel_by_id(self, action, parameter):
         """Interrupt a kernel given an id"""
 
-        asyncio.create_task(self._interrupt_kernel_by_id(variant.get_string()))
+        asyncio.create_task(
+            self._interrupt_kernel_by_id(parameter.get_string()))
 
     async def _interrupt_kernel_by_id(self, kernel_id):
         """Interrupt a kernel given an id asynchronously"""
@@ -590,12 +612,25 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #   OPEN BROWSER PAGE WITH URL
     #
 
-    def open_browser_page(self, action, variant):
+    def open_browser_page(self, action, parameter):
         """Opens a new Browser page with a starting url or the default
         if empty"""
 
-        page = BrowserPage(variant.get_string())
+        page = BrowserPage(parameter.get_string())
         self.panel_grid.add(page)
+
+    #
+    #   OPEN EMPTY VIEWERS
+    #
+
+    def on_empty_text_action(self, *_args):
+        self.panel_grid.add(TextPage())
+
+    def on_empty_json_action(self, *_args):
+        self.panel_grid.add(JsonViewerPage())
+
+    def on_empty_geo_json_action(self, *_args):
+        self.panel_grid.add(GeoJsonPage())
 
     #
     #   CREATE ACTIONS WITH OR WITHOUT TARGETS
@@ -641,8 +676,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         try:
             file = await dialog.open(self)
             self.panel_grid.add(NotebookPage(file.get_path()))
-        except Exception as e:
-            print(e)
+        except Exception as error:
+            self.activate_action(
+                "win.error-toast",
+                GLib.Variant(
+                    "(ss)", (_("Could not open Notebook"), str(error))))
 
     def on_open_code_action(self, *_args):
         """Opens a new code page using a File dialog"""
@@ -672,9 +710,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     #   OPEN ANY FILE
     #
 
-    def on_open_file_action(self, action, variant):
+    def on_open_file_action(self, action, parameter):
         """Handles the open-file action, takes the file's path"""
-        file_path = variant.get_string()
+        file_path = parameter.get_string()
 
         self.open_file(file_path)
 
@@ -712,9 +750,9 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
                     launcher.launch(self, None, None)
 
-    def open_file_with_text(self, action, variant):
+    def open_file_with_text(self, action, parameter):
         """Opens a file using the Text page"""
-        file_path = variant.get_string()
+        file_path = parameter.get_string()
 
         if self.raise_page_if_open(file_path):
             return
@@ -1265,17 +1303,42 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self.activate_action("win.run-cell")
 
     #
+    #   ERROR TOAST
+    #
+
+    def on_error_toast_action(self, action, parameter):
+        print("activated")
+        brief, message = parameter.unpack()
+
+        toast = Adw.Toast(
+            title=brief,
+            button_label="Info",
+            action_name="win.error-toast-info",
+            action_target=GLib.Variant("s", message))
+
+        self.toast_overlay.add_toast(toast)
+
+    def on_error_toast_info_action(self, action, parameter):
+        message = parameter.unpack()
+
+        builder = Gtk.Builder.new_from_resource(
+            "/io/github/nokse22/PlanetNine/gtk/error_dialog.ui")
+        builder.get_object("label").set_label(message)
+
+        builder.get_object("dialog").present(self.get_root())
+
+    #
     #   CHAPTER VIEW for NotebookPage
     #
 
-    def on_select_cell_action(self, action, variant):
+    def on_select_cell_action(self, action, parameter):
         """Handles the select-cell action, takes the cell index to select"""
 
         notebook = self.get_visible_page()
         if not isinstance(notebook, NotebookPage):
             return
 
-        notebook.set_selected_cell_index(variant.get_uint32())
+        notebook.set_selected_cell_index(parameter.get_uint32())
 
     @Gtk.Template.Callback("on_chapter_menu_activated")
     def on_chapter_menu_activated(self, *_args):

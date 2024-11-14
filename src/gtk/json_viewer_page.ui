@@ -59,7 +59,7 @@
                   <object class="GtkScrolledWindow" id="scrolled_window_2"> <!-- Changed id to avoid duplicate -->
                     <property name="vexpand">true</property>
                     <child>
-                      <object class="AdwBin" id="json_viewer_bin">
+                      <object class="JsonViewer" id="json_viewer">
                       </object>
                     </child>
                   </object>

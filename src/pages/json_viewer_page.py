@@ -17,12 +17,9 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gtk, Adw, Gio, GObject
-from gi.repository import Panel, GtkSource
+from gi.repository import Gtk, Gio, GObject, GLib
+from gi.repository import Panel
 from gi.repository import Spelling
-
-from ..others.save_delegate import GenericSaveDelegate
-from ..others.style_manager import StyleManager
 
 from ..widgets.json_viewer import JsonViewer
 
@@ -33,7 +30,9 @@ from ..interfaces.cursor import ICursor
 from ..interfaces.style_update import IStyleUpdate
 from ..interfaces.searchable import ISearchable
 
-import os
+import asyncio
+
+GObject.type_register(JsonViewer)
 
 
 @Gtk.Template(
@@ -47,10 +46,10 @@ class JsonViewerPage(
 
     source_view = Gtk.Template.Child()
     buffer = Gtk.Template.Child()
-    json_viewer_bin = Gtk.Template.Child()
+    json_viewer = Gtk.Template.Child()
     stack = Gtk.Template.Child()
 
-    def __init__(self, _path=None, **kwargs):
+    def __init__(self, _file_path=None, **kwargs):
         super().__init__(**kwargs)
         ICursor.__init__(self)
         IStyleUpdate.__init__(self)
@@ -77,20 +76,13 @@ class JsonViewerPage(
 
         # LOAD File
 
-        if _path:
-            with open(_path, 'r') as file:
-                content = file.read()
-
-            self.buffer.set_text(content)
-            self.set_path(_path)
-            self.set_modified(False)
+        asyncio.create_task(self.load_file(_file_path))
 
         # SETUP the page
 
         self.is_changed = True
 
         self.buffer.connect("changed", self.on_json_changed)
-
         self.stack.connect("notify::visible-child-name", self.on_page_changed)
 
     def on_json_changed(self, *_args):
@@ -102,21 +94,16 @@ class JsonViewerPage(
         """When the view switches to the json viewer, updates the json viewer
         if the buffer content have been changed"""
 
-        if self.is_changed:
-            child = self.json_viewer_bin.get_child()
-            if child:
-                child.disconnect()
+        if self.stack.get_visible_child_name() == "json":
+            return
 
+        if self.is_changed:
             start = self.buffer.get_start_iter()
             end = self.buffer.get_end_iter()
             text = self.buffer.get_text(start, end, True)
 
-            viewer = JsonViewer()
-            viewer.parse_json_string(text)
-            self.json_viewer_bin.set_child(viewer)
-
+            self.json_viewer.parse_json_string(text)
             self.is_changed = False
-
     #
     #   Implement Disconnectable Interface
     #

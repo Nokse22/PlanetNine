@@ -89,9 +89,6 @@ class ConsolePage(
         completion.add_provider(completion_words)
         # completion.add_provider(LSPCompletionProvider())
 
-        asyncio.create_task(self._start_kernel())
-
-    async def _start_kernel(self):
         self.start_kernel()
 
     #

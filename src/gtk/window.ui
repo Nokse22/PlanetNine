@@ -203,8 +203,12 @@
               </object>
             </child>
             <property name="content">
-              <object class="PanelGrid" id="panel_grid">
-                <signal name="create-frame" handler="on_create_frame"/>
+              <object class="AdwToastOverlay" id="toast_overlay">
+                <property name="child">
+                  <object class="PanelGrid" id="panel_grid">
+                    <signal name="create-frame" handler="on_create_frame"/>
+                  </object>
+                </property>
               </object>
             </property>
             <child type="bottom">
@@ -586,11 +590,26 @@
     </section>
     <section>
       <item>
-        <attribute name="label" translatable="yes">New Browser Page</attribute>
+        <attribute name="label" translatable="yes">Browser Page</attribute>
         <attribute name="action">win.new-browser-page</attribute>
         <attribute name="target"></attribute>
       </item>
     </section>
+    <submenu>
+      <attribute name="label">Empty Pages</attribute>
+      <item>
+        <attribute name="label" translatable="yes">Text Page</attribute>
+        <attribute name="action">win.empty-text</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">Json Page</attribute>
+        <attribute name="action">win.empty-json</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">Geo Json Page</attribute>
+        <attribute name="action">win.empty-geo-json</attribute>
+      </item>
+    </submenu>
     <section>
       <item>
         <attribute name="label" translatable="yes">Open Notebook</attribute>
@@ -630,3 +649,4 @@
 
   </menu>
 </interface>
+
