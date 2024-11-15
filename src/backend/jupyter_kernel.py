@@ -97,10 +97,6 @@ class JupyterKernel(GObject.GObject):
         self.kernel_id = _kernel_id
         self.status = ""
 
-        self.thread = None
-        self.address = ""
-        self.token = ""
-
         self.shell_futures = {}
 
         self._running = False

@@ -187,7 +187,7 @@ class KernelManagerPanel(Panel.Widget):
                     "win.new-console-id", GLib.Variant("s", item.kernel_id))
             else:
                 widget.set_activate_action_and_target(
-                    "win.new-notebook-id", GLib.Variant("s", item.kernel_id))
+                    "win.open-file", GLib.Variant("s", item.file_path))
 
         else:
             widget.set_text("Unknown")

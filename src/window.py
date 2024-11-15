@@ -437,13 +437,15 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         the corresponding page_id"""
 
         page = self.find_ikernel_page(page_id)
-        if page:
-            success, kernel = await self.jupyter_server.start_kernel_by_name(
-                kernel_name)
+        if not page:
+            return
 
-            if success:
-                page.set_kernel(kernel)
-                self.update_kernel_info(page)
+        succ, kernel = await self.jupyter_server.new_session(
+            kernel_name, page.get_title(), "/")
+
+        if succ:
+            page.set_kernel(kernel)
+            self.update_kernel_info(page)
 
     def on_request_kernel_id(self, action, parameter):
         """Handles the request-kernel-id action by retriving the requested
@@ -451,13 +453,14 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         page_id, kernel_id = parameter.unpack()
         page = self.find_ikernel_page(page_id)
-        if page:
-            success, kernel = self.jupyter_server.get_kernel_by_id(
-                kernel_id)
+        if not page:
+            return
 
-            if success:
-                page.set_kernel(kernel)
-                self.update_kernel_info(page)
+        success, kernel = self.jupyter_server.get_kernel_by_id(kernel_id)
+
+        if success:
+            page.set_kernel(kernel)
+            self.update_kernel_info(page)
 
     def find_ikernel_page(self, page_id):
         """Finds the page with the corresponding page_id"""
@@ -719,34 +722,40 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         if self.raise_page_if_open(file_path):
             return
 
-        gfile = Gio.File.new_for_path(file_path)
+        try:
+            gfile = Gio.File.new_for_path(file_path)
 
-        file_info = gfile.query_info("standard::content-type", 0, None)
-        mime_type = file_info.get_content_type()
+            file_info = gfile.query_info("standard::content-type", 0, None)
+            mime_type = file_info.get_content_type()
 
-        match mime_type:
-            case "application/json":
-                self.panel_grid.add(JsonViewerPage(file_path))
-            case "text/csv":
-                self.panel_grid.add(MatrixPage(file_path))
-            case "application/x-ipynb+json":
-                self.panel_grid.add(NotebookPage(file_path))
-            case "text/x-python":
-                self.panel_grid.add(CodePage(file_path))
-            case "application/geo+json":
-                self.panel_grid.add(GeoJsonPage(file_path))
-            case mime_type if is_mime_displayable(mime_type):
-                self.panel_grid.add(TextPage(file_path))
-            case _:
-                try:
-                    file = Gio.File.new_for_path(file_path)
-                except GLib.GError:
-                    print("Failed to construct a new Gio.File object.")
-                else:
-                    launcher = Gtk.FileLauncher.new(file)
-                    launcher.set_always_ask(True)
+            match mime_type:
+                case "application/json":
+                    self.panel_grid.add(JsonViewerPage(file_path))
+                case "text/csv":
+                    self.panel_grid.add(MatrixPage(file_path))
+                case "application/x-ipynb+json":
+                    self.panel_grid.add(NotebookPage(file_path))
+                case "text/x-python":
+                    self.panel_grid.add(CodePage(file_path))
+                case "application/geo+json":
+                    self.panel_grid.add(GeoJsonPage(file_path))
+                case mime_type if is_mime_displayable(mime_type):
+                    self.panel_grid.add(TextPage(file_path))
+                case _:
+                    try:
+                        file = Gio.File.new_for_path(file_path)
+                    except GLib.GError:
+                        print("Failed to construct a new Gio.File object.")
+                    else:
+                        launcher = Gtk.FileLauncher.new(file)
+                        launcher.set_always_ask(True)
 
-                    launcher.launch(self, None, None)
+                        launcher.launch(self, None, None)
+        except Exception as error:
+            self.activate_action(
+                "win.error-toast",
+                GLib.Variant(
+                    "(ss)", (_("Could not open Notebook"), str(error))))
 
     def open_file_with_text(self, action, parameter):
         """Opens a file using the Text page"""
@@ -1017,25 +1026,27 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     async def _change_kernel(self, page):
         """Changes the kernel of the given page by showing a dialog"""
 
-        self.select_kernel_combo_row.set_selected(0)
         # TODO start with the current kernel
+        self.select_kernel_combo_row.set_selected(0)
 
         choice = await dialog_choose_async(self, self.select_kernel_dialog)
 
         if choice == 'select':
 
-            kernel = self.select_kernel_combo_row.get_selected_item()
-
+            selection = self.select_kernel_combo_row.get_selected_item()
             old_kernel = page.get_kernel()
 
-            if isinstance(kernel, JupyterKernelInfo):
-                succ, new_ker = await self.jupyter_server.start_kernel_by_name(
-                    kernel.name)
+            print(selection)
+
+            if isinstance(selection, JupyterKernelInfo):
+                succ, session = await self.jupyter_server.new_session(
+                    selection.name, page.get_title(), page.get_path())
+                print(succ, session)
                 if succ:
-                    page.set_kernel(new_ker)
+                    page.set_kernel(session["kernel"]["id"])
                     self.update_kernel_info(page)
-            elif isinstance(kernel, JupyterKernel):
-                page.set_kernel(kernel)
+            elif isinstance(selection, JupyterKernel):
+                page.set_kernel(selection.kernel_id)
                 self.update_kernel_info(page)
 
             if old_kernel:
@@ -1209,12 +1220,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.change_kernel_action.set_enabled(True)
         self.start_server_action.set_enabled(False)
-
-        asyncio.create_task(self.get_se())
-
-    async def get_se(self):
-        await self.jupyter_server.get_running_kernels()
-        await self.jupyter_server.get_sessions()
 
     def on_jupyter_server_has_new_line(self, server, line):
         """Callback to the Server new-line signal,

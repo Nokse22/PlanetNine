@@ -18,6 +18,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from gi.repository import GObject, GLib, Gio, Panel
+from ..backend.jupyter_server import JupyterServer
 from .language import ILanguage
 from gettext import gettext as _
 import random
@@ -36,6 +37,7 @@ class IKernel:
 
     def __init__(self, **kwargs):
         self.page_id = "".join(random.choices(string.ascii_letters, k=10))
+        self.jupyter_server = JupyterServer()
 
         if "kernel_id" in kwargs.keys():
             self.kernel_id = kwargs["kernel_id"]
@@ -80,26 +82,35 @@ class IKernel:
         :rtype: JupyterKernel
         """
 
-        return self.jupyter_kernel
+        succ, kernel = self.jupyter_server.get_kernel_by_id(self.kernel_id)
 
-    def set_kernel(self, jupyter_kernel):
+        if succ:
+            return kernel
+
+        return None
+
+    def set_kernel(self, kernel_id):
         """Sets the page kernel
 
         :param JupyterKernel jupyter_kernel: the new page kernel
         """
 
+        self.kernel_id = kernel_id
+
+        jupyter_kernel = self.get_kernel()
+
         if isinstance(self, ILanguage):
             self.set_language(jupyter_kernel.language)
 
-        if self.jupyter_kernel:
-            self.jupyter_kernel.disconnect_by_func(self.on_kernel_info_changed)
+        # if self.jupyter_kernel:
+        #     self.jupyter_kernel.disconnect_by_func(self.on_kernel_info_changed)
 
-        self.jupyter_kernel = jupyter_kernel
-        self.jupyter_kernel.connect(
-            "status-changed",
-            self.on_kernel_info_changed)
+        # self.jupyter_kernel = jupyter_kernel
+        # self.jupyter_kernel.connect(
+        #     "status-changed",
+        #     self.on_kernel_info_changed)
 
-        self.emit("kernel-info-changed")
+        # self.emit("kernel-info-changed")
 
     def on_kernel_info_changed(self, *_args):
         """Emits the signal kernel-info-changed

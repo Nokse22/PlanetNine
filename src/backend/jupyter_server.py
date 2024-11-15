@@ -17,7 +17,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gio, Xdp
+from gi.repository import Gio, Xdp, GLib
 from gi.repository import GObject
 
 import re
@@ -36,12 +36,15 @@ class KernelSession(GObject.GObject):
     name = ""
     kernel_id = None
     session_type = None
+    file_path = ""
 
     def __init__(self, session_json=""):
         super().__init__()
 
         self.name = session_json.get("name")
+        self.session_id = session_json.get("id")
         self.session_type = session_json.get("type")
+        self.file_path = session_json.get("path")
 
         kernel = session_json.get("kernel")
         self.kernel_id = kernel.get("id")
@@ -55,36 +58,37 @@ class JupyterServer(GObject.GObject):
         'new-line': (GObject.SignalFlags.RUN_FIRST, None, (str,)),
     }
 
-    avalaible_kernels = Gio.ListStore()
-    kernels = Gio.ListStore()
+    avalaible_kernels = Gio.ListStore.new(JupyterKernelInfo)
+    sessions = Gio.ListStore.new(KernelSession)
+    kernels = Gio.ListStore.new(JupyterKernel)
+
     default_kernel_name = GObject.Property(type=str, default="")
 
     data_dir = os.environ["XDG_DATA_HOME"]
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
+    portal = Xdp.Portal()
 
-        self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
-        self.portal = Xdp.Portal()
+    jupyter_process = None
 
-        self.jupyter_process = None
+    address = GObject.Property(type=str, default="")
+    token = GObject.Property(type=str, default="")
 
-        self.thread = None
-        self.address = ""
-        self.token = ""
+    is_running = GObject.Property(type=bool, default=False)
+    sandboxed = GObject.Property(type=bool, default=False)
+    use_external = GObject.Property(type=bool, default=False)
+    flatpak_spawn = GObject.Property(type=bool, default=False)
+    conn_file_dir = GObject.Property(type=str, default="")
 
-        self.is_running = False
-        self.sandboxed = None
-        self.use_external = None
-        self.flatpak_spawn = None
-        self.conn_file_dir = None
+    address_pattern = r'(http[s]?://\S+?)\?token=([\w-]+)'
 
-        self.sessions = Gio.ListStore.new(KernelSession)
-        self.kernels = Gio.ListStore.new(JupyterKernel)
-        self.avalaible_kernels = Gio.ListStore.new(JupyterKernelInfo)
-        self.default_kernel_name = ""
+    _instance = None
+    _initialized = False
 
-        self.address_pattern = r'(http[s]?://\S+?)\?token=([\w-]+)'
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(JupyterServer, cls).__new__(cls)
+        return cls._instance
 
     def start(self):
         self.sandboxed = self.portal.running_under_sandbox()
@@ -146,9 +150,77 @@ class JupyterServer(GObject.GObject):
             self.emit("started")
             self.is_running = True
 
+            GLib.timeout_add(500, self.update_kernels)
+
             asyncio.create_task(self.on_kernel_stated())
             return True
         return False
+
+    def update_kernels(self):
+        asyncio.create_task(self._update_kernels())
+        return True
+
+    async def _update_kernels(self):
+        succ, new_kernels = await self.get_running_kernels()
+        if not succ:
+            return
+
+        new_kernel_ids = [k['id'] for k in new_kernels]
+
+        # Remove kernels not in new_kernels
+        i = 0
+        while i < self.kernels.get_n_items():
+            kernel = self.kernels.get_item(i)
+            if kernel.kernel_id not in new_kernel_ids:
+                self.kernels.remove(i)
+            else:
+                i += 1
+
+        # Add new kernels if they don't exist
+        for new_kernel in new_kernels:
+            kernel_exists = any(
+                self.kernels.get_item(i).kernel_id == new_kernel['id']
+                for i in range(self.kernels.get_n_items())
+            )
+            if not kernel_exists:
+                kernel = JupyterKernel(
+                    new_kernel['name'],
+                    new_kernel['id'],
+                    "python",
+                    self.conn_file_dir
+                )
+                self.kernels.append(kernel)
+
+        # Handle sessions
+        succ, sessions = await self.get_sessions()
+        if not succ:
+            return
+
+        # Create mapping of session IDs for efficient lookup
+        new_session_ids = {s['id']: s for s in sessions}
+
+        # Update kernel connections
+        for i in range(self.kernels.get_n_items()):
+            kernel = self.kernels.get_item(i)
+            relevant_sessions = [s for s in sessions if s['kernel']['id'] == kernel.kernel_id]
+
+            # Remove old connections not in new sessions
+            j = 0
+            while j < kernel.connections.get_n_items():
+                session = kernel.connections.get_item(j)
+                if session.session_id not in new_session_ids:
+                    kernel.connections.remove(j)
+                else:
+                    j += 1
+
+            # Add new sessions if they don't exist
+            for new_session in relevant_sessions:
+                session_exists = any(
+                    kernel.connections.get_item(k).session_id == new_session['id']
+                    for k in range(kernel.connections.get_n_items())
+                )
+                if not session_exists:
+                    kernel.connections.append(KernelSession(new_session))
 
     def stop(self):
         if self.jupyter_process:
@@ -241,13 +313,6 @@ class JupyterServer(GObject.GObject):
 
         if response.status_code == 200:
             sessions = response.json()
-            print("SESSIONS: ", sessions)
-            for session in sessions:
-                for kernel in self.kernels:
-                    print("KERNEL: ", kernel)
-                    if kernel.kernel_id == session['kernel']['id']:
-                        kernel.connections.append(KernelSession(session))
-
             return True, sessions
         else:
             return False, None
@@ -266,21 +331,13 @@ class JupyterServer(GObject.GObject):
             return False, None
 
         if response.status_code == 200:
-            kernels = response.json()
-            print("KERNELS: ", kernels)
-            for kernel in kernels:
-                kernel = JupyterKernel(
-                    kernel['name'],
-                    kernel['id'],
-                    "python",
-                    self.conn_file_dir
-                )
-                self.kernels.append(kernel)
-            return True, kernels
+            new_kernels = response.json()
+            return True, new_kernels
         else:
             return False, None
 
     async def new_session(self, kernel_name, session_name, notebook_path):
+        print("new session", self.address)
         if self.address == "":
             return False, None
         try:
@@ -300,6 +357,8 @@ class JupyterServer(GObject.GObject):
         except Exception as e:
             print(e)
             return False, None
+
+        print(response.status_code)
 
         if response.status_code == 201:
             session = response.json()
@@ -340,10 +399,6 @@ class JupyterServer(GObject.GObject):
             return False
 
         if response.status_code == 204:
-            for index, kernel in enumerate(self.kernels):
-                if kernel.kernel_id == kernel_id:
-                    self.kernels.remove(index)
-                    break
             return True
         else:
             return False
