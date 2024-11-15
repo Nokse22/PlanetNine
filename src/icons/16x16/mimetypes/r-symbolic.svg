@@ -24,7 +24,7 @@
      inkscape:deskcolor="#d1d1d1"
      showgrid="true"
      inkscape:zoom="33.543378"
-     inkscape:cx="5.7537437"
+     inkscape:cx="5.7388376"
      inkscape:cy="10.717466"
      inkscape:window-width="1920"
      inkscape:window-height="1011"
@@ -52,17 +52,17 @@
      fill="#222222"
      id="path1"
      sodipodi:nodetypes="ssssssssss"
-     style="stroke-width:0.901388;fill:#7b7b7b;fill-opacity:1" />
+     style="stroke-width:0.901388;fill:#7b7b7b;fill-opacity:0.56587929" />
   <text
      xml:space="preserve"
-     style="font-weight:bold;font-size:17.2633px;font-family:Cantarell;-inkscape-font-specification:'Cantarell, Bold';text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#000000;fill-rule:evenodd;stroke-width:91.351;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke fill markers"
-     x="3.5801556"
-     y="15.489252"
+     style="font-weight:bold;font-size:15.8141px;font-family:Cantarell;-inkscape-font-specification:'Cantarell, Bold';text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#000000;fill-rule:evenodd;stroke-width:83.6826;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke fill markers"
+     x="3.7527726"
+     y="15.37143"
      id="text1"
-     transform="scale(0.96807825,1.0329744)"><tspan
+     transform="scale(0.96071433,1.0408921)"><tspan
        sodipodi:role="line"
        id="tspan1"
-       x="3.5801556"
-       y="15.489252"
-       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:17.2633px;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:91.351">R</tspan></text>
+       x="3.7527726"
+       y="15.37143"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:15.8141px;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:83.6826">R</tspan></text>
 </svg>
