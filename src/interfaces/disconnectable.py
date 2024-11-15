@@ -23,4 +23,5 @@
 class IDisconnectable:
     def disconnect(self):
         """Disconnects all signals so that the class can be deleted"""
+
         raise NotImplementedError

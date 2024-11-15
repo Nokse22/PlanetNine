@@ -23,14 +23,17 @@
 class ICells:
     def run_selected_cell(self):
         """Run the currently selected cell"""
+
         raise NotImplementedError
 
     def run_all_cells(self):
         """Run all the cells"""
+
         raise NotImplementedError
 
     def run_selected_and_advance(self):
         """Run the currently selected cell and selects the next one"""
+
         raise NotImplementedError
 
     def add_cell(self, cell_type):
@@ -38,4 +41,5 @@ class ICells:
 
         :param CellType cell_type: The type of cell to add
         """
+
         raise NotImplementedError

@@ -189,7 +189,6 @@ class StyleManager(GObject.GObject):
     @GObject.Property(type=GObject.GObject)
     def palette(self):
         for palette in self.palettes:
-            print(palette.name)
             if palette.name == self.selected:
                 return palette
 
