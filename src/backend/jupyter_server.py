@@ -105,7 +105,9 @@ class JupyterServer(GObject.GObject):
 
     async def _start(self):
         list_servers_process = Gio.Subprocess.new(
-            ['jupyter-server', 'list'] if not self.flatpak_spawn else ['flatpak-spawn', '--host', 'jupyter-server', 'list'],
+            ['jupyter-server', 'list']
+            if not self.flatpak_spawn else
+            ['flatpak-spawn', '--host', 'jupyter-server', 'list'],
             Gio.SubprocessFlags.STDOUT_PIPE
         )
 
@@ -117,7 +119,9 @@ class JupyterServer(GObject.GObject):
                 return
 
         self.jupyter_process = Gio.Subprocess.new(
-            ['jupyter-server'] if not self.flatpak_spawn else ['flatpak-spawn', '--host', 'jupyter-server'],
+            ['jupyter-server']
+            if not self.flatpak_spawn else
+            ['flatpak-spawn', '--host', 'jupyter-server'],
             Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_MERGE
         )
 
@@ -194,18 +198,17 @@ class JupyterServer(GObject.GObject):
                 kernel.connect("status-changed", self.on_kernel_status_changed)
                 self.kernels.append(kernel)
 
-        # Handle sessions
         succ, sessions = await self.get_sessions()
         if not succ:
             return
 
-        # Create mapping of session IDs for efficient lookup
         new_session_ids = {s['id']: s for s in sessions}
 
         # Update kernel connections
         for i in range(self.kernels.get_n_items()):
             kernel = self.kernels.get_item(i)
-            relevant_sessions = [s for s in sessions if s['kernel']['id'] == kernel.kernel_id]
+            relevant_sessions = [
+                s for s in sessions if s['kernel']['id'] == kernel.kernel_id]
 
             # Remove old connections not in new sessions
             j = 0
