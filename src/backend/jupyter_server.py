@@ -20,14 +20,14 @@
 from gi.repository import Gio, Xdp, GLib
 from gi.repository import GObject
 
+from .jupyter_kernel import JupyterKernel, JupyterKernelInfo
+from pprint import pprint
+
 import re
 import os
 import asyncio
 import requests
-
-from pprint import pprint
-
-from .jupyter_kernel import JupyterKernel, JupyterKernelInfo
+import uuid
 
 
 class KernelSession(GObject.GObject):
@@ -56,6 +56,7 @@ class JupyterServer(GObject.GObject):
     __gsignals__ = {
         'started': (GObject.SignalFlags.RUN_FIRST, None, ()),
         'new-line': (GObject.SignalFlags.RUN_FIRST, None, (str,)),
+        'kernel-info-changed': (GObject.SignalFlags.RUN_FIRST, None, ()),
     }
 
     avalaible_kernels = Gio.ListStore.new(JupyterKernelInfo)
@@ -173,6 +174,7 @@ class JupyterServer(GObject.GObject):
             kernel = self.kernels.get_item(i)
             if kernel.kernel_id not in new_kernel_ids:
                 self.kernels.remove(i)
+                kernel.disconnect_by_func(self.on_kernel_status_changed)
             else:
                 i += 1
 
@@ -189,6 +191,7 @@ class JupyterServer(GObject.GObject):
                     "python",
                     self.conn_file_dir
                 )
+                kernel.connect("status-changed", self.on_kernel_status_changed)
                 self.kernels.append(kernel)
 
         # Handle sessions
@@ -267,7 +270,7 @@ class JupyterServer(GObject.GObject):
                 kernel_language,
                 self.conn_file_dir
             )
-
+            kernel.connect("status-changed", self.on_kernel_status_changed)
             self.kernels.append(kernel)
 
             return True, kernel
@@ -336,10 +339,28 @@ class JupyterServer(GObject.GObject):
         else:
             return False, None
 
-    async def new_session(self, kernel_name, session_name, notebook_path):
+    async def new_session(self, session_name, notebook_path, **kwargs):
         print("new session", self.address)
         if self.address == "":
             return False, None
+
+        kernel_name = kwargs.get("kernel_name", "")
+        kernel_id = kwargs.get("kernel_id", str(uuid.uuid4()))
+        page_id = kwargs.get("page_id", str(uuid.uuid4()))
+        page_path = kwargs.get("page_path", "")
+        page_type = kwargs.get("page_type", "")
+
+        pprint({
+                    "kernel": {
+                        "name": kernel_name,
+                        "id": kernel_id
+                    },
+                    "name": session_name,
+                    "path": page_path,
+                    "type": page_type,
+                    "id": page_id
+                })
+
         try:
             response = await asyncio.to_thread(
                 requests.post,
@@ -347,11 +368,13 @@ class JupyterServer(GObject.GObject):
                 params={"token": self.token},
                 json={
                     "kernel": {
-                        "name": kernel_name
+                        "name": kernel_name,
+                        "id": kernel_id
                     },
                     "name": session_name,
-                    "path": notebook_path,
-                    "type": "notebook"
+                    "path": page_path,
+                    "type": page_type,
+                    "id": page_id
                 }
             )
         except Exception as e:
@@ -450,3 +473,6 @@ class JupyterServer(GObject.GObject):
                 return True, kernel
 
         return False, None
+
+    def on_kernel_status_changed(self, *_args):
+        self.emit("kernel-info-changed")

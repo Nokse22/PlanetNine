@@ -31,15 +31,12 @@ class Notebook(Gio.ListStore):
     __gtype_name__ = 'Notebook'
 
     title = GObject.Property(type=str, default="Untitled.ipynb")
-    jupyter_kernel = None
     metadata = None
 
     def __init__(self, _path=None):
         super().__init__()
 
         self.set_path(_path)
-
-        self.jupyter_kernel = None
 
         self.metadata = None
 

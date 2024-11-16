@@ -146,6 +146,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             "started", self.on_jupyter_server_started)
         self.jupyter_server.connect(
             "new-line", self.on_jupyter_server_has_new_line)
+        self.jupyter_server.connect(
+            "kernel-info-changed", self.update_kernel_info)
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
@@ -307,18 +309,13 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.create_action_with_target(
             'request-kernel-id',
-            GLib.VariantType.new("(ss)"),
+            GLib.VariantType.new("(sss)"),
             self.on_request_kernel_id)
 
         self.create_action_with_target(
             'request-kernel-name',
-            GLib.VariantType.new("(ss)"),
-            self.on_request_kernel_name)
-
-        self.create_action_with_target(
-            'new-session',
             GLib.VariantType.new("(sss)"),
-            self.start_new_session)
+            self.on_request_kernel_name)
 
         self.create_action_with_target(
             'error-toast',
@@ -428,10 +425,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     def on_request_kernel_name(self, action, parameter):
         """Handles the request-kernel-name action"""
 
-        page_id, kernel_name = parameter.unpack()
-        asyncio.create_task(self._on_request_kernel_name(page_id, kernel_name))
+        page_id, page_type, kernel_name = parameter.unpack()
+        asyncio.create_task(
+            self._on_request_kernel_name(page_id, page_type, kernel_name))
 
-    async def _on_request_kernel_name(self, page_id, kernel_name):
+    async def _on_request_kernel_name(self, page_id, page_type, kernel_name):
         """Handles the request-kernel-name action asynchronously
         and starts the new kernel and adds it to the page with
         the corresponding page_id"""
@@ -440,27 +438,35 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         if not page:
             return
 
-        succ, kernel = await self.jupyter_server.new_session(
-            kernel_name, page.get_title(), "/")
+        succ, session = await self.jupyter_server.new_session(
+            page.get_title(), "/", kernel_name=kernel_name, page_id=page_id)
 
         if succ:
-            page.set_kernel(kernel)
-            self.update_kernel_info(page)
+            page.set_kernel(session["kernel"]["id"])
+            self.update_kernel_info()
 
     def on_request_kernel_id(self, action, parameter):
         """Handles the request-kernel-id action by retriving the requested
         kernel and adding it to the page with the corresponding page_id"""
 
-        page_id, kernel_id = parameter.unpack()
+        page_id, page_type, kernel_id = parameter.unpack()
+        asyncio.create_task(
+            self._on_request_kernel_id(page_id, page_type, kernel_id))
+
+    async def _on_request_kernel_id(self, page_id, page_type, kernel_id):
+        """Handles the request-kernel-id action asynchronously
+        and starts a new session"""
+
         page = self.find_ikernel_page(page_id)
         if not page:
             return
 
-        success, kernel = self.jupyter_server.get_kernel_by_id(kernel_id)
+        succ, session = await self.jupyter_server.new_session(
+            page.get_title(), "/", kernel_id=kernel_id, page_id=page_id)
 
-        if success:
-            page.set_kernel(kernel)
-            self.update_kernel_info(page)
+        if succ:
+            page.set_kernel(session["kernel"]["id"])
+            self.update_kernel_info()
 
     def find_ikernel_page(self, page_id):
         """Finds the page with the corresponding page_id"""
@@ -826,13 +832,13 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         # Kernel Interface (Notebook, Code, Console)
         if isinstance(page, IKernel):
-            page.connect("kernel-info-changed", self.update_kernel_info)
-            self.update_kernel_info(page)
+            # page.connect("kernel-info-changed", self.update_kernel_info)
+            self.update_kernel_info()
 
             self.kernel_controls.set_visible(True)
             self.kernel_status_menu.set_visible(True)
         else:
-            self.update_kernel_info(None)
+            self.update_kernel_info()
 
             self.kernel_controls.set_visible(False)
             self.kernel_status_menu.set_visible(False)
@@ -870,12 +876,14 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.previous_page = page
 
-    def update_kernel_info(self, page):
+    def update_kernel_info(self, *_args):
         """Updates the UI with the page kernel information or hides UI if
         the kernel is None
         """
 
-        if page:
+        page = self.get_visible_page()
+
+        if isinstance(page, IKernel):
             kernel = page.get_kernel()
             if kernel:
                 self.kernel_status_menu.set_label(kernel.status)
@@ -962,8 +970,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
     def disconnect_page_funcs(self, page):
         """Disconnect all functions connected to the previously visible page"""
 
-        if isinstance(page, IKernel):
-            page.disconnect_by_func(self.update_kernel_info)
         if isinstance(page, ICursor):
             page.disconnect_by_func(self.on_cursor_moved)
         if isinstance(page, ILanguage):
@@ -986,22 +992,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
                 page.move_cursor(int(parts[1]), int(parts[2]), int(parts[0]))
             elif len(parts) == 2:
                 page.move_cursor(int(parts[0]), int(parts[1]))
-
-    #
-    #   START A NEW SESSION
-    #
-
-    def start_new_session(self, action, target):
-        kernel_name, session_name, file_path = target.unpack()
-        asyncio.create_task(
-            self._start_new_session(kernel_name, session_name, file_path))
-
-    async def _start_new_session(self, kernel_name, session_name, file_path):
-        succ, session_id = await self.jupyter_server.new_session(
-            kernel_name, session_name, file_path)
-
-        if succ:
-            print(session_id)
 
     #
     #   CHANGE/SELECT KERNEL OF A PAGE BY ID OR VISIBLE
@@ -1040,14 +1030,20 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
             if isinstance(selection, JupyterKernelInfo):
                 succ, session = await self.jupyter_server.new_session(
-                    selection.name, page.get_title(), page.get_path())
-                print(succ, session)
+                    page.get_title(),
+                    page.get_path(),
+                    kernel_name=selection.name)
                 if succ:
                     page.set_kernel(session["kernel"]["id"])
-                    self.update_kernel_info(page)
+                    self.update_kernel_info()
             elif isinstance(selection, JupyterKernel):
-                page.set_kernel(selection.kernel_id)
-                self.update_kernel_info(page)
+                succ, session = await self.jupyter_server.new_session(
+                    page.get_title(),
+                    page.get_path(),
+                    kernel_id=selection.kernel_id)
+                if succ:
+                    page.set_kernel(session["kernel"]["id"])
+                    self.update_kernel_info()
 
             if old_kernel:
                 self.shutdown_kernel_if_orphan(old_kernel.kernel_id)

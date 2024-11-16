@@ -70,13 +70,12 @@ class CellUI(
         ISearchable.__init__(self)
         IStyleUpdate.__init__(self)
         ILanguage.__init__(self)
+        IDisconnectable.__init__(self)
 
         # TODO Add cell collapsing
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
-        self.actions_signals = []
-        self.bindings = []
         self.providers = []
 
         self.cell = cell
@@ -310,7 +309,9 @@ class CellUI(
     #
 
     def disconnect(self, *_args):
-        self.style_manager.disconnect_by_func(self.update_style_scheme)
+        IDisconnectable.disconnect(self)
+        IStyleUpdate.disconnect(self)
+
         self.cell.disconnect_by_func(self.on_execution_count_changed)
         self.cell.disconnect_by_func(self.on_add_output)
         self.cell.disconnect_by_func(self.on_reset_output)
@@ -331,14 +332,6 @@ class CellUI(
                 child.disconnect()
             self.output_box.remove(child)
             child = child.get_next_sibling()
-
-        for action, callback in self.actions_signals:
-            action.disconnect_by_func(callback)
-        del self.actions_signals
-
-        for binding in self.bindings:
-            binding.unbind()
-        del self.bindings
 
         for provider in self.providers:
             provider.unregister(self.buffer)

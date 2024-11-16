@@ -34,6 +34,8 @@ class MarkdownTextView(Gtk.TextView, IStyleUpdate, IDisconnectable):
 
     def __init__(self):
         super().__init__()
+        IDisconnectable.__init__(self)
+
         self.buffer = self.get_buffer()
 
         self.set_css_name("markdownview")
@@ -274,11 +276,12 @@ class MarkdownTextView(Gtk.TextView, IStyleUpdate, IDisconnectable):
             tag.set_property("foreground", accent_color)
 
     def disconnect(self, *_args):
+        IDisconnectable.disconnect(self)
+        IStyleUpdate.disconnect(self)
+
         self.buffer.disconnect_by_func(self.on_text_changed)
         self.buffer.disconnect_by_func(self.on_text_inserted)
         self.buffer.disconnect_by_func(self.on_text_deleted)
-
-        self.style_manager.disconnect_by_func(self.update_style_scheme)
 
         print("unrealize:", sys.getrefcount(self))
 

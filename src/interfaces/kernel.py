@@ -30,8 +30,8 @@ import string
 class IKernel:
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        cls.kernel_info_changed = GObject.Signal("kernel-info-changed")
         cls.page_id = GObject.Property(type=str)
+        cls.page_type = GObject.Property(type=str, default="notebook")
         cls.kernel_id = GObject.Property(type=str)
         cls.kernel_name = GObject.Property(type=str)
 
@@ -39,10 +39,8 @@ class IKernel:
         self.page_id = "".join(random.choices(string.ascii_letters, k=10))
         self.jupyter_server = JupyterServer()
 
-        if "kernel_id" in kwargs.keys():
-            self.kernel_id = kwargs["kernel_id"]
-        elif "kernel_name" in kwargs.keys():
-            self.kernel_name = kwargs["kernel_name"]
+        self.kernel_id = kwargs.get("kernel_id", None)
+        self.kernel_name = kwargs.get("kernel_name", None)
 
         if isinstance(self, Panel.Widget):
             menu = Gio.Menu()
@@ -65,11 +63,13 @@ class IKernel:
         if self.kernel_name:
             self.activate_action(
                 "win.request-kernel-name",
-                GLib.Variant("(ss)", (self.page_id, self.kernel_name)))
+                GLib.Variant(
+                    "(sss)", (self.page_id, self.page_type, self.kernel_name)))
         elif self.kernel_id:
             self.activate_action(
                 "win.request-kernel-id",
-                GLib.Variant("(ss)", (self.page_id, self.kernel_id)))
+                GLib.Variant(
+                    "(sss)", (self.page_id, self.page_type, self.kernel_id)))
         else:
             self.activate_action(
                 "win.change-kernel",
@@ -99,23 +99,5 @@ class IKernel:
 
         jupyter_kernel = self.get_kernel()
 
-        if isinstance(self, ILanguage):
+        if isinstance(self, ILanguage) and jupyter_kernel:
             self.set_language(jupyter_kernel.language)
-
-        # if self.jupyter_kernel:
-        #     self.jupyter_kernel.disconnect_by_func(self.on_kernel_info_changed)
-
-        # self.jupyter_kernel = jupyter_kernel
-        # self.jupyter_kernel.connect(
-        #     "status-changed",
-        #     self.on_kernel_info_changed)
-
-        # self.emit("kernel-info-changed")
-
-    def on_kernel_info_changed(self, *_args):
-        """Emits the signal kernel-info-changed
-
-        Run whenever the status or the kernel itself changes
-        """
-
-        self.emit("kernel-info-changed")

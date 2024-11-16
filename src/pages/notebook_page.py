@@ -64,6 +64,7 @@ class NotebookPage(
         ICursor.__init__(self, True)
         ISaveable.__init__(self, True)
         ILanguage.__init__(self)
+        IDisconnectable.__init__(self)
 
         self.bindings = []
 
@@ -162,16 +163,16 @@ class NotebookPage(
                 self.run_command_callback,
                 cell
             )
-        elif self.notebook_model.jupyter_kernel:
+        elif self.get_kernel():
             cell.reset_output()
             cell.executing = True
-            self.notebook_model.jupyter_kernel.execute(
+            self.get_kernel().execute(
                 cell.source,
                 self.run_code_callback,
                 cell
             )
         else:
-            print(f"can't run code: {self.notebook_model.jupyter_kernel}")
+            print(f"can't run code: {self.get_kernel()}")
 
     def run_command_callback(self, line, cell):
         """Callback to running a command for a cell"""
@@ -194,8 +195,6 @@ class NotebookPage(
             output = Output(OutputType.STREAM)
             output.parse(content)
             cell.add_output(output)
-
-            self.emit("kernel-info-changed")
 
         elif msg_type == 'execute_input':
             count = content['execution_count']
@@ -461,34 +460,8 @@ class NotebookPage(
     #   Implement Kernel Page Interface
     #
 
-    def set_kernel(self, jupyter_kernel):
-        """Overrides the set_kernel of the IKernel interface"""
-
-        # TODO I can probably move the kernel to the page and not have to override this function
-
-        kernel = self.get_kernel()
-
-        if kernel:
-            kernel.disconnect_by_func(self.on_kernel_status_changed)
-
-        self.notebook_model.jupyter_kernel = jupyter_kernel
-        self.notebook_model.jupyter_kernel.connect(
-            "status-changed", self.on_kernel_status_changed)
-
-        self.set_language(self.get_kernel().language)
-        self.emit("kernel-info-changed")
-
-    def get_kernel(self):
-        """Overrides the get_kernel of the IKernel interface"""
-
-        if self.notebook_model:
-            return self.notebook_model.jupyter_kernel
-        return None
-
     def on_kernel_status_changed(self, kernel, status):
         """Overrides the on_kernel_status_changed of the IKernel interface"""
-
-        self.emit("kernel-info-changed")
 
         if status == "starting":
             for cell in self.notebook_model:
@@ -542,6 +515,8 @@ class NotebookPage(
     def disconnect(self, *_args):
         """Disconnect all signals"""
 
+        IDisconnectable.disconnect(self)
+
         self.list_drop_target.disconnect_by_func(self.on_drop_target_drop)
         self.list_drop_target.disconnect_by_func(self.on_drop_target_motion)
         self.list_drop_target.disconnect_by_func(self.on_drop_target_leave)
@@ -558,18 +533,10 @@ class NotebookPage(
             cell.disconnect_by_func(self.on_cell_source_changed)
             cell.disconnect()
 
-        kernel = self.get_kernel()
-        if kernel:
-            kernel.disconnect_by_func(self.on_kernel_status_changed)
-
         self.cells_list_box.bind_model(
             None,
             None
         )
-
-        for binding in self.bindings:
-            binding.unbind()
-        del self.bindings
 
         self.save_delegate.disconnect_all()
 

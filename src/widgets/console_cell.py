@@ -26,11 +26,12 @@ import sys
 from ..others.output_loader import OutputLoader
 from ..interfaces.style_update import IStyleUpdate
 from ..interfaces.language import ILanguage
+from ..interfaces.disconnectable import IDisconnectable
 
 
 @Gtk.Template(
     resource_path='/io/github/nokse22/PlanetNine/gtk/console_cell.ui')
-class ConsoleCell(Gtk.Box, IStyleUpdate, ILanguage):
+class ConsoleCell(Gtk.Box, IStyleUpdate, ILanguage, IDisconnectable):
     __gtype_name__ = 'ConsoleCell'
 
     source_view = Gtk.Template.Child()
@@ -44,6 +45,7 @@ class ConsoleCell(Gtk.Box, IStyleUpdate, ILanguage):
         super().__init__()
         IStyleUpdate.__init__(self)
         ILanguage.__init__(self)
+        IDisconnectable.__init__(self)
 
         self.buffer.set_text(content)
 
@@ -56,9 +58,10 @@ class ConsoleCell(Gtk.Box, IStyleUpdate, ILanguage):
         self.output_loader.add_output(output)
 
     def disconnect(self, *_args):
-        self.style_manager.disconnect_by_func(self.update_style_scheme)
+        IDisconnectable.disconnect(self)
+        IStyleUpdate.disconnect(self)
 
-        print("unrealize: ", sys.getrefcount(self))
+        print(f"disconnect: {self}")
 
     def __del__(self, *_args):
         print(f"DELETING {self}")

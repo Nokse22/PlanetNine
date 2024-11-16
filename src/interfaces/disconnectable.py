@@ -21,7 +21,17 @@
 # The IDisconnectable interface is used for any widget that needs to
 #       disconnect signal to be able to free the memory
 class IDisconnectable:
-    def disconnect(self):
+    def __init__(self):
+        self.actions_signals = []
+        self.bindings = []
+
+    def disconnect(self, *_args):
         """Disconnects all signals so that the class can be deleted"""
 
-        raise NotImplementedError
+        for action, callback in self.actions_signals:
+            action.disconnect_by_func(callback)
+        del self.actions_signals
+
+        for binding in self.bindings:
+            binding.unbind()
+        del self.bindings

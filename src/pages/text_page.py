@@ -54,6 +54,7 @@ class TextPage(
         ISaveable.__init__(self)
         IStyleUpdate.__init__(self)
         ISearchable.__init__(self)
+        IDisconnectable.__init__(self)
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
@@ -79,11 +80,10 @@ class TextPage(
     def disconnect(self, *_args):
         """Disconnect all signals"""
 
-        self.style_manager.disconnect_by_func(self.update_style_scheme)
-        self.buffer.disconnect_by_func(self.on_text_changed)
-        self.buffer.disconnect_by_func(self.on_cursor_position_changed)
-
-        self.save_delegate.disconnect_all()
+        IDisconnectable.disconnect(self)
+        IStyleUpdate.disconnect(self)
+        ICursor.disconnect(self)
+        ISaveable.disconnect(self)
 
         print(f"Disconnected:  {self}")
 

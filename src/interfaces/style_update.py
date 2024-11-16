@@ -34,3 +34,6 @@ class IStyleUpdate:
 
         scheme = self.style_manager.get_current_scheme()
         self.buffer.set_style_scheme(scheme)
+
+    def disconnect(self, *_args):
+        self.style_manager.disconnect_by_func(self.update_style_scheme)

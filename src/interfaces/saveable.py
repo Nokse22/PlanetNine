@@ -116,3 +116,7 @@ class ISaveable:
         start = self.buffer.get_start_iter()
         end = self.buffer.get_end_iter()
         return self.buffer.get_text(start, end, True)
+
+    def disconnect(self, *_args):
+        self.buffer.disconnect_by_func(self.on_text_changed)
+        self.save_delegate.disconnect_all()

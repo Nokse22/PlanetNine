@@ -60,3 +60,6 @@ class ICursor:
         succ, cursor_iter = self.buffer.get_iter_at_line_offset(line, column)
         if succ:
             self.buffer.place_cursor(cursor_iter)
+
+    def disconnect(self, *_args):
+        self.buffer.disconnect_by_func(self.on_cursor_position_changed)

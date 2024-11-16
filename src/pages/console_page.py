@@ -56,8 +56,9 @@ class ConsolePage(
         ICursor.__init__(self)
         IStyleUpdate.__init__(self)
         ILanguage.__init__(self)
+        IDisconnectable.__init__(self)
 
-        self.jupyter_kernel = None
+        self.page_type = "console"
 
         self.actions_signals = []
         self.bindings = []
@@ -114,10 +115,10 @@ class ConsolePage(
             #     cell
             # )
             # pass
-        if self.jupyter_kernel:
+        if self.get_kernel():
             cell = self.add_run_cell(content)
             self.buffer.set_text("")
-            self.jupyter_kernel.execute(
+            self.get_kernel().execute(
                 content,
                 self.run_code_callback,
                 cell
@@ -157,7 +158,7 @@ class ConsolePage(
     def add_run_cell(self, content):
         """Add a cell of code to the view"""
         cell = ConsoleCell(content)
-        lang_name = get_language_highlight_name(self.jupyter_kernel.language)
+        lang_name = get_language_highlight_name(self.get_kernel().language)
         cell.set_language(lang_name)
         self.run_list_box.append(cell)
         return cell
@@ -170,20 +171,12 @@ class ConsolePage(
 
     def disconnect(self, *_args):
         """Disconnect all signals"""
-        self.style_manager.disconnect_by_func(self.update_style_scheme)
+
+        IDisconnectable.disconnect(self)
+        IStyleUpdate.disconnect(self)
+        ICursor.disconnect(self)
+
         self.send_button.disconnect_by_func(self.on_send_clicked)
-        self.buffer.disconnect_by_func(self.on_cursor_position_changed)
-
-        if self.jupyter_kernel:
-            self.jupyter_kernel.disconnect_by_func(self.on_kernel_info_changed)
-
-        for action, callback in self.actions_signals:
-            action.disconnect_by_func(callback)
-        del self.actions_signals
-
-        for binding in self.bindings:
-            binding.unbind()
-        del self.bindings
 
         print(f"Disconnected:  {self}")
 

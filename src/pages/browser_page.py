@@ -47,9 +47,7 @@ class BrowserPage(Panel.Widget, IDisconnectable):
 
     def __init__(self, _initial_uri=None):
         super().__init__()
-
-        self.actions_signals = []
-        self.bindings = []
+        IDisconnectable.__init__(self)
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
@@ -155,6 +153,9 @@ class BrowserPage(Panel.Widget, IDisconnectable):
 
     def disconnect(self, *_args):
         """Disconnect all signals"""
+
+        IDisconnectable.disconnect(self)
+
         self.back_button.disconnect_by_func(self.on_back_clicked_cb)
         self.forward_button.disconnect_by_func(self.on_forward_clicked_cb)
         self.reload_button.disconnect_by_func(self.on_reload_clicked_cb)
@@ -164,14 +165,6 @@ class BrowserPage(Panel.Widget, IDisconnectable):
         self.search_entry.disconnect_by_func(self.on_entry_activated)
         self.cancel_reload_button.disconnect_by_func(
             self.on_cancel_reload_clicked_cb)
-
-        for action, callback in self.actions_signals:
-            action.disconnect_by_func(callback)
-        del self.actions_signals
-
-        for binding in self.bindings:
-            binding.unbind()
-        del self.bindings
 
         print(f"Disconnected:  {self}")
 

@@ -60,10 +60,9 @@ class CodePage(
         ICursor.__init__(self)
         IStyleUpdate.__init__(self)
         ISaveable.__init__(self)
+        IDisconnectable.__init__(self)
 
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
-
-        self.jupyter_kernel = None
 
         self.path = file_path
 
@@ -245,7 +244,7 @@ class CodePage(
         """Runs the currently selected cell"""
 
         code_portion = self.get_selected_cell_content()
-        self.jupyter_kernel.execute(
+        self.get_kernel().execute(
             code_portion,
             self.run_code_callback
         )
@@ -259,7 +258,7 @@ class CodePage(
     def run_all_cells(self):
         """Runs the entire script"""
 
-        self.jupyter_kernel.execute(
+        self.get_kernel().execute(
             self.get_content(),
             self.run_code_callback
         )
@@ -277,7 +276,7 @@ class CodePage(
 
         code_portion = self.buffer.get_text(start_iter, end_iter, False)
 
-        self.jupyter_kernel.execute(
+        self.get_kernel().execute(
             code_portion,
             self.run_code_callback
         )
@@ -325,17 +324,12 @@ class CodePage(
     def disconnect(self, *_args):
         """Disconnect all signals"""
 
-        self.style_manager.disconnect_by_func(self.update_style_scheme)
-        self.buffer.disconnect_by_func(self.on_cursor_position_changed)
-        self.buffer.disconnect_by_func(self.on_text_changed)
-
-        self.save_delegate.disconnect_all()
-
-        if self.jupyter_kernel:
-            self.jupyter_kernel.disconnect_by_func(self.on_kernel_info_changed)
+        IDisconnectable.disconnect(self)
+        IStyleUpdate.disconnect(self)
+        ICursor.disconnect(self)
+        ISaveable.disconnect(self)
 
         print(f"Disconnected:  {self}")
 
     def __del__(self):
         print(f"DELETING {self}")
-
