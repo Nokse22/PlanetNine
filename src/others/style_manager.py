@@ -219,7 +219,10 @@ class StyleManager(GObject.GObject):
     def get_accent_color(self):
         """Returns the current accent color"""
 
-        return self.adw_style_manager.get_accent_color_rgba().to_string()
+        if "Adwaita" in self.palette.name:
+            return self.adw_style_manager.get_accent_color_rgba().to_string()
+        else:
+            return self.get_current_colors()["foreground"]
 
     def get_current_scheme(self):
         """Returns the current GtkSource style scheme"""

@@ -272,8 +272,8 @@ class MarkdownTextView(Gtk.TextView, IStyleUpdate, IDisconnectable):
         self.code_tag.set_property("background", bg_color)
         self.block_code_tag.set_property("background", bg_color)
 
-        for tag in self.foreground_accent_tags:
-            tag.set_property("foreground", accent_color)
+        for foreground_tag in self.foreground_accent_tags:
+            foreground_tag.set_property("foreground", accent_color)
 
     def disconnect(self, *_args):
         IDisconnectable.disconnect(self)

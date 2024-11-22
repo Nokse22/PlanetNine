@@ -231,6 +231,9 @@ class NotebookPage(
         cell.connect("notify::source", self.on_cell_source_changed)
         cell.add_provider(self.words_provider)
         cell.add_provider(self.kernel_provider)
+        kernel = self.get_kernel()
+        if kernel:
+            cell.set_language(kernel.language)
         return cell
 
     def on_cell_source_changed(self, *_args):
@@ -388,7 +391,6 @@ class NotebookPage(
         """Overrides the set_language method of ILanguage"""
 
         self.language = _language
-        lang = self.language_manager.get_language(self.language)
 
         for index in range(0, self.notebook_model.get_n_items()):
             cell = self.cells_list_box.get_row_at_index(index).get_child()

@@ -1285,9 +1285,11 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             for adw_page in frame.get_pages():
                 page = adw_page.get_child()
                 if isinstance(page, IKernel):
-                    if page.get_kernel().kernel_id == kernel_id:
-                        result = page
-                        return
+                    kernel = page.get_kernel()
+                    if kernel:
+                        if kernel.kernel_id == kernel_id:
+                            result = page
+                            return
 
         self.panel_grid.foreach_frame(check_frame)
 
