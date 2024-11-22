@@ -113,7 +113,7 @@ class GenericSaveDelegate(Panel.SaveDelegate):
 
             output_stream = await file.replace_async(
                 etag=None,
-                make_backup=True,
+                make_backup=False,
                 flags=Gio.FileCreateFlags.NONE,
                 io_priority=GLib.PRIORITY_DEFAULT,
                 cancellable=None,
