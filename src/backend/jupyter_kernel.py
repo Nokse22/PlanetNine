@@ -83,12 +83,12 @@ class JupyterKernel(GObject.GObject):
     kernel_id = GObject.Property(type=str, default='')
     connections = GObject.Property(type=Gio.ListStore)
 
-    def __init__(self, _name, _kernel_id, _language, _search_path):
+    def __init__(self, _kernel_info, _kernel_id, _search_path):
         super().__init__()
 
-        self.name = _name
-        self.display_name = _name.title() + " " + _kernel_id[:5]
-        self.language = _language
+        self.name = _kernel_info.name
+        self.display_name = _kernel_info.display_name
+        self.language = _kernel_info.language
 
         self.connections = Gio.ListStore()
 
@@ -109,7 +109,7 @@ class JupyterKernel(GObject.GObject):
 
         self.conn_file_dir = _search_path
 
-        self.__connect()
+        self._connect()
 
         self.executing = False
 
@@ -128,10 +128,14 @@ class JupyterKernel(GObject.GObject):
         # asyncio.create_task(self._get_stdin_msg())
         asyncio.create_task(self._get_shell_msg())
 
-    def __connect(self):
-        connection_file_path = jupyter_client.connect.find_connection_file(
-            filename=f'kernel-{self.kernel_id}.json',
-            path=self.conn_file_dir)
+    def _connect(self):
+        try:
+            connection_file_path = jupyter_client.connect.find_connection_file(
+                filename=f'kernel-{self.kernel_id}.json',
+                path=self.conn_file_dir)
+        except Exception as error:
+            print(error)
+            return
 
         with open(connection_file_path) as f:
             connection_info = json.load(f)

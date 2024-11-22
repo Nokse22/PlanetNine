@@ -157,7 +157,7 @@ class JupyterServer(GObject.GObject):
 
             GLib.timeout_add(500, self.update_kernels)
 
-            asyncio.create_task(self.on_kernel_stated())
+            asyncio.create_task(self.on_server_stated())
             return True
         return False
 
@@ -167,6 +167,10 @@ class JupyterServer(GObject.GObject):
 
     async def _update_kernels(self):
         succ, new_kernels = await self.get_running_kernels()
+        if not succ:
+            return
+
+        succ, kernel_specs = await self.get_kernel_specs()
         if not succ:
             return
 
@@ -189,14 +193,17 @@ class JupyterServer(GObject.GObject):
                 for i in range(self.kernels.get_n_items())
             )
             if not kernel_exists:
-                kernel = JupyterKernel(
-                    new_kernel['name'],
-                    new_kernel['id'],
-                    "python",
-                    self.conn_file_dir
-                )
-                kernel.connect("status-changed", self.on_kernel_status_changed)
-                self.kernels.append(kernel)
+                for kernel_info in self.avalaible_kernels:
+                    if kernel_info.name == new_kernel['name']:
+                        kernel = JupyterKernel(
+                            kernel_info,
+                            new_kernel['id'],
+                            self.conn_file_dir
+                        )
+                if kernel:
+                    kernel.connect(
+                        "status-changed", self.on_kernel_status_changed)
+                    self.kernels.append(kernel)
 
         succ, sessions = await self.get_sessions()
         if not succ:
@@ -238,11 +245,17 @@ class JupyterServer(GObject.GObject):
     def get_is_running(self):
         return self.is_running
 
-    async def on_kernel_stated(self):
+    async def on_server_stated(self):
         while True:
             success, kernel_specs = await self.get_kernel_specs()
             if success:
-                break
+                pprint(kernel_specs)
+                self.default_kernel_name = kernel_specs['default']
+                for name, kernel_spec in kernel_specs['kernelspecs'].items():
+                    kernel_info = JupyterKernelInfo.new_from_specs(kernel_spec)
+                    self.avalaible_kernels.append(kernel_info)
+
+                return
 
     async def start_kernel_by_name(self, kernel_name):
         if self.address == "":
@@ -295,11 +308,6 @@ class JupyterServer(GObject.GObject):
 
         if response.status_code == 200:
             kernel_specs = response.json()
-            pprint(kernel_specs)
-            self.default_kernel_name = kernel_specs['default']
-            for name, kernel_spec in kernel_specs['kernelspecs'].items():
-                kernel_info = JupyterKernelInfo.new_from_specs(kernel_spec)
-                self.avalaible_kernels.append(kernel_info)
             return True, kernel_specs
         else:
             return False, None
@@ -347,22 +355,22 @@ class JupyterServer(GObject.GObject):
         if self.address == "":
             return False, None
 
-        kernel_name = kwargs.get("kernel_name", "")
+        kernel_name = kwargs.get("kernel_name", str(uuid.uuid4()))
         kernel_id = kwargs.get("kernel_id", str(uuid.uuid4()))
         page_id = kwargs.get("page_id", str(uuid.uuid4()))
-        page_path = kwargs.get("page_path", "")
-        page_type = kwargs.get("page_type", "")
+        page_path = kwargs.get("page_path", str(uuid.uuid4()))
+        page_type = kwargs.get("page_type", "notebook")
 
         pprint({
-                    "kernel": {
-                        "name": kernel_name,
-                        "id": kernel_id
-                    },
-                    "name": session_name,
-                    "path": page_path,
-                    "type": page_type,
-                    "id": page_id
-                })
+            "kernel": {
+                "name": kernel_name,
+                "id": kernel_id
+            },
+            "name": session_name,
+            "path": page_path,
+            "type": page_type,
+            "id": page_id
+        })
 
         try:
             response = await asyncio.to_thread(
@@ -384,10 +392,9 @@ class JupyterServer(GObject.GObject):
             print(e)
             return False, None
 
-        print(response.status_code)
-
         if response.status_code == 201:
             session = response.json()
+            print(session)
             return True, session
         else:
             return False, None
