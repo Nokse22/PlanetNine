@@ -11,6 +11,7 @@
         "--socket=pulseaudio",
         "--device=dri",
         "--socket=wayland",
+        "--filesystem=~/.local/share/jupyter/runtime",
         "--env=GOBJECT_DEBUG=instance-count",
         "--talk-name=org.freedesktop.Flatpak"
     ],
