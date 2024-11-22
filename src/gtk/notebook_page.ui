@@ -28,8 +28,8 @@
                     <property name="scroll-to-focus">false</property>
                     <child>
                       <object class="AdwClamp">
-                        <property name="maximum-size">800</property>
-                        <property name="tightening-threshold">600</property>
+                        <property name="maximum-size">860</property>
+                        <property name="tightening-threshold">800</property>
                         <child>
                           <object class="GtkListBox" id="cells_list_box">
                             <property name="margin-start">12</property>
