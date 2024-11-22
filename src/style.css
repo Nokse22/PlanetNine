@@ -23,9 +23,10 @@ list.notebook-list {
 list.notebook-list > row {
   background-color:transparent;
   transition: background-color ease-in-out 100ms;
-  padding-top: 3px;
-  padding-bottom: 3px;
-  border-radius: 12px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  padding-right: 6px;
+  border-radius: 15px;
 }
 
 list.notebook-list > row:hover {
