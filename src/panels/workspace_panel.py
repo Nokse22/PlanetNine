@@ -36,11 +36,11 @@ class NodeType(IntEnum):
 
 
 class TreeNode(GObject.Object):
-    def __init__(self, node_path, node_type, children=None, model=None):
+    def __init__(self, node_path, node_type, model=None):
         super().__init__()
         self.node_path = node_path
         self.node_type = node_type
-        self.children = children or []
+        self.children = Gio.ListStore.new(TreeNode)
 
         self.display_name = os.path.basename(self.node_path)
 
@@ -64,20 +64,20 @@ class WorkspacePanel(Panel.Widget):
         super().__init__()
 
         self.workspace_root = TreeNode(
-            "Workspace", NodeType.ROOT, [], self.workspace_menu)
+            "Workspace", NodeType.ROOT, self.workspace_menu)
         tree_model = Gio.ListStore()
         tree_model.append(self.workspace_root)
         tree_list_model = Gtk.TreeListModel.new(
-            tree_model, False, True, self.create_model_func)
+            tree_model, False, False, self.create_model_func)
         selection_model = Gtk.NoSelection(model=tree_list_model)
         self.workspace_list_view.set_model(selection_model)
 
         self.files_root = TreeNode(
-            "Other Files", NodeType.ROOT, [], self.other_menu)
+            "Other Files", NodeType.ROOT, self.other_menu)
         tree_model = Gio.ListStore()
         tree_model.append(self.files_root)
         tree_list_model = Gtk.TreeListModel.new(
-            tree_model, False, True, self.create_model_func)
+            tree_model, False, False, self.create_model_func)
         selection_model = Gtk.NoSelection(model=tree_list_model)
         self.other_files_list_view.set_model(selection_model)
 
@@ -122,7 +122,7 @@ class WorkspacePanel(Panel.Widget):
 
         folder_path = folder.get_path()
 
-        self.workspace_root.children = []
+        self.workspace_root.children.remove_all()
 
         for node in os.listdir(folder_path):
             if os.path.isdir(folder_path):
@@ -300,10 +300,7 @@ class WorkspacePanel(Panel.Widget):
 
     def create_model_func(self, item):
         if item.node_type in [NodeType.FOLDER, NodeType.ROOT]:
-            child_model = Gio.ListStore.new(TreeNode)
-            for child in item.children:
-                child_model.append(child)
-            return child_model
+            return item.children
         return None
 
     @Gtk.Template.Callback("on_setup")
