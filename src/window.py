@@ -1026,12 +1026,10 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             selection = self.select_kernel_combo_row.get_selected_item()
             old_kernel = page.get_kernel()
 
-            print(selection)
-
             if isinstance(selection, JupyterKernelInfo):
                 succ, session = await self.jupyter_server.new_session(
                     page.get_title(),
-                    page.get_path(),
+                    page.get_path() if isinstance(page, ISaveable) else "",
                     kernel_name=selection.name)
                 if succ:
                     page.set_kernel(session["kernel"]["id"])
@@ -1039,7 +1037,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             elif isinstance(selection, JupyterKernel):
                 succ, session = await self.jupyter_server.new_session(
                     page.get_title(),
-                    page.get_path(),
+                    page.get_path() if isinstance(page, ISaveable) else "",
                     kernel_id=selection.kernel_id)
                 if succ:
                     page.set_kernel(session["kernel"]["id"])
