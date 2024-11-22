@@ -1,7 +1,8 @@
 [Desktop Entry]
-Name=planetnine
-Exec=planetnine
+Name=Planet Nine
+Exec=planetnine %U
 Icon=io.github.nokse22.PlanetNine
+MimeType=application/x-ipynb+json;text/plain;application/json;text/csv;text/x-python;application/geo+json
 Terminal=false
 Type=Application
 Categories=Utility;

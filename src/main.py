@@ -52,7 +52,7 @@ class PlanetnineApplication(Panel.Application):
 
     def __init__(self):
         super().__init__(application_id='io.github.nokse22.PlanetNine',
-                         flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
+                         flags=Gio.ApplicationFlags.HANDLES_OPEN)
         self.create_action(
             'quit', lambda *_: self.quit(), ['<primary>q'])
         self.create_action(
@@ -74,6 +74,15 @@ class PlanetnineApplication(Panel.Application):
         self.settings = Gio.Settings.new('io.github.nokse22.PlanetNine')
 
         self.preferences = None
+
+    def do_open(self, files, n_files, hint):
+        if not self.win:
+            self.win = PlanetnineWindow(application=self)
+            self.win.present()
+
+        for file in files:
+            file_path = file.get_path()
+            self.win.open_file(file_path)
 
     def do_activate(self):
         self.win = self.props.active_window
