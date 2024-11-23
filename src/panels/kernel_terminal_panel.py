@@ -31,7 +31,7 @@ class KernelTerminalPanel(TerminalPanel):
         """Handles setting the kernel"""
         if not kernel:
             self.vte_terminal.reset(True, True)
-        elif kernel != self.kernel:
+        else:
             self.change_kernel(kernel)
 
     def change_kernel(self, kernel):
