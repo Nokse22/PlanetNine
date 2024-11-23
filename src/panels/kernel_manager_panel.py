@@ -27,6 +27,8 @@ from ..widgets.tree_row_widget import TreeWidget, ClickAction
 
 from ..utils.converters import get_language_icon
 
+from gettext import gettext as _
+
 from enum import IntEnum
 
 
@@ -37,9 +39,10 @@ class NodeType(IntEnum):
 
 
 class TreeNode(GObject.Object):
-    def __init__(self, name):
+    def __init__(self, name, model=None):
         super().__init__()
         self.name = name
+        self.model = model
 
 
 @Gtk.Template(
@@ -61,8 +64,14 @@ class KernelManagerPanel(Panel.Widget):
         self.avalaible_kernels_model = _avalaible_kernels_model
         self.running_kernels_model = _running_kernels_model
 
+        sessions_menu_model = Gio.Menu()
+        menu_item = Gio.MenuItem.new(_("Shutdown all"), "win.shutdown-all")
+        sessions_menu_model.append_item(menu_item)
+        menu_item = Gio.MenuItem.new(_("Restart all"), "win.restart-all")
+        sessions_menu_model.append_item(menu_item)
+
         self.avalaible_kernels_root = TreeNode("Available Kernels")
-        self.running_kernels_root = TreeNode("Sessions")
+        self.running_kernels_root = TreeNode("Sessions", sessions_menu_model)
 
         root_model = Gio.ListStore()
         root_model.append(self.avalaible_kernels_root)
@@ -120,6 +129,7 @@ class KernelManagerPanel(Panel.Widget):
             widget.set_icon_name("view-list-symbolic")
             widget.set_show_menu(False)
             widget.set_text(item.name)
+            widget.set_menu_model(item.model)
 
         elif isinstance(item, JupyterKernelInfo):
             widget.set_text(item.display_name)

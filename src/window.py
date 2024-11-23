@@ -269,6 +269,8 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             self.on_change_kernel_action)
         self.interrupt_kernel_action = self.create_action(
             'interrupt-kernel', self.on_interrupt_kernel)
+        self.shutdown_all_action = self.create_action(
+            'shutdown-all', self.on_shutdown_all_action)
 
         self.create_action_with_target(
             'select-cell',
@@ -282,6 +284,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         self.restart_kernel_action.set_enabled(False)
         self.change_kernel_action.set_enabled(False)
         self.interrupt_kernel_action.set_enabled(False)
+        self.shutdown_all_action.set_enabled(False)
 
         #   OTHER ACTIONS
 
@@ -597,6 +600,20 @@ class PlanetnineWindow(Adw.ApplicationWindow):
         kernel_id = self.get_visible_page().get_kernel().kernel_id
 
         asyncio.create_task(self._interrupt_kernel_by_id(kernel_id))
+
+    #
+    #   SHUTDOWN ALL KERNELS
+    #
+
+    def on_shutdown_all_action(self, *_args):
+        """Shutdown all kernels"""
+
+        asyncio.create_task(self._on_shutdown_all_action())
+
+    async def _on_shutdown_all_action(self, *_args):
+        """Shutdown all kernels"""
+
+        await self.jupyter_server.shutdown_all()
 
     #
     #   SAVE VISIBLE PAGE
@@ -1214,6 +1231,7 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         self.change_kernel_action.set_enabled(True)
         self.start_server_action.set_enabled(False)
+        self.shutdown_all_action.set_enabled(True)
 
     def on_jupyter_server_has_new_line(self, server, line):
         """Callback to the Server new-line signal,

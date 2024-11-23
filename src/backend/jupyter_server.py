@@ -486,3 +486,13 @@ class JupyterServer(GObject.GObject):
 
     def on_kernel_status_changed(self, *_args):
         self.emit("kernel-info-changed")
+
+    async def shutdown_all(self):
+        ids = [kernel.kernel_id for kernel in self.kernels]
+        result = True
+        for kernel_id in ids:
+            succ = await self.shutdown_kernel(kernel_id)
+            if not succ:
+                result = False
+
+        return result

@@ -77,8 +77,9 @@ class TreeWidget(Adw.Bin):
         self.image.set_from_icon_name(icon_name)
 
     def set_menu_model(self, model):
-        self.show_menu = True
-        self.menu_model = model
+        if model:
+            self.show_menu = True
+            self.menu_model = model
 
     def on_click_released(self, gesture, n_press, click_x, click_y):
         if gesture.get_current_button() == 3 and self.show_menu:
