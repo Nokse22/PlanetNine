@@ -19,6 +19,7 @@
 
 from gi.repository import Gtk, Pango
 from ..interfaces.style_update import IStyleUpdate
+from ..interfaces.disconnectable import IDisconnectable
 import re
 
 
@@ -75,6 +76,8 @@ class TerminalTextView(Gtk.TextView, IStyleUpdate):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        IDisconnectable.__init__(self)
+
         self.set_wrap_mode(Gtk.WrapMode.WORD)
         self.set_editable(False)
         self.set_cursor_visible(False)
@@ -254,3 +257,7 @@ class TerminalTextView(Gtk.TextView, IStyleUpdate):
             bg_tag = self.buffer.get_tag_table().lookup(f"bg_{bg_base}{i}")
             if bg_tag:
                 bg_tag.set_property("background", colors[f"color{i}"])
+
+    def disconnect(self, *_args):
+        IDisconnectable.disconnect(self)
+        IStyleUpdate.disconnect(self)
