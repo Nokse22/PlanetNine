@@ -900,34 +900,36 @@ class PlanetnineWindow(Adw.ApplicationWindow):
 
         page = self.get_visible_page()
 
-        if isinstance(page, IKernel):
-            kernel = page.get_kernel()
-            if kernel:
-                self.kernel_status_menu.set_label(kernel.status)
-                self.omni_label.set_label(kernel.display_name)
-                self.omni_image.set_visible(True)
-                self.omni_image.set_from_icon_name(
-                    get_language_icon(kernel.language))
+        if not isinstance(page, IKernel):
+            return
 
-                self.kernel_language_label.set_label(kernel.language)
-                self.kernel_display_name_label.set_label(kernel.display_name)
-                self.kernel_name_label.set_label(kernel.name)
+        kernel = page.get_kernel()
+        if kernel:
+            self.kernel_status_menu.set_label(kernel.status)
+            self.omni_label.set_label(kernel.display_name)
+            self.omni_image.set_visible(True)
+            self.omni_image.set_from_icon_name(
+                get_language_icon(kernel.language))
 
-                self.variables_panel.set_model(kernel.get_variables())
-                self.kernel_terminal.set_kernel(kernel)
+            self.kernel_language_label.set_label(kernel.language)
+            self.kernel_display_name_label.set_label(kernel.display_name)
+            self.kernel_name_label.set_label(kernel.name)
 
-                if kernel.status == "busy":
-                    self.omni_bar.start_pulsing()
-                    self.interrupt_kernel_action.set_enabled(True)
-                else:
-                    self.omni_bar.stop_pulsing()
-                    self.interrupt_kernel_action.set_enabled(False)
+            self.variables_panel.set_model(kernel.get_variables())
+            self.kernel_terminal.set_kernel(kernel)
 
-                self.run_cell_and_advance_action.set_enabled(True)
-                self.run_line_action.set_enabled(True)
-                self.run_selected_action.set_enabled(True)
-                self.restart_kernel_and_run_action.set_enabled(True)
-                self.restart_kernel_action.set_enabled(True)
+            if kernel.status == "busy":
+                self.omni_bar.start_pulsing()
+                self.interrupt_kernel_action.set_enabled(True)
+            else:
+                self.omni_bar.stop_pulsing()
+                self.interrupt_kernel_action.set_enabled(False)
+
+            self.run_cell_and_advance_action.set_enabled(True)
+            self.run_line_action.set_enabled(True)
+            self.run_selected_action.set_enabled(True)
+            self.restart_kernel_and_run_action.set_enabled(True)
+            self.restart_kernel_action.set_enabled(True)
         else:
             self.kernel_status_menu.set_label("")
             self.omni_label.set_label("No Kernel")

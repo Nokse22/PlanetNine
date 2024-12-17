@@ -17,7 +17,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gtk, Panel, Gdk, Vte
+from gi.repository import Gtk, Panel, Gdk, Vte, Gio
 
 from ..interfaces.style_update import IStyleUpdate
 
@@ -25,10 +25,19 @@ from ..interfaces.style_update import IStyleUpdate
 class TerminalPanel(Panel.Widget, IStyleUpdate):
     __gtype_name__ = 'TerminalPanel'
 
+    menu_model = Gio.Menu()
+
+    menu_item = Gio.MenuItem.new("Copy", "terminal.copy")
+    menu_model.append_item(menu_item)
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        # TODO Add copy
+        self.click_gesture = Gtk.GestureClick()
+        self.click_gesture.set_button(3)
+        self.click_gesture.connect("released", self.on_click_released)
+
+        self.popover = Gtk.PopoverMenu.new_from_model(self.menu_model)
 
         self.set_icon_name("terminal-symbolic")
 
@@ -40,6 +49,7 @@ class TerminalPanel(Panel.Widget, IStyleUpdate):
         )
 
         scrolled_window = Gtk.ScrolledWindow()
+        scrolled_window.add_controller(self.click_gesture)
         scrolled_window.set_child(self.vte_terminal)
 
         self.set_child(scrolled_window)
@@ -58,10 +68,11 @@ class TerminalPanel(Panel.Widget, IStyleUpdate):
         colors = self.style_manager.get_current_colors()
         background = Gdk.RGBA()
         foreground = Gdk.RGBA()
+        transparent = Gdk.RGBA()
 
-        background.parse("rgba(0, 0, 0, 0)")
-
+        background.parse(colors["background"])
         foreground.parse(colors["foreground"])
+        transparent.parse("rgba(0.0, 0.0, 0.0, 0.0)")
 
         colors_list = []
 
@@ -70,11 +81,25 @@ class TerminalPanel(Panel.Widget, IStyleUpdate):
             color.parse(colors[f"color{i}"])
             colors_list.append(color)
 
-        self.vte_terminal.set_color_background(background)
-        self.vte_terminal.set_color_foreground(foreground)
-
         self.vte_terminal.set_colors(
             foreground,
-            background,
+            transparent,
             colors_list
         )
+        self.vte_terminal.set_color_highlight(foreground)
+        self.vte_terminal.set_color_highlight_foreground(background)
+
+    def on_click_released(self, gesture, n_press, click_x, click_y):
+        if n_press != 1:
+            return
+
+        widget = gesture.get_widget()
+
+        position = Gdk.Rectangle()
+        position.x = click_x
+        position.y = click_y
+        self.popover.set_parent(widget)
+        self.popover.set_pointing_to(position)
+        self.popover.popup()
+
+        return True

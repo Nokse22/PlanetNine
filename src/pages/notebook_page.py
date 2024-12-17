@@ -53,6 +53,7 @@ class NotebookPage(
     cells_list_box = Gtk.Template.Child()
     list_drop_target = Gtk.Template.Child()
     scrolled_window = Gtk.Template.Child()
+    viewport = Gtk.Template.Child()
     stack = Gtk.Template.Child()
 
     cache_dir = os.environ["XDG_CACHE_HOME"]
@@ -268,18 +269,16 @@ class NotebookPage(
         """Adds a cell of type cell_type to the notebook_model"""
 
         cell = Cell(cell_type)
-        if self.notebook_model.get_n_items() > 1:
-            index = self.get_selected_cell_index()
-            self.notebook_model.insert(index + 1, cell)
+
+        selected_index = self.get_selected_cell_index()
+        if self.notebook_model.get_n_items() - 1 != selected_index:
+            self.notebook_model.insert(selected_index + 1, cell)
+            self.set_selected_cell_index(selected_index + 1)
         else:
             self.notebook_model.append(cell)
+            self.set_selected_cell_index(self.notebook_model.get_n_items() - 1)
 
         self.set_modified(True)
-
-        found, position = self.notebook_model.find(cell)
-
-        if found:
-            self.set_selected_cell_index(position)
 
     def get_selected_cell(self):
         """Return the selected cell"""
@@ -294,6 +293,8 @@ class NotebookPage(
         found, position = self.notebook_model.find(cell)
         if found and position != self.notebook_model.get_n_items() - 1:
             self.set_selected_cell_index(position + 1)
+        else:
+            self.add_cell(CellType.CODE)
 
     def get_selected_cell_index(self):
         """Returns the index of the selected cell"""
@@ -312,6 +313,12 @@ class NotebookPage(
         row = self.cells_list_box.get_row_at_index(index)
         if row:
             self.cells_list_box.select_row(row)
+
+            if index == self.notebook_model.get_n_items() - 1:
+                vadj = self.scrolled_window.get_vadjustment()
+                vadj.set_value(vadj.get_upper() - vadj.get_page_size())
+            else:
+                self.viewport.scroll_to(row)
 
     #
     #   Drag and Drop

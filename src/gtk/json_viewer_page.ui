@@ -56,10 +56,11 @@
                 <property name="title">Viewer</property>
                 <property name="icon-name">text-json-symbolic</property>
                 <property name="child">
-                  <object class="GtkScrolledWindow" id="scrolled_window_2"> <!-- Changed id to avoid duplicate -->
+                  <object class="GtkScrolledWindow">
                     <property name="vexpand">true</property>
                     <child>
                       <object class="JsonViewer" id="json_viewer">
+                        <property name="css-classes">background</property>
                       </object>
                     </child>
                   </object>

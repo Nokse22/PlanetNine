@@ -55,6 +55,7 @@ class ImagesPanel(Panel.Widget):
 
     def check_for_new_images(self):
         """Run every half second to check if new images are added"""
+
         if not os.path.exists(self.images_path):
             return True
 
@@ -64,6 +65,7 @@ class ImagesPanel(Panel.Widget):
             self.view_stack.set_visible_child_name("images_page")
         else:
             self.view_stack.set_visible_child_name("no_images_page")
+            self.images.remove_all()
 
         if updated_images == self.current_images:
             return True
@@ -74,7 +76,7 @@ class ImagesPanel(Panel.Widget):
                 new_images.append(img)
 
         if new_images == []:
-            return
+            return True
 
         for image_path in new_images:
             image_file = Gio.File.new_for_path(
@@ -188,6 +190,9 @@ class ImagesPanel(Panel.Widget):
         """Copies the currently selected image"""
 
         source_file = self.selection_model.get_selected_item()
+
+        if not source_file:
+            return
 
         try:
             stream = await source_file.read_async(None)

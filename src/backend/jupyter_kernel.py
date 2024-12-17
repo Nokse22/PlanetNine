@@ -152,8 +152,8 @@ class JupyterKernel(GObject.GObject):
         while self._running:
             try:
                 msg = await self.kernel_client.get_control_msg()
-                print("CONTROL MSG:")
-                pprint(msg)
+                # print("CONTROL MSG:")
+                # pprint(msg)
 
             except Exception as e:
                 print(f"Exception while getting control msg:\n{e}")
@@ -162,8 +162,8 @@ class JupyterKernel(GObject.GObject):
         while self._running:
             try:
                 msg = await self.kernel_client.get_iopub_msg()
-                print("IOPUB MSG:")
-                pprint(msg)
+                # print("IOPUB MSG:")
+                # pprint(msg)
                 self.process_iopub_msg(msg)
 
             except Exception as e:
@@ -174,7 +174,8 @@ class JupyterKernel(GObject.GObject):
         if not msg:
             return
 
-        msg = self.extract_variables(msg)
+        if not self.extract_variables(msg):
+            return
 
         msg_type = msg['header']['msg_type']
         msg_content = msg['content']
@@ -221,8 +222,8 @@ class JupyterKernel(GObject.GObject):
         while self._running:
             try:
                 msg = await self.kernel_client.get_stdin_msg()
-                print("STDIN MSG:")
-                pprint(msg)
+                # print("STDIN MSG:")
+                # pprint(msg)
 
             except Exception as e:
                 print(f"Exception while getting stdin msg:\n{e}")
@@ -245,7 +246,7 @@ class JupyterKernel(GObject.GObject):
         if msg['header']['msg_type'] != 'stream':
             return msg
 
-        empty_pattern = re.compile(r'Interactive namespace is empty.')
+        empty_pattern = re.compile(r'Interactive namespace is empty.\n')
 
         msg['content']['text'] = empty_pattern.sub('', msg['content']['text'])
 
@@ -263,10 +264,12 @@ class JupyterKernel(GObject.GObject):
                 var = Variable(parts.group(1), parts.group(2), parts.group(3))
                 self.add_variable(var)
             msg['content']['text'] = whos_pattern.sub(
-                '', msg['content']['text'])
-            if msg['content']['text'] == "":
-                return None
-        return msg
+                '', msg['content']['text'])[:-1]
+
+        if msg['content']['text'] == "":
+            return False
+
+        return True
 
     def get_variables(self):
         return self._variables

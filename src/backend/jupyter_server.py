@@ -60,7 +60,6 @@ class JupyterServer(GObject.GObject):
     }
 
     avalaible_kernels = Gio.ListStore.new(JupyterKernelInfo)
-    sessions = Gio.ListStore.new(KernelSession)
     kernels = Gio.ListStore.new(JupyterKernel)
 
     default_kernel_name = GObject.Property(type=str, default="")
@@ -90,6 +89,10 @@ class JupyterServer(GObject.GObject):
         if cls._instance is None:
             cls._instance = super(JupyterServer, cls).__new__(cls)
         return cls._instance
+
+    def __init__(self):
+        super().__init__()
+        self.kernels.connect("items-changed", self.on_kernel_status_changed)
 
     def start(self):
         self.sandboxed = self.portal.running_under_sandbox()
@@ -350,7 +353,7 @@ class JupyterServer(GObject.GObject):
         else:
             return False, None
 
-    async def new_session(self, session_name, notebook_path, **kwargs):
+    async def new_session(self, session_name, page_path, **kwargs):
         print("new session", self.address)
         if self.address == "":
             return False, None
@@ -358,7 +361,6 @@ class JupyterServer(GObject.GObject):
         kernel_name = kwargs.get("kernel_name", str(uuid.uuid4()))
         kernel_id = kwargs.get("kernel_id", str(uuid.uuid4()))
         page_id = kwargs.get("page_id", str(uuid.uuid4()))
-        page_path = kwargs.get("page_path", str(uuid.uuid4()))
         page_type = kwargs.get("page_type", "notebook")
 
         pprint({
