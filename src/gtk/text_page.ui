@@ -16,7 +16,7 @@
                 <property name="monospace">True</property>
                 <property name="highlight-current-line">True</property>
                 <property name="show-line-numbers">True</property>
-                <property name="background-pattern">grid</property>
+                <!-- <property name="background-pattern">grid</property> -->
                 <property name="auto-indent">True</property>
                 <property name="top-margin">12</property>
                 <property name="bottom-margin">12</property>

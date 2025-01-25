@@ -17,49 +17,46 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import os
 
+def get_mime_icon(mimetype):
+    mime_to_icon = {
+        "text/x-python": "text-x-python-symbolic",
 
-def get_mime_icon(filename):
-    ext_to_icon = {
-        ".py": "text-x-python-symbolic",
+        "application/x-ipynb+json": "notepad-symbolic",
 
-        ".ipynb": "notepad-symbolic",
+        "image/png": "image-symbolic",
+        "image/jpeg": "image-symbolic",
+        "image/gif": "image-symbolic",
+        "image/bmp": "image-symbolic",
+        "image/svg+xml": "image-symbolic",
 
-        ".png": "image-symbolic",
-        ".jpg": "image-symbolic",
-        ".jpeg": "image-symbolic",
-        ".gif": "image-symbolic",
-        ".bmp": "image-symbolic",
-        ".svg": "image-symbolic",
+        "text/markdown": "text-markdown-symbolic",
 
-        ".md": "text-markdown-symbolic",
+        "text/plain": "text-symbolic",
 
-        ".txt": "text-symbolic",
+        "text/csv": "table-symbolic",
 
-        ".csv": "table-symbolic",
+        "application/json": "text-json-symbolic",
+        "application/geo+json": "text-json-symbolic",
 
-        ".json": "text-json-symbolic",
-        ".geojson": "text-json-symbolic",
+        "text/html": "text-html-symbolic",
 
-        ".html": "text-html-symbolic",
-        ".htm": "text-html-symbolic",
+        "application/x-tex": "text-x-tex-symbolic",
 
-        ".tex": "text-x-tex-symbolic",
+        "application/xml": "text-xml-symbolic",
 
-        ".xml": "text-xml-symbolic",
+        "application/javascript": "text-javascript-symbolic",
 
-        ".js": "text-javascript-symbolic",
+        "application/x-yaml": "text-yaml-symbolic",
+        "text/yaml": "text-yaml-symbolic",
 
-        ".yaml": "text-yaml-symbolic",
-        ".yml": "text-yaml-symbolic",
-
-        ".pdf": "application-pdf-symbolic",
+        "application/pdf": "application-pdf-symbolic",
     }
 
-    _, ext = os.path.splitext(filename)
+    if mimetype is None:
+        return "paper-symbolic"
 
-    return ext_to_icon.get(ext.lower(), "paper-symbolic")
+    return mime_to_icon.get(mimetype.lower(), "paper-symbolic")
 
 
 def get_language_icon(lang):

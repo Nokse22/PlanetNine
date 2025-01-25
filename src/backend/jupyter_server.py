@@ -498,3 +498,39 @@ class JupyterServer(GObject.GObject):
                 result = False
 
         return result
+
+    async def get_path_content(self, path):
+        if self.address == "":
+            return False, None
+        try:
+            response = await asyncio.to_thread(
+                requests.get,
+                f'{self.address}/api/contents/{path}',
+                params={"token": self.token}
+            )
+        except Exception as e:
+            print(e)
+            return False, None
+
+        if response.status_code == 200:
+            return True, response.json()
+        else:
+            return False, None
+
+    async def set_path_content(self, path, content):
+        if self.address == "":
+            return False, None
+        try:
+            response = await asyncio.to_thread(
+                requests.get,
+                f'{self.address}/api/contents/{path}',
+                params={"token": self.token}
+            )
+        except Exception as e:
+            print(e)
+            return False, None
+
+        if response.status_code == 200:
+            return True, response.json()
+        else:
+            return False, None

@@ -295,8 +295,6 @@ class PlanetnineWindow(Adw.ApplicationWindow):
             'open-notebook', self.on_open_notebook_action)
         self.create_action(
             'open-code', self.on_open_code_action)
-        self.create_action(
-            'open-workspace', self.workspace_view.set_workspace_folder)
 
         self.create_action_with_target(
             'open-file',

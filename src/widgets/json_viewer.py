@@ -127,7 +127,10 @@ class JsonViewer(Adw.Bin):
         self.factory.connect("setup", self.on_factory_setup)
         self.factory.connect("bind", self.on_factory_bind)
         self.factory.connect("unbind", self.on_factory_unbind)
+        self.factory.connect("teardown", self.on_factory_teardown)
         self.list_view.set_model(selection_model)
+
+        # FIXME with very long json it is buggy
 
     def parse_json_string(self, json_string):
         try:
@@ -198,7 +201,12 @@ class JsonViewer(Adw.Bin):
         widget.set_value(tree_node.node_type, tree_node.content)
 
     def on_factory_unbind(self, factory, list_item):
-        list_item.get_child().disconnect()
+        # list_item.get_child().disconnect()
+        pass
+
+    def on_factory_teardown(self, factory, list_item):
+        # list_item.get_child().disconnect()
+        pass
 
     def disconnect(self, *_args):
         self.list_store.remove_all()

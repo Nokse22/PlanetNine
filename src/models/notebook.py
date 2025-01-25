@@ -40,22 +40,6 @@ class Notebook(Gio.ListStore):
 
         self.metadata = None
 
-    @classmethod
-    def new_from_file(cls, notebook_path):
-        """Initialize a new Notebook from a file
-
-        :param str notebook_path: The path to the .ipynb file
-        """
-        instance = cls(notebook_path)
-
-        with open(notebook_path, 'r') as file:
-            file_content = file.read()
-            notebook_node = nbformat.reads(file_content, as_version=4)
-
-        instance.parse(notebook_node)
-
-        return instance
-
     @GObject.Property(type=GObject.GObject)
     def cells(self):
         return self
@@ -81,12 +65,12 @@ class Notebook(Gio.ListStore):
 
         :param: The notebook node to parse
         """
-        for json_cell in notebook_node['cells']:
+        for json_cell in notebook_node.get('cells'):
             cell = Cell.new_from_json(json_cell)
 
             self.append(cell)
 
-        self.metadata = notebook_node.metadata
+        self.metadata = notebook_node.get("metadata")
 
     def get_notebook_node(self):
         """Gets the notebook as a json

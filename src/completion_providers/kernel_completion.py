@@ -75,6 +75,9 @@ class KernelCompletionProvider(GObject.Object, GtkSource.CompletionProvider):
     async def _do_completion(self, word, context):
         """Fetches possible completions and makes a new model"""
 
+        if self.page.get_kernel() is None:
+            return
+
         reply = await self.page.get_kernel().complete(word, len(word))
 
         self.store.remove_all()

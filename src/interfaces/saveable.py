@@ -18,6 +18,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 from gi.repository import GObject, Gio, Panel
 from ..others.save_delegate import GenericSaveDelegate
+from ..backend.jupyter_server import JupyterServer
 from .language import ILanguage
 from gettext import gettext as _
 import os
@@ -37,6 +38,8 @@ class ISaveable:
 
             self.buffer.connect("changed", self.on_text_changed)
 
+            self.server = JupyterServer()
+
         if isinstance(self, Panel.Widget):
             menu = Gio.Menu()
 
@@ -55,12 +58,10 @@ class ISaveable:
         """Handles loading the file in the buffer"""
 
         try:
-            file = Gio.File.new_for_path(file_path)
-
-            success, contents, _ = await file.load_contents_async(None)
+            success, contents = await self.server.get_path_content(file_path)
 
             if success:
-                self.buffer.set_text(contents.decode('utf-8'))
+                self.buffer.set_text(contents.get("content", ""))
                 self.set_modified(False)
             else:
                 return

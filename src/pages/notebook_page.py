@@ -30,6 +30,7 @@ from ..widgets.cell_ui import CellUI
 from ..models.output import Output, OutputType
 from ..models.notebook import Notebook
 from ..backend.command_line import CommandLine
+from ..backend.jupyter_server import JupyterServer
 # from ..completion_providers.completion_providers import LSPCompletionProvider
 from ..completion_providers.completion_providers import WordsCompletionProvider
 from ..completion_providers.kernel_completion import KernelCompletionProvider
@@ -79,6 +80,8 @@ class NotebookPage(
         # self.lsp_provider = LSPCompletionProvider()
         self.kernel_provider = KernelCompletionProvider(self)
 
+        self.server = JupyterServer()
+
         self.list_drop_target.set_gtypes([Cell])
         self.list_drop_target.set_actions(Gdk.DragAction.MOVE)
 
@@ -96,14 +99,13 @@ class NotebookPage(
     async def load_file(self, file_path):
         """Load a file"""
 
-        if file_path:
-            self.notebook_model = await asyncio.to_thread(
-                Notebook.new_from_file,
-                file_path)
-        else:
-            self.notebook_model = Notebook()
+        success, contents = await self.server.get_path_content(file_path)
 
-        # self.set_title(self.notebook_model.title)
+        self.notebook_model = Notebook()
+
+        if contents:
+            self.notebook_model.parse(contents.get("content", ""))
+
         self.bindings.append(
             self.notebook_model.bind_property("title", self, "title", 2))
 
