@@ -1,7 +1,7 @@
 {
     "id" : "io.github.nokse22.PlanetNine",
     "runtime" : "org.gnome.Platform",
-    "runtime-version" : "47",
+    "runtime-version" : "master",
     "sdk" : "org.gnome.Sdk",
     "command" : "planetnine",
     "finish-args" : [
@@ -134,15 +134,13 @@
             "sources" : [
                 {
                     "type" : "git",
-                    "url" : "file:///home/Nokse/Projects"
+                    "url" : "https://github.com/nokse22/PlanetNine",
+                    "branch": "main"
                 }
             ],
             "config-opts" : [
                 "--libdir=lib"
             ]
         }
-    ],
-    "build-options" : {
-        "env" : {        }
-    }
+    ]
 }
